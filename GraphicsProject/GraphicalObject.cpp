@@ -21,10 +21,13 @@ GraphicalObject::GraphicalObject()
 
 	try {
 		sh_MVP = gl::Uniform<gl::Mat4f>(shaderProgram, "MVP");
+		sh_MODELVIEW = gl::Uniform<gl::Mat4f>(shaderProgram, "MODELVIEW");
 		sh_modelTransposedInverse = gl::Uniform<gl::Mat4f>(shaderProgram, "model_transposed_inverse");
 		sh_lightDir = gl::Uniform<gl::Vec3f>(shaderProgram, "lightDir");
 		gl::UniformSampler(shaderProgram, "albedoTexture").Set(0);
 		gl::UniformSampler(shaderProgram, "normalMap").Set(1);
+		gl::UniformSampler(shaderProgram, "specularTexture").Set(2);
+		gl::UniformSampler(shaderProgram, "roughnessTexture").Set(3);
 	}
 	catch (gl::Error& err) {
 		std::cout << err.what() << std::endl;
@@ -32,14 +35,19 @@ GraphicalObject::GraphicalObject()
 
 	LoadTexture(albedoTexture, DemoCore::imgFolderPath + "Cerberus_A.tga", TextureType::COLOR);
 	LoadTexture(normalMap, DemoCore::imgFolderPath + "Cerberus_N.tga", TextureType::DATA);
+	LoadTexture(specularTexture, DemoCore::imgFolderPath + "Cerberus_M.tga", TextureType::DATA);
+	LoadTexture(roughnessTexture, DemoCore::imgFolderPath + "Cerberus_R.tga", TextureType::DATA);
 }
 
 GraphicalObject::GraphicalObject(GraphicalObject&& r):
 mesh(std::move(r.mesh)),
 albedoTexture(std::move(r.albedoTexture)),
 normalMap(std::move(r.normalMap)),
+specularTexture(std::move(r.specularTexture)),
+roughnessTexture(std::move(r.roughnessTexture)),
 sh_lightDir(std::move(r.sh_lightDir)),
 sh_MVP(std::move(r.sh_MVP)),
+sh_MODELVIEW(std::move(r.sh_MODELVIEW)),
 sh_modelTransposedInverse(std::move(r.sh_modelTransposedInverse)),
 shaderProgram(std::move(r.shaderProgram)),
 modelTransform(std::move(r.modelTransform))
@@ -50,8 +58,11 @@ GraphicalObject& GraphicalObject::operator=(GraphicalObject&& r)
 	mesh = std::move(r.mesh);
 	albedoTexture = std::move(r.albedoTexture);
 	normalMap = std::move(r.normalMap);
+	specularTexture = std::move(r.specularTexture);
+	roughnessTexture = std::move(r.roughnessTexture);
 	sh_lightDir = std::move(r.sh_lightDir);
 	sh_MVP = std::move(r.sh_MVP);
+	sh_MODELVIEW = std::move(r.sh_MODELVIEW);
 	sh_modelTransposedInverse = std::move(r.sh_modelTransposedInverse);
 	shaderProgram = std::move(r.shaderProgram);
 	modelTransform = std::move(r.modelTransform);
@@ -105,9 +116,12 @@ void GraphicalObject::Draw(DemoCore& core)
 
 	gl::Texture::Active(0);
 	albedoTexture.Bind(gl::Texture::Target::_2D);
-
 	gl::Texture::Active(1);
 	normalMap.Bind(gl::Texture::Target::_2D);
+	gl::Texture::Active(2);
+	specularTexture.Bind(gl::Texture::Target::_2D);
+	gl::Texture::Active(3);
+	roughnessTexture.Bind(gl::Texture::Target::_2D);
 
 	mesh.BindVAO();
 	glContext.DrawElements(mesh.GetPrimitiveType(), mesh.GetNumOfIndices(), mesh.indexTypeEnum);

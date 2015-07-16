@@ -1,19 +1,29 @@
 #version 330
 
 uniform vec3 lightDir;
-uniform sampler2D normalMap;
 uniform sampler2D albedoTexture;
+uniform sampler2D normalMap;
+uniform sampler2D specularTexture;
+uniform sampler2D roughnessTexture;
 
 in vec2 texCoord_v;
 in vec3 normal_v;
 in vec3 tangent_v;
 
+in vec3 viewerDir_v;
+
 out vec4 fragColor;
 
 //vec3 lightDir = normalize(vec3(-3, 2, 2));
 
+float PhongBlinn(const in vec3 lightSourceDir, const in vec3 viewerDir, const in vec3 normal, const in float shininess)
+{
+	vec3 halfway = normalize(lightSourceDir+viewerDir);
+	return pow(max(dot(normal, halfway), 0), shininess);
+}
+
 void main(void) 
-{ 
+{
 	vec3 normal = normalize(normal_v);
 	vec3 tangent  = normalize(tangent_v);
 	tangent = normalize(tangent - normal * (dot(normal, tangent)));
@@ -26,6 +36,12 @@ void main(void)
 	
 	//normal = (texture(normalMap, texCoord_v).xyz*2.0-1.0);
 	
-	fragColor = vec4(texture(albedoTexture, texCoord_v).xyz * max(dot(lightDir, normal), 0), 1.0); 
+	vec3 kd = texture(albedoTexture, texCoord_v).xyz * (vec3(1) - texture(specularTexture, texCoord_v).xyz);
+	vec3 ks = texture(specularTexture, texCoord_v).xyz;
+	
+	const float maxShininess = 256;
+	float shininess = (1 - texture(roughnessTexture, texCoord_v).x) * maxShininess;
+	
+	fragColor = vec4((kd + ks*PhongBlinn(lightDir, normalize(viewerDir_v), normal, shininess)) * max(dot(lightDir, normal), 0), 1.0); 
 	//fragColor = vec4(normal, 1.0);
 } 

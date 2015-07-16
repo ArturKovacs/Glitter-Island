@@ -396,7 +396,7 @@ void DemoCore::KeyReleased(sf::Event::KeyEvent key)
 
 void DemoCore::DrawScene()
 {
-	sun.SetDirectionTowardsSource(gl::Vec3f(std::cos(GetElapsedTime().asSeconds()), 0.7, std::sin(GetElapsedTime().asSeconds())));
+	sun.SetDirectionTowardsSource(gl::Vec3f(std::cos(GetElapsedTime().asSeconds()), 1.5, std::sin(GetElapsedTime().asSeconds())));
 	//sun.SetDirectionTowardsSource(gl::Vec3f(1, 1, -1));
 
 	glContext.Clear().ColorBuffer().DepthBuffer();

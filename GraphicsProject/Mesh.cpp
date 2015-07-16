@@ -9,7 +9,7 @@
 
 Mesh::Mesh() : primitiveType(gl::enums::PrimitiveType::Points)
 {
-	forEachAttribute([&](AttributeCategory current){
+	ForEachAttribute([&](AttributeCategory current){
 		vertexAttributes.insert(std::make_pair(current, VertexAttributeContainer(std::move(gl::Buffer()), GetAttributeCategoryInfo(current).elementDimensions)));
 	});
 }
@@ -42,7 +42,7 @@ void Mesh::LoadFromFile(const std::string& filename)
 
 	SetIndices(objMesh.GetIndices());
 
-	forEachAttribute([&](AttributeCategory current){
+	ForEachAttribute([&](AttributeCategory current){
 		SetVertexAttributeBuffer(current, objMesh.GetVertexAttribute(current));
 	});
 
@@ -198,7 +198,7 @@ OBJMesh::OBJMesh(std::istream& objContent)
 {
 	std::cout << "Loading mesh!" << std::endl;
 
-	forEachAttribute([&](AttributeCategory current){vertexAttributes.insert(std::make_pair(current, std::vector<gl::Vec3f>()));});
+	ForEachAttribute([&](AttributeCategory current){vertexAttributes.insert(std::make_pair(current, std::vector<gl::Vec3f>()));});
 
 	std::map<AttributeCategory, std::vector<gl::Vec3f> > attribLists;
 	attribLists.insert(std::make_pair(AttributeCategory::POSITION, std::vector<gl::Vec3f>()));
