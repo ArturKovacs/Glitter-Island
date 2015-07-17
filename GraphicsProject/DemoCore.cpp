@@ -73,7 +73,8 @@ terrainSize(500), water(terrainSize * 7)
 	//////////
 	//Init objects
 
-	terrain.LoadFromHeightMap(DemoCore::imgFolderPath + "heightMap.png", terrainSize, 0.06);
+	//terrain.LoadFromHeightMap(DemoCore::imgFolderPath + "heightMap.png", terrainSize, 0.06);
+	terrain.LoadFromHeightMap(DemoCore::imgFolderPath + "heightMap.png", terrainSize, 0.2);
 
 	skybox.LoadTextureFromFiles(
 		DemoCore::imgFolderPath + "sb4-x.bmp",
@@ -85,6 +86,7 @@ terrainSize(500), water(terrainSize * 7)
 
 	cam.SetFovY(gl::Degrees(70));
 
+	/*
 	{
 		Mesh mesh;
 		mesh.LoadFromFile(DemoCore::modelsFolderPath + "CerberusCycles.obj");
@@ -99,6 +101,7 @@ terrainSize(500), water(terrainSize * 7)
 
 		graphicalObjects.push_back(std::move(object));
 	}
+	*/
 }
 
 int DemoCore::Start()
@@ -422,7 +425,7 @@ void DemoCore::DrawObjects()
 	gl::Mat4f viewProjection = projection*view;
 
 	//in meters as usual
-	const float waterLevel = 10;
+	const float waterLevel = 49;
 
 	terrain.SetLightDir(gl::Normalized(sun.GetDirectionTowardsSource()));
 	terrain.SetTransform(gl::ModelMatrixf::Translation(-terrainSize*0.5, -waterLevel, terrainSize*0.5)*gl::ModelMatrixf::RotationA(gl::Vec3f(1, 0, 0), gl::Radians<float>(-gl::math::Pi() / 2)));

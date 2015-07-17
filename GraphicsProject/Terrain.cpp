@@ -3,6 +3,7 @@
 #include "all_gl_headers.hpp"
 #include "DemoCore.hpp"
 
+#include <oglplus/images/load.hpp>
 #include "FileLoad.hpp"
 
 #include <SFML/Graphics.hpp>
@@ -43,12 +44,18 @@ Terrain::Terrain()
 void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float heightMultiplyer, bool invertNormals)
 {
 	static const int maxHeight = 255;
+	static const bool fromSRGB = false;
+
+	//gl::images::Image oglplusimg = gl::images::LoadByName("", fileName, true, true);
+	//oglplusimg.Pixel(0, 0, oglplusimg.Depth()).x;
 
 	sf::Image image;
 
 	if (!image.loadFromFile(fileName)) {
 		throw std::runtime_error(std::string("Can not load file: ") + fileName);
 	}
+
+	image.flipVertically();
 
 	const int imgWidth = image.getSize().x;
 	const int imgHeight = image.getSize().y;
@@ -69,13 +76,13 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float 
 
 	for (int currY = 0; currY < imgHeight; currY++) {
 		for (int currX = 0; currX < imgWidth; currX++) {
-			sf::Uint8 currHeight = image.getPixel(currX, currY).r;
-			gl::Vec3f normal = GetNormalInHeightMap(image, currX, currY, scale, heightMultiplyer);
-			if (invertNormals){
-				normal = -1.f * normal;
-			}
+			float currHeight = image.getPixel(currX, currY).r;
+			if (fromSRGB) { currHeight = std::pow(currHeight/maxHeight, 2.2)*maxHeight; }
 
-			SetAttributeInArray(&positions, imgWidth, currX, currY, gl::Vec3f(float(currX)/(imgWidth-1), float(currY)/(imgHeight-1), (float(currHeight)/(maxHeight))*heightMultiplyer)*scale);
+			gl::Vec3f normal = GetNormalInHeightMap(image, currX, currY, scale, heightMultiplyer);
+			if (invertNormals) { normal = -1.f * normal; }
+
+			SetAttributeInArray(&positions, imgWidth, currX, currY, gl::Vec3f(float(currX)/(imgWidth-1), float(currY)/(imgHeight-1), (float(currHeight)/maxHeight)*heightMultiplyer)*scale);
 			SetAttributeInArray(&texCoords, imgWidth, currX, currY, gl::Vec2f(float(currX)/(imgWidth-1), float(currY)/(imgHeight-1)));
 		}
 	}
@@ -182,7 +189,7 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float 
 	seabottom.SetPrimitiveType(gl::enums::PrimitiveType::TriangleFan);
 }
 
-static gl::Mat4f SajatTransposeFaszomMertNemMukodikAzOglPlusOsTODO(const gl::Mat4f& input)
+static gl::Mat4f SajatTransposeMertNemMukodikAzOglPlusOsTODO(const gl::Mat4f& input)
 {
 	gl::Mat4f result;
 
@@ -209,7 +216,8 @@ void Terrain::Draw(DemoCore& core)
 
 	sh_lightDir.Set(lightDir);
 	sh_MVP.Set(core.GetCamera().GetViewProjectionTransform() * modelTransform);
-	sh_modelTransposedInverse.Set(SajatTransposeFaszomMertNemMukodikAzOglPlusOsTODO(gl::Inverse(modelTransform)));
+	sh_modelTransposedInverse.Set(SajatTransposeMertNemMukodikAzOglPlusOsTODO(gl::Inverse(modelTransform)));
+	//sh_modelTransposedInverse.Set(gl::Transposed(gl::Inverse(modelTransform)));
 
 	graphicalModel.BindVAO();
 	core.GetGLContext().DrawElements(graphicalModel.GetPrimitiveType(), graphicalModel.GetNumOfIndices(), graphicalModel.indexTypeEnum);
