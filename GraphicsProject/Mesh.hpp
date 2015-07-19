@@ -47,11 +47,9 @@ public:
 private:
 	struct VertexAttributeContainer
 	{
-		//std::shared_ptr<gl::Buffer> buffer;
 		gl::Buffer buffer;
 		int elementDimension;
 
-		//VertexAttributeContainer(gl::Buffer* buffer, const int elementDimension) : buffer(buffer), elementDimension(elementDimension) {}
 		VertexAttributeContainer(gl::Buffer&& buffer, const int elementDimension) : buffer(std::move(buffer)), elementDimension(elementDimension) {}
 		VertexAttributeContainer(VertexAttributeContainer&) = delete;
 		void operator=(VertexAttributeContainer&) = delete;
@@ -66,9 +64,8 @@ private:
 
 	gl::enums::PrimitiveType primitiveType;
 
-private:
-
-	GLfloat* GetPosition();
+//private:
+	//GLfloat* GetPosition();
 };
 
 class OBJMesh

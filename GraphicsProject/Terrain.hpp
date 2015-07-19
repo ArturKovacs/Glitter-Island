@@ -38,20 +38,16 @@ public:
 private:
 	static void LoadTexture(gl::Texture& target, const std::string& filename, float anisotropy = 0);
 
-	gl::Vec3f GetNormalInHeightMap(const sf::Image& heightMap, const int x, const int y, const float scale, const float heightMultiplyer) const;
+	//static gl::Vec3f GetNormalInHeightMap(const sf::Image& heightMap, const int x, const int y, const float scale, const float heightMultiplyer);
 
-	gl::Vec3f GetLowerTriangleNormalFromQuad(const int bottomLeftVertexPosX, const int bottomLeftVertexPosY, const std::vector<GLfloat>& positions, const int numHorizontalVertices) const;
-	gl::Vec3f GetUpperTriangleNormalFromQuad(const int bottomLeftVertexPosX, const int bottomLeftVertexPosY, const std::vector<GLfloat>& positions, const int numHorizontalVertices) const;
+	static gl::Vec3f GetLowerTriangleNormalFromQuad(const int bottomLeftVertexPosX, const int bottomLeftVertexPosY, const std::vector<gl::Vec3f>& positions, const int numHorizontalVertices);
+	static gl::Vec3f GetUpperTriangleNormalFromQuad(const int bottomLeftVertexPosX, const int bottomLeftVertexPosY, const std::vector<gl::Vec3f>& positions, const int numHorizontalVertices);
 
-	//gl::Vec3f GetVertexPosition(const std::vector<GLfloat>& positions, const int x, const int y, const int width) const;
-	
-	void SetAttributeInArray(std::vector<GLfloat>* attributeArray, const int width, const int x, const int y, const gl::Vec3f value) const;
-	void SetAttributeInArray(std::vector<GLfloat>* attributeArray, const int width, const int x, const int y, const gl::Vec2f value) const;
+	static int GetVertexIndex(const int width, const int x, const int y);
 
-	gl::Vec2f GetAttributeFromVec2Array(const std::vector<GLfloat>& attributeArray, const int width, const int x, const int y) const;
-	gl::Vec3f GetAttributeFromVec3Array(const std::vector<GLfloat>& attributeArray, const int width, const int x, const int y) const;
+	static void CalculatePositionsAndTexCoords(std::vector<gl::Vec3f>* positions, std::vector<gl::Vec2f>* texCoords, const sf::Image& image, const float scale, const float heightMultiplyer);
+	static void CalculateNormals(std::vector<gl::Vec3f>* normals, const sf::Image& image, const std::vector<gl::Vec3f>& positions);
 
-	int GetVertexIndex(const int width, const int x, const int y) const;
-	int GetVertexIndexInAttributeArray(const int width, const int x, const int y, const int numDimensions) const;
+	static void SetUpIndices(std::vector<Mesh::IndexType>* indices, const int imgWidth, const int imgHeight);
 };
 

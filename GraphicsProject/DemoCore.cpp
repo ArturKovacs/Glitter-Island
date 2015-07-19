@@ -10,7 +10,7 @@ const std::string DemoCore::modelsFolderPath = "../models/";
 DemoCore::DemoCore(sf::Window* pWindow) :
 running(false),
 pWindow(pWindow),
-mouseSensitivity(0.005), camSpeed(2.5), fastSpeedMultiplyer(4),
+mouseSensitivity(0.005), camSpeed(2.5), fastSpeedMultiplyer(10),
 terrainSize(500), water(terrainSize * 7)
 {
 	screenWidth = pWindow->getSize().x;
