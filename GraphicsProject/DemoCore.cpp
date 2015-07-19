@@ -3,18 +3,64 @@
 #include <SFML/Window.hpp>
 #include <SFML/OpenGL.hpp>
 
+/*
+static void CheckGLError()
+{
+	GLenum e = glGetError();
+	switch (e)
+	{
+	case GL_NO_ERROR:
+		break;
+
+	case GL_INVALID_ENUM:
+		throw std::exception("GL_INVALID_ENUM");
+		break;
+	case GL_INVALID_VALUE:
+		throw std::exception("GL_INVALID_VALUE");
+		break;
+	case GL_INVALID_OPERATION:
+		throw std::exception("GL_INVALID_OPERATION");
+		break;
+	case GL_INVALID_FRAMEBUFFER_OPERATION:
+		throw std::exception("GL_INVALID_FRAMEBUFFER_OPERATION");
+		break;
+	case GL_OUT_OF_MEMORY:
+		throw std::exception("GL_OUT_OF_MEMORY");
+		break;
+	case GL_STACK_UNDERFLOW:
+		throw std::exception("GL_STACK_UNDERFLOW");
+		break;
+	case GL_STACK_OVERFLOW:
+		throw std::exception("GL_STACK_OVERFLOW");
+		break;
+
+	default:
+		throw std::exception((std::string("Noooooooo... ") + std::to_string(e)).c_str());
+		break;
+	}
+}*/
+
 const std::string DemoCore::shadersFolderPath = "../shaders/";
 const std::string DemoCore::imgFolderPath = "../img/";
 const std::string DemoCore::modelsFolderPath = "../models/";
 
 DemoCore::DemoCore(sf::Window* pWindow) :
 running(false),
+isInEditMode(false),
 pWindow(pWindow),
 mouseSensitivity(0.005), camSpeed(2.5), fastSpeedMultiplyer(10),
 terrainSize(500), water(terrainSize * 7)
 {
+	//assert(pWindow->isActive())
+
+	if (!overlayFont.loadFromFile("../font-quicksand/Quicksand-Regular.otf")) {
+		throw std::exception("Could not load font!");
+	}
+
 	screenWidth = pWindow->getSize().x;
 	screenHeight = pWindow->getSize().y;
+
+	textDrawer.SetScreenResolution(gl::Vec2i(screenWidth, screenHeight));
 
 	framebuffers.push_back(std::move(Framebuffer(screenWidth, screenHeight)));
 	framebuffers.back().Bind(gl::Framebuffer::Target::Draw);
@@ -65,9 +111,7 @@ terrainSize(500), water(terrainSize * 7)
 	framebufferCopy_ScreenWidth.Set(screenWidth);
 	framebufferCopy_ScreenHeight.Set(screenHeight);
 
-	//gl::Texture::Active(0);
 	gl::UniformSampler(finalFramebufferCopy, "colorTex").Set(0);
-	//gl::Texture::Active(1);
 	gl::UniformSampler(finalFramebufferCopy, "depthTex").Set(1);
 
 	//////////
@@ -111,7 +155,7 @@ int DemoCore::Start()
 	isInFastMode = false;
 	wireframeModeEnabled = false;
 
-	pWindow->setActive();
+	//pWindow->setActive();
 	pWindow->setKeyRepeatEnabled(false);
 
 	glContext.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -221,11 +265,6 @@ Framebuffer& DemoCore::GetCurrentFramebuffer()
 	return framebuffers.back();
 }
 
-/*Scene& DemoCore::GetCurrentScene()
-{
-	return scene;
-}*/
-
 gl::Context& DemoCore::GetGLContext()
 {
 	return glContext;
@@ -275,18 +314,23 @@ void DemoCore::Draw()
 
 	glContext.Enable(gl::Capability::DepthTest);
 	GetCurrentFramebuffer().Bind(gl::Framebuffer::Target::Draw);
+
 	DrawScene();
+
 
 	//draw current framebuffer to screen
 	GetCurrentFramebuffer().SetVertexPosName("vertexPos");
 	GetCurrentFramebuffer().SetShaderProgram(&finalFramebufferCopy);
 
 	glContext.Enable(gl::Capability::DepthTest);
-
 	defaultFBO.Bind(gl::Framebuffer::Target::Draw);
 	glContext.Clear().ColorBuffer().DepthBuffer();
 
 	GetCurrentFramebuffer().Draw(*this);
+
+	if (isInEditMode) {
+		DrawOverlay();
+	}
 }
 
 void DemoCore::ClearFramebufferStack()
@@ -306,6 +350,8 @@ void DemoCore::Resize(const int width, const int height)
 
 	cam.SetScreenWidth(screenWidth);
 	cam.SetScreenHeight(screenHeight);
+
+	textDrawer.SetScreenResolution(gl::Vec2i(screenWidth, screenHeight));
 
 	finalFramebufferCopy.Use();
 	framebufferCopy_ScreenWidth.Set(screenWidth);
@@ -348,6 +394,10 @@ void DemoCore::KeyPressed(sf::Event::KeyEvent key)
 
 	case sf::Keyboard::H:
 		wireframeModeEnabled = !wireframeModeEnabled;
+		break;
+
+	case sf::Keyboard::E:
+		isInEditMode = !isInEditMode;
 		break;
 
 	case sf::Keyboard::LShift:
@@ -434,4 +484,22 @@ void DemoCore::DrawObjects()
 	for (auto& current : graphicalObjects) {
 		current.Draw(*this);
 	}
+}
+
+void DemoCore::DrawOverlay()
+{
+	glContext.PolygonMode(gl::enums::Face::FrontAndBack, gl::PolygonMode::Fill);
+	glContext.Enable(gl::Capability::Blend);
+	glContext.BlendFunc(gl::BlendFunction::SrcAlpha, gl::BlendFunction::OneMinusSrcAlpha);
+
+	sf::Text editModeText("Hey, this is my awesome test text!\nAlso the quick brown fox jumps over the lazy dog.", overlayFont);
+	editModeText.setCharacterSize(18);
+
+	editModeText.setColor(sf::Color::Yellow);
+	editModeText.setStyle(sf::Text::Bold);
+
+	textDrawer.Draw(glContext, editModeText);
+	//DrawOverlayText(editModeText);
+
+	glContext.Disable(gl::Capability::Blend);
 }

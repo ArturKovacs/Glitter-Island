@@ -6,6 +6,8 @@
 #include <SFML/Window.hpp>
 #include <SFML/OpenGL.hpp>
 
+#include "TextDrawer.hpp"
+//#include "CharacterDrawer.hpp"
 #include "Framebuffer.hpp"
 #include "DefaultFramebuffer.hpp"
 #include "GraphicalObject.hpp"
@@ -34,7 +36,6 @@ public:
 	void CopyFramebufferContents(const Framebuffer& source);
 
 	Framebuffer& GetCurrentFramebuffer();
-	//Scene& GetCurrentScene();
 	gl::Context& GetGLContext();
 	sf::Time GetElapsedTime();
 	bool GetWireframeModeEnabled() const;
@@ -47,11 +48,6 @@ public:
 
 	void Draw();
 
-private: // misc
-	bool running;
-	sf::Clock clock;
-	double elapsedSec;
-
 private: // graphical state
 	int screenWidth;
 	int screenHeight;
@@ -59,7 +55,6 @@ private: // graphical state
 	sf::Window* pWindow;
 
 	gl::Context glContext;
-//	Scene scene;
 
 	std::list<Framebuffer> framebuffers;
 	gl::DefaultFramebuffer defaultFBO;
@@ -67,6 +62,15 @@ private: // graphical state
 	gl::Program finalFramebufferCopy;
 	gl::Uniform<GLint> framebufferCopy_ScreenWidth;
 	gl::Uniform<GLint> framebufferCopy_ScreenHeight;
+
+private: // misc
+	bool running;
+	sf::Clock clock;
+	double elapsedSec;
+	bool isInEditMode;
+	sf::Font overlayFont;
+	//CharacterDrawer characterDrawer;
+	TextDrawer textDrawer;
 
 private: // demo properties, user state
 	const float mouseSensitivity;
@@ -103,4 +107,5 @@ private:
 
 	void DrawScene();
 	void DrawObjects();
+	void DrawOverlay();
 };

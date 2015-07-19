@@ -4,9 +4,6 @@
 #include <string>
 #include <sstream>
 
-#include <oglplus/shapes/obj_mesh.hpp>
-#include <oglplus/opt/resources.hpp>
-
 Mesh::Mesh() : primitiveType(gl::enums::PrimitiveType::Points)
 {
 	ForEachAttribute([&](AttributeCategory current){
@@ -46,33 +43,13 @@ void Mesh::LoadFromFile(const std::string& filename)
 		SetVertexAttributeBuffer(current, objMesh.GetVertexAttribute(current));
 	});
 
-	/*
-	gl::shapes::ObjMesh loaded_mesh(file);
-	gl::shapes::ObjMesh::IndexArray mesh_indices(loaded_mesh.Indices());
-
-	std::vector<Mesh::IndexType> indices_Mesh_format(mesh_indices.size());
-	for (int i = 0; i < mesh_indices.size(); i++) {
-		indices_Mesh_format.at(i) = mesh_indices.at(i);
-	}
-
-	SetIndices(indices_Mesh_format);
-
-	std::vector<GLfloat> vertexData;
-	loaded_mesh.Positions(vertexData);
-	SetVertexAttributeBuffer(AttributeCategory::POSITION, vertexData);
-
-	loaded_mesh.Normals(vertexData);
-	SetVertexAttributeBuffer(AttributeCategory::NORMAL, vertexData);
-
-	loaded_mesh.TexCoordinates(vertexData);
-	SetVertexAttributeBuffer(AttributeCategory::TEX_COORD, vertexData);*/
-
 	SetPrimitiveType(gl::PrimitiveType::Triangles);
 }
 
 void Mesh::SetIndices(const std::vector<IndexType>& indexArray)
 {
 	VAO.Bind();
+
 	indices.Bind(gl::Buffer::Target::ElementArray);
 	gl::Buffer::Data(gl::Buffer::Target::ElementArray, indexArray);
 }
@@ -102,12 +79,17 @@ GLsizei Mesh::GetNumOfIndices() const
 
 void Mesh::AttachVertexAttribute(const AttributeCategory targetAttribute, const gl::Program& shaderProgram, const std::string& nameInShader) const
 {
+	AttachVertexAttribute(targetAttribute, vertexAttributes.at(targetAttribute).elementDimension, shaderProgram, nameInShader);
+}
+
+void Mesh::AttachVertexAttribute(const AttributeCategory targetAttribute, const int elementDimensionCount, const gl::Program& shaderProgram, const std::string& nameInShader) const
+{
 	VAO.Bind();
-	auto& attributeContainer = vertexAttributes.at(targetAttribute);
+	const auto& attributeContainer = vertexAttributes.at(targetAttribute);
 
 	attributeContainer.buffer.Bind(gl::Buffer::Target::Array);
 	gl::VertexArrayAttrib attribute(shaderProgram, nameInShader);
-	attribute.Setup<GLfloat>(attributeContainer.elementDimension);
+	attribute.Setup<GLfloat>(elementDimensionCount);
 	attribute.Enable();
 }
 
@@ -234,43 +216,6 @@ OBJMesh::OBJMesh(std::istream& objContent)
 	auto CopyAttributeFromListToActualData = [&](AttributeCategory attrib, int OBJindex){
 		vertexAttributes.at(attrib).push_back(attribLists.at(attrib).at(OBJindex-1));
 	};
-
-	/*
-	int posCount = 0;
-	int texCoordCount = 0;
-	int normalCount = 0;
-	int faceCount = 0;
-
-	while (objContent >> read) {
-		if (read == "v") {
-			posCount++;
-		}
-		else if (read == "vt") {
-			texCoordCount++;
-		}
-		else if (read == "vn") {
-			normalCount++;
-		}
-		else if (read == "f") {
-			faceCount++;
-		}
-
-		objContent.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-	}
-
-	objContent.clear();
-	objContent.seekg(start);
-
-	attribLists.at(AttributeCategory::POSITION).reserve(posCount);
-	attribLists.at(AttributeCategory::TEX_COORD).reserve(texCoordCount);
-	attribLists.at(AttributeCategory::NORMAL).reserve(normalCount);
-
-	ForEachAttribute([&](AttributeCategory current){
-		vertexAttributes.at(current).reserve(faceCount*3);
-	});*/
-	//vertexAttributes.at(AttributeCategory::POSITION).reserve(faceCount*3);
-	//vertexAttributes.at(AttributeCategory::TEX_COORD).reserve(faceCount*3);
-	//vertexAttributes.at(AttributeCategory::NORMAL).reserve(faceCount*3);
 
 	while (objContent >> read) {
 		if (read == "v") {

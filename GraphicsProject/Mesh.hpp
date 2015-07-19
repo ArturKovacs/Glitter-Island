@@ -38,7 +38,8 @@ public:
 	gl::enums::PrimitiveType GetPrimitiveType() const;
 	GLsizei GetNumOfIndices() const;
 
-	void AttachVertexAttribute(const AttributeCategory target, const gl::Program& shaderProgram, const std::string& nameInShader) const;
+	void AttachVertexAttribute(const AttributeCategory targetAttribute, const gl::Program& shaderProgram, const std::string& nameInShader) const;
+	void AttachVertexAttribute(const AttributeCategory targetAttribute, const int elementDimensionCount, const gl::Program& shaderProgram, const std::string& nameInShader) const;
 
 	void BindVAO() const;
 
