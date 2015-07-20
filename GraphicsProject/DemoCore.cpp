@@ -30,6 +30,7 @@ terrainSize(500), water(terrainSize * 7)
 	framebuffers.push_back(std::move(Framebuffer(screenWidth, screenHeight)));
 	framebuffers.back().Bind(gl::Framebuffer::Target::Draw);
 
+	/*
 	gl::VertexShader vs;
 	vs.Source(gl::String(
 		"#version 330\n"
@@ -68,7 +69,8 @@ terrainSize(500), water(terrainSize * 7)
 	fs.Compile();
 	finalFramebufferCopy.AttachShader(fs);
 
-	finalFramebufferCopy.Link();
+	finalFramebufferCopy.Link();*/
+	finalFramebufferCopy = LoadShaderProgramFromFiles("finalFramebufferCopy_v.glsl", "finalFramebufferCopy_f.glsl");
 	finalFramebufferCopy.Use();
 
 	framebufferCopy_ScreenWidth = gl::Uniform<GLint>(finalFramebufferCopy, "screenWidth");
@@ -284,6 +286,13 @@ gl::Program DemoCore::LoadShaderProgramFromFiles(const std::string& vs_name, con
 
 	return result;
 }
+
+
+////////////////////////////////////////////
+//
+// Private functions
+//
+////////////////////////////////////////////
 
 void DemoCore::ClearFramebufferStack()
 {
