@@ -22,28 +22,19 @@ public:
 
 	void SetIndices(const std::vector<IndexType>& indexArray);
 	void SetPrimitiveType(gl::enums::PrimitiveType type);
-
-	/*
-	template<typename elementType>
-	void SetVertexAttributeBuffer(AttributeCategory targetAttribute, const std::vector<elementType>& dataArray)
-	{
-		VAO.Bind();
-
-		vertexAttributes.at(targetAttribute).buffer.Bind(gl::Buffer::Target::Array);
-		gl::Buffer::Data(gl::Buffer::Target::Array, dataArray);
-	}*/
-	
+	void SetVertexAttributeElementDimensions(AttributeCategory targetAttribute, const int dimensionCount);
 	void SetVertexAttributeBuffer(AttributeCategory targetAttribute, const gl::BufferData& dataArray);
 
 	gl::enums::PrimitiveType GetPrimitiveType() const;
 	GLsizei GetNumOfIndices() const;
 
 	void AttachVertexAttribute(const AttributeCategory targetAttribute, const gl::Program& shaderProgram, const std::string& nameInShader) const;
-	void AttachVertexAttribute(const AttributeCategory targetAttribute, const int elementDimensionCount, const gl::Program& shaderProgram, const std::string& nameInShader) const;
+	//void AttachVertexAttribute(const AttributeCategory targetAttribute, const int elementDimensionCount, const gl::Program& shaderProgram, const std::string& nameInShader) const;
 
 	void BindVAO() const;
 
 	static Mesh GenerateTriangle(float size);
+	static Mesh GenerateCircle(float radius, int resolution);
 
 private:
 	struct VertexAttributeContainer
@@ -64,9 +55,6 @@ private:
 	std::map<AttributeCategory,  VertexAttributeContainer> vertexAttributes;
 
 	gl::enums::PrimitiveType primitiveType;
-
-//private:
-	//GLfloat* GetPosition();
 };
 
 class OBJMesh
@@ -87,10 +75,6 @@ public:
 	std::vector<GLfloat> GetVertexAttribute(AttributeCategory target);
 
 private:
-	//int GetPosIndexForList(int objPosIndex) { return (objPosIndex - 1)*posDimensionCount; }
-	//int GetTexCoordIndexForList(int objTexCoordIndex) { return (objTexCoordIndex - 1)*texCoordDimensionCount; }
-	//int GetNormalIndexForList(int objNormalIndex) { return (objNormalIndex - 1)*3; }
-
 	
 	template<typename elementType>
 	std::vector<GLfloat> GetFloatVector(const std::vector<elementType>& input, int inputDimensions)

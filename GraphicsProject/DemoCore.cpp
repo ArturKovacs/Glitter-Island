@@ -22,6 +22,8 @@ terrainSize(500), water(terrainSize * 7)
 		throw std::exception("Could not load font!");
 	}
 
+	circle = Mesh::GenerateCircle(1, 10);
+
 	screenWidth = pWindow->getSize().x;
 	screenHeight = pWindow->getSize().y;
 
@@ -30,46 +32,6 @@ terrainSize(500), water(terrainSize * 7)
 	framebuffers.push_back(std::move(Framebuffer(screenWidth, screenHeight)));
 	framebuffers.back().Bind(gl::Framebuffer::Target::Draw);
 
-	/*
-	gl::VertexShader vs;
-	vs.Source(gl::String(
-		"#version 330\n"
-
-		"uniform int screenWidth;"
-		"uniform int screenHeight;"
-
-		"in vec2 vertexPos;"
-		"out vec2 textureCoords;"
-		"void main(void)"
-		"{"
-		"	gl_Position = vec4(vertexPos, 0, 1.0);"
-		"	textureCoords = vec2("
-		"						(vertexPos.x*0.5 + 0.5)*screenWidth,"
-		"						(vertexPos.y*0.5 + 0.5)*screenHeight);"
-		"}"
-		));
-	vs.Compile();
-	finalFramebufferCopy.AttachShader(vs);
-
-	gl::FragmentShader fs;
-	fs.Source(gl::String(
-		"#version 330\n"
-		"uniform sampler2D colorTex;"
-		"uniform sampler2D depthTex;"
-		"in vec2 textureCoords;"
-		"out vec4 fragColor;"
-		"void main(void)"
-		"{"
-		//correct gamma!"
-		"	fragColor = pow(texelFetch(colorTex, ivec2(textureCoords), 0), vec4(1/2.2));"
-		//"	fragColor = texelFetch(colorTex, ivec2(textureCoords), 0);"
-		"	gl_FragDepth = texelFetch(depthTex, ivec2(textureCoords), 0).x;"
-		"}"
-		));
-	fs.Compile();
-	finalFramebufferCopy.AttachShader(fs);
-
-	finalFramebufferCopy.Link();*/
 	finalFramebufferCopy = LoadShaderProgramFromFiles("finalFramebufferCopy_v.glsl", "finalFramebufferCopy_f.glsl");
 	finalFramebufferCopy.Use();
 
@@ -193,7 +155,7 @@ int DemoCore::Start()
 
 		if (elapsedSec - lastFPSUpdateSec > FPSUpdateDelaySec) {
 			int currFPS = std::round(framesSinceLastFPSUpdate / (elapsedSec - lastFPSUpdateSec));
-			pWindow->setTitle(sf::String("Island -| FPS: ") + std::to_string(currFPS) + " current; " + std::to_string(recentMinFPS) + " recent min |-");
+			pWindow->setTitle(sf::String("Glitter-Island <| FPS: ") + std::to_string(currFPS) + " current; " + std::to_string(recentMinFPS) + " recent min |>");
 			lastFPSUpdateSec = elapsedSec;
 			framesSinceLastFPSUpdate = 0;
 		}
@@ -423,9 +385,6 @@ void DemoCore::Draw()
 	GetCurrentFramebuffer().Bind(gl::Framebuffer::Target::Draw);
 
 	DrawScene();
-	if (isInEditMode) {
-		DrawEditMode();
-	}
 
 	//draw current framebuffer to screen
 	GetCurrentFramebuffer().SetVertexPosName("vertexPos");
@@ -477,6 +436,10 @@ void DemoCore::DrawObjects()
 	for (auto& current : graphicalObjects) {
 		current.Draw(*this);
 	}
+
+	if (isInEditMode) {
+		DrawEditMode();
+	}
 }
 
 void DemoCore::DrawEditMode()
@@ -490,15 +453,25 @@ void DemoCore::DrawEditMode()
 	glContext.ReadPixels(cursorPos.x, cursorPos.y, 1, 1, gl::enums::PixelDataFormat::DepthComponent, gl::PixelDataType::Float, &depthAtCursor);
 
 	//assuming cursor is pointing on the terrain
-	gl::Vec4f cursorWorldPos = gl::Inverse(cam.GetViewProjectionTransform() * terrain.GetTransform()) * gl::Vec4f(
+	gl::Vec4f cursorWorldPos = gl::Inverse(cam.GetViewProjectionTransform()) * gl::Vec4f(
 		((float(cursorPos.x)/screenWidth)*2-1),
 		((float(cursorPos.y)/screenHeight)*2-1),
 		(depthAtCursor)*2-1,
-		1); 
+		1);
 
 	cursorWorldPos = cursorWorldPos / cursorWorldPos.w();
 
+	//cursorWorldPos = gl::Vec4f(0, 20, 0, 1);
 
+	gl::Mat4f MVP = cam.GetViewProjectionTransform() * gl::ModelMatrixf::Translation(cursorWorldPos.xyz()) * gl::ModelMatrixf::RotationX(gl::Radians<float>(gl::math::Pi()*0.5));
+
+	//glContext.Disable(gl::Capability::CullFace);
+	glContext.Disable(gl::Capability::DepthTest);
+	glContext.LineWidth(2);
+	simpleColoredDrawer.Draw(glContext, circle, MVP, gl::Vec4f(1, 0.1, 0.5, 1));
+	glContext.LineWidth(1);
+	glContext.Enable(gl::Capability::DepthTest);
+	//glContext.Enable(gl::Capability::CullFace);
 }
 
 void DemoCore::DrawOverlay()

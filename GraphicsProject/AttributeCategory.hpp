@@ -4,9 +4,9 @@ enum class AttributeCategory { _FIRST, POSITION, TEX_COORD, NORMAL, TANGENT /* c
 
 struct AttributeCategoryInfo
 {
-	const int elementDimensions;
+	const int defaultElementDimensions;
 
-	AttributeCategoryInfo(int elementDimensions) : elementDimensions(elementDimensions){}
+	AttributeCategoryInfo(int elementDimensions) : defaultElementDimensions(elementDimensions){}
 };
 
 AttributeCategoryInfo GetAttributeCategoryInfo(AttributeCategory attrib);

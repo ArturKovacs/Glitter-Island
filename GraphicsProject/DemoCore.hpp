@@ -6,8 +6,8 @@
 #include <SFML/Window.hpp>
 #include <SFML/OpenGL.hpp>
 
+#include "SimpleColoredDrawer.hpp"
 #include "TextDrawer.hpp"
-//#include "CharacterDrawer.hpp"
 #include "Framebuffer.hpp"
 #include "DefaultFramebuffer.hpp"
 #include "GraphicalObject.hpp"
@@ -71,6 +71,8 @@ private: // misc
 	double elapsedSec;
 	sf::Font overlayFont;
 	TextDrawer textDrawer;
+	SimpleColoredDrawer simpleColoredDrawer;
+	Mesh circle;
 
 private: //edit mode
 	bool isInEditMode;

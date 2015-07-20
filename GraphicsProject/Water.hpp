@@ -6,6 +6,11 @@ class DemoCore;
 
 class Water
 {
+public:
+	Water(const float waterSize = 50);
+
+	void Draw(DemoCore& core);
+
 private:
 	gl::VertexArray VAO;
 
@@ -14,6 +19,7 @@ private:
 
 	gl::Program waterShader;
 	gl::Uniform<gl::Mat4f> sh_MVP;
+	gl::Uniform<gl::Mat4f> sh_viewProj;
 	gl::Uniform<gl::Mat4f> sh_invMVP;
 	gl::UniformSampler sh_screen;
 	gl::UniformSampler sh_screenDepth;
@@ -25,15 +31,5 @@ private:
 
 	gl::Program geometryOnlyShader;
 	gl::Uniform<gl::Mat4f> sh_geomOnly_MVP;
-
-public:
-	Water(const float waterSize = 50);
-
-	void Draw(DemoCore& core);
-	void DrawGeometryOnly(DemoCore& core);
-
-private:
-	//void DrawBehindWaterWithRefraction(DemoCore& core, Framebuffer& screenWithoutWater);
-	//void DrawInFrontOfWater(DemoCore& core, Framebuffer& screenWithoutWater);
 };
 

@@ -7,7 +7,7 @@
 Mesh::Mesh() : primitiveType(gl::enums::PrimitiveType::Points)
 {
 	ForEachAttribute([&](AttributeCategory current){
-		vertexAttributes.insert(std::make_pair(current, VertexAttributeContainer(std::move(gl::Buffer()), GetAttributeCategoryInfo(current).elementDimensions)));
+		vertexAttributes.insert(std::make_pair(current, VertexAttributeContainer(std::move(gl::Buffer()), GetAttributeCategoryInfo(current).defaultElementDimensions)));
 	});
 }
 
@@ -59,6 +59,11 @@ void Mesh::SetPrimitiveType(gl::enums::PrimitiveType type)
 	primitiveType = type;
 }
 
+void Mesh::SetVertexAttributeElementDimensions(AttributeCategory targetAttribute, const int dimensionCount)
+{
+	vertexAttributes.at(targetAttribute).elementDimension = dimensionCount;
+}
+
 void Mesh::SetVertexAttributeBuffer(AttributeCategory targetAttribute, const gl::BufferData& dataArray)
 {
 	VAO.Bind();
@@ -79,17 +84,12 @@ GLsizei Mesh::GetNumOfIndices() const
 
 void Mesh::AttachVertexAttribute(const AttributeCategory targetAttribute, const gl::Program& shaderProgram, const std::string& nameInShader) const
 {
-	AttachVertexAttribute(targetAttribute, vertexAttributes.at(targetAttribute).elementDimension, shaderProgram, nameInShader);
-}
-
-void Mesh::AttachVertexAttribute(const AttributeCategory targetAttribute, const int elementDimensionCount, const gl::Program& shaderProgram, const std::string& nameInShader) const
-{
 	VAO.Bind();
 	const auto& attributeContainer = vertexAttributes.at(targetAttribute);
 
 	attributeContainer.buffer.Bind(gl::Buffer::Target::Array);
 	gl::VertexArrayAttrib attribute(shaderProgram, nameInShader);
-	attribute.Setup<GLfloat>(elementDimensionCount);
+	attribute.Setup<GLfloat>(attributeContainer.elementDimension);
 	attribute.Enable();
 }
 
@@ -123,6 +123,33 @@ Mesh Mesh::GenerateTriangle(float size)
 	result.SetIndices(indexData);
 
 	result.SetPrimitiveType(gl::enums::PrimitiveType::Triangles);
+
+	return std::move(result);
+}
+
+Mesh Mesh::GenerateCircle(float radius, int resolution)
+{
+	Mesh result;
+
+	std::vector<gl::Vec2f> vertexPosData(resolution);
+
+	for (int i = 0; i < resolution; i++) {
+		float currAngle = (float(i)/resolution)*2*gl::math::Pi();
+		vertexPosData.at(i) = gl::Vec2f(std::cos(currAngle)*radius, std::sin(currAngle)*radius);
+	}
+
+	result.SetVertexAttributeElementDimensions(AttributeCategory::POSITION, 2);
+	result.SetVertexAttributeBuffer(AttributeCategory::POSITION, vertexPosData);
+
+	std::vector<IndexType> indexData(resolution);
+
+	for (int i = 0; i < resolution; i++) {
+		indexData.at(i) = i;
+	}
+	result.SetIndices(indexData);
+
+	//result.SetPrimitiveType(gl::enums::PrimitiveType::Triangles);
+	result.SetPrimitiveType(gl::enums::PrimitiveType::LineLoop);
 
 	return std::move(result);
 }
@@ -304,5 +331,5 @@ std::vector<Mesh::IndexType>& OBJMesh::GetIndices()
 
 std::vector<GLfloat> OBJMesh::GetVertexAttribute(AttributeCategory target)
 {
-	return GetFloatVector(vertexAttributes.at(target), GetAttributeCategoryInfo(target).elementDimensions);
+	return GetFloatVector(vertexAttributes.at(target), GetAttributeCategoryInfo(target).defaultElementDimensions);
 }

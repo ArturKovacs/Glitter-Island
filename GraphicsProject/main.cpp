@@ -43,7 +43,7 @@ static void CheckGLError()
 int main()
 {
 	try {
-		sf::Window window(sf::VideoMode(800, 600), "Glitter-Island", sf::Style::Default, sf::ContextSettings(24));
+		sf::Window window(sf::VideoMode(800, 600), "Loading", sf::Style::Default, sf::ContextSettings(24));
 
 		///////////////////////////////////////////////
 		//These functions are called intentionally!

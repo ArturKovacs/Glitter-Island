@@ -10,6 +10,7 @@ Water::Water(const float waterSize)
 	waterShader.Use();
 
 	sh_MVP = gl::Uniform<gl::Mat4f>(waterShader, "MVP");
+	sh_viewProj = gl::Uniform<gl::Mat4f>(waterShader, "viewProj");
 	//sh_invMVP = gl::Uniform<gl::Mat4f>(waterShader, "invMVP");
 	sh_screen = gl::UniformSampler(waterShader, "screen");
 	sh_screenDepth = gl::UniformSampler(waterShader, "screenDepth");
@@ -18,21 +19,6 @@ Water::Water(const float waterSize)
 	sh_camPos = gl::Uniform<gl::Vec3f>(waterShader, "campos");
 	sh_sunDir = gl::Uniform<gl::Vec3f>(waterShader, "sunDir");
 	sh_time = gl::Uniform<GLfloat>(waterShader, "time");
-
-	gl::VertexShader vs_geom;
-	vs_geom.Source(LoadFileAsString(DemoCore::shadersFolderPath + "geometryOnly_v.glsl"));
-	vs_geom.Compile();
-	geometryOnlyShader.AttachShader(vs_geom);
-
-	gl::FragmentShader fs_geom;
-	fs_geom.Source(LoadFileAsString(DemoCore::shadersFolderPath + "geometryOnly_f.glsl"));
-	fs_geom.Compile();
-	geometryOnlyShader.AttachShader(fs_geom);
-
-	geometryOnlyShader.Link();
-	geometryOnlyShader.Use();
-
-	sh_geomOnly_MVP = gl::Uniform<gl::Mat4f>(geometryOnlyShader, "MVP");
 
 	VAO.Bind();
 
@@ -80,6 +66,7 @@ void Water::Draw(DemoCore& core)
 	sh_screenHeight.Set(core.GetCamera().GetScreenHeight());
 
 	sh_MVP.Set(core.GetCamera().GetViewProjectionTransform());
+	sh_viewProj.Set(core.GetCamera().GetViewProjectionTransform());
 	//sh_invMVP.Set(gl::Inverse(core.GetCamera().GetViewProjectionTransform()));
 	sh_camPos.Set(core.GetCamera().GetPosition());
 	sh_sunDir.Set(core.GetSun().GetDirectionTowardsSource());
@@ -93,14 +80,4 @@ void Water::Draw(DemoCore& core)
 	gl.DrawElements(gl::PrimitiveType::TriangleFan, indices.Size(gl::Buffer::Target::ElementArray).get() / sizeof(GLushort), gl::DataType::UnsignedShort);
 
 	gl.Disable(gl::Capability::Blend);
-}
-
-void Water::DrawGeometryOnly(DemoCore& core)
-{
-	geometryOnlyShader.Use();
-
-	sh_geomOnly_MVP.Set(core.GetCamera().GetViewProjectionTransform());
-
-	VAO.Bind();
-	core.GetGLContext().DrawElements(gl::PrimitiveType::TriangleFan, indices.Size(gl::Buffer::Target::ElementArray).get() / sizeof(GLushort), gl::DataType::UnsignedShort);
 }

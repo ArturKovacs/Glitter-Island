@@ -8,7 +8,7 @@ uniform int screenHeight;
 
 uniform mat4 MVP;
 //uniform mat4 invMVP;
-flat in mat4 invMVP;
+flat in mat4 invViewProj;
 
 uniform vec3 campos;
 uniform float time;
@@ -55,7 +55,7 @@ void main(void)
 	
 	////////
 	
-	vec4 terrainPointPos = (invMVP * vec4(((float(gl_FragCoord.x)/screenWidth)*2-1),
+	vec4 terrainPointPos = (invViewProj * vec4(((float(gl_FragCoord.x)/screenWidth)*2-1),
 											((float(gl_FragCoord.y)/screenHeight)*2-1),
 											(objectsDepth)*2-1,
 											1));
@@ -81,7 +81,7 @@ void main(void)
 	//}
 	
 	vec3 refractedColor;
-	if (hitPosDepth > gl_FragCoord.z) {
+	if (hitPosDepth > gl_FragCoord.z+0.0005) {
 		refractedColor = texture2D(screen, hitPosOnScreen.xy).rgb;
 	}
 	else {
