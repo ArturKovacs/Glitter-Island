@@ -6,6 +6,7 @@
 
 Skybox::Skybox()
 {
+	/*
 	gl::VertexShader vs_skydraw;
 	vs_skydraw.Source(LoadFileAsString(DemoCore::shadersFolderPath + "skybox_skydraw_v.glsl"));
 	vs_skydraw.Compile();
@@ -16,7 +17,8 @@ Skybox::Skybox()
 	fs_skydraw.Compile();
 	skydrawShader.AttachShader(fs_skydraw);
 
-	skydrawShader.Link();
+	skydrawShader.Link();*/
+	skydrawShader = DemoCore::LoadShaderProgramFromFiles("skybox_skydraw_v.glsl", "skybox_skydraw_f.glsl");
 	skydrawShader.Use();
 
 	sh_ViewProjectionMatrix = gl::Uniform<gl::Mat4f>(skydrawShader, "viewProjectionMatrix");
@@ -56,17 +58,7 @@ Skybox::Skybox()
 	gl::Buffer::Data(gl::Buffer::Target::ElementArray, indexData);
 
 	///Fadeout shader
-	gl::VertexShader vs_fadeout;
-	vs_fadeout.Source(LoadFileAsString(DemoCore::shadersFolderPath + "passthrough2_v.glsl"));
-	vs_fadeout.Compile();
-	fadeoutShader.AttachShader(vs_fadeout);
-
-	gl::FragmentShader fs_fadeout;
-	fs_fadeout.Source(LoadFileAsString(DemoCore::shadersFolderPath + "skybox_fadeout_f.glsl"));
-	fs_fadeout.Compile();
-	fadeoutShader.AttachShader(fs_fadeout);
-
-	fadeoutShader.Link();
+	fadeoutShader = DemoCore::LoadShaderProgramFromFiles("passthrough2_v.glsl", "skybox_fadeout_f.glsl");
 	fadeoutShader.Use();
 
 	gl::UniformSampler(fadeoutShader, "screenColor").Set(0);

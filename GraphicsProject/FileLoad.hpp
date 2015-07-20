@@ -3,6 +3,8 @@
 #include <fstream>
 #include <string>
 
+#include "all_gl_headers.hpp"
+
 /**
  * \brief Loads a file's contntets to an std::string.
  *

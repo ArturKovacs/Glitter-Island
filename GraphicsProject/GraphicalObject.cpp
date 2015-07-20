@@ -5,18 +5,7 @@
 
 GraphicalObject::GraphicalObject()
 {
-	//create a fancy shader!
-	gl::VertexShader vs;
-	vs.Source(LoadFileAsString(DemoCore::shadersFolderPath + "graphicalObject_v.glsl"));
-	vs.Compile();
-
-	gl::FragmentShader fs;
-	fs.Source(LoadFileAsString(DemoCore::shadersFolderPath + "graphicalObject_f.glsl"));
-	fs.Compile();
-
-	shaderProgram.AttachShader(vs);
-	shaderProgram.AttachShader(fs);
-	shaderProgram.Link();
+	shaderProgram = DemoCore::LoadShaderProgramFromFiles("graphicalObject_v.glsl", "graphicalObject_f.glsl");
 	shaderProgram.Use();
 
 	try {

@@ -11,17 +11,7 @@
 
 Terrain::Terrain()
 {
-	gl::VertexShader vs;
-	vs.Source(LoadFileAsString(DemoCore::shadersFolderPath + "terrain_v.glsl"));
-	vs.Compile();
-
-	gl::FragmentShader fs;
-	fs.Source(LoadFileAsString(DemoCore::shadersFolderPath + "terrain_f.glsl"));
-	fs.Compile();
-
-	shaderProgram.AttachShader(vs);
-	shaderProgram.AttachShader(fs);
-	shaderProgram.Link();
+	shaderProgram = DemoCore::LoadShaderProgramFromFiles("terrain_v.glsl", "terrain_f.glsl");
 	shaderProgram.Use();
 
 	try {

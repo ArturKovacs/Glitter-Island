@@ -3,6 +3,7 @@
 
 #include "DemoCore.hpp"
 
+/*
 static void CheckGLError()
 {
 	GLenum e = glGetError();
@@ -37,12 +38,12 @@ static void CheckGLError()
 		throw std::exception((std::string("Noooooooo... ") + std::to_string(e)).c_str());
 		break;
 	}
-}
+}*/
 
 int main()
 {
 	try {
-		sf::Window window(sf::VideoMode(800, 600), "Island", sf::Style::Default, sf::ContextSettings(24));
+		sf::Window window(sf::VideoMode(800, 600), "Glitter-Island", sf::Style::Default, sf::ContextSettings(24));
 
 		///////////////////////////////////////////////
 		//These functions are called intentionally!
@@ -60,22 +61,6 @@ int main()
 		if (glewInit() != GLEW_OK) {
 			throw std::exception("Can not initialize GLEW");
 		}
-
-		sf::Font font;
-		font.loadFromFile("../font-quicksand/Quicksand-Regular.otf");
-		const sf::Texture& tex = font.getTexture(10);
-		std::cout << tex.getSize().x << std::endl;
-
-		CheckGLError();
-
-		GLuint VAO;
-		glGenVertexArrays(1, &VAO);
-		glBindVertexArray(VAO);
-		CheckGLError();
-
-		gl::VertexArray oglplusVAO;
-		oglplusVAO.Bind();
-		CheckGLError();
 
 		DemoCore demo(&window);
 		return demo.Start();

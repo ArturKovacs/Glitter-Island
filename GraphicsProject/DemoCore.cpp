@@ -3,42 +3,7 @@
 #include <SFML/Window.hpp>
 #include <SFML/OpenGL.hpp>
 
-/*
-static void CheckGLError()
-{
-	GLenum e = glGetError();
-	switch (e)
-	{
-	case GL_NO_ERROR:
-		break;
-
-	case GL_INVALID_ENUM:
-		throw std::exception("GL_INVALID_ENUM");
-		break;
-	case GL_INVALID_VALUE:
-		throw std::exception("GL_INVALID_VALUE");
-		break;
-	case GL_INVALID_OPERATION:
-		throw std::exception("GL_INVALID_OPERATION");
-		break;
-	case GL_INVALID_FRAMEBUFFER_OPERATION:
-		throw std::exception("GL_INVALID_FRAMEBUFFER_OPERATION");
-		break;
-	case GL_OUT_OF_MEMORY:
-		throw std::exception("GL_OUT_OF_MEMORY");
-		break;
-	case GL_STACK_UNDERFLOW:
-		throw std::exception("GL_STACK_UNDERFLOW");
-		break;
-	case GL_STACK_OVERFLOW:
-		throw std::exception("GL_STACK_OVERFLOW");
-		break;
-
-	default:
-		throw std::exception((std::string("Noooooooo... ") + std::to_string(e)).c_str());
-		break;
-	}
-}*/
+#include "FileLoad.hpp"
 
 const std::string DemoCore::shadersFolderPath = "../shaders/";
 const std::string DemoCore::imgFolderPath = "../img/";
@@ -53,7 +18,7 @@ terrainSize(500), water(terrainSize * 7)
 {
 	//assert(pWindow->isActive())
 
-	if (!overlayFont.loadFromFile("../font-quicksand/Quicksand-Regular.otf")) {
+	if (!overlayFont.loadFromFile("../font/Inconsolata.otf")) {
 		throw std::exception("Could not load font!");
 	}
 
@@ -301,36 +266,23 @@ const Camera& DemoCore::GetCamera() const
 	return cam;
 }
 
-void DemoCore::Draw()
+gl::Program DemoCore::LoadShaderProgramFromFiles(const std::string& vs_name, const std::string& fs_name)
 {
-	ClearFramebufferStack();
+	gl::Program result;
 
-	if (wireframeModeEnabled) {
-		glContext.PolygonMode(gl::enums::Face::FrontAndBack, gl::PolygonMode::Line);
-	}
-	else {
-		glContext.PolygonMode(gl::enums::Face::FrontAndBack, gl::PolygonMode::Fill);
-	}
+	gl::VertexShader vs;
+	vs.Source(LoadFileAsString(shadersFolderPath + vs_name));
+	vs.Compile();
 
-	glContext.Enable(gl::Capability::DepthTest);
-	GetCurrentFramebuffer().Bind(gl::Framebuffer::Target::Draw);
+	gl::FragmentShader fs;
+	fs.Source(LoadFileAsString(shadersFolderPath + fs_name));
+	fs.Compile();
 
-	DrawScene();
+	result.AttachShader(vs);
+	result.AttachShader(fs);
+	result.Link();
 
-
-	//draw current framebuffer to screen
-	GetCurrentFramebuffer().SetVertexPosName("vertexPos");
-	GetCurrentFramebuffer().SetShaderProgram(&finalFramebufferCopy);
-
-	glContext.Enable(gl::Capability::DepthTest);
-	defaultFBO.Bind(gl::Framebuffer::Target::Draw);
-	glContext.Clear().ColorBuffer().DepthBuffer();
-
-	GetCurrentFramebuffer().Draw(*this);
-
-	if (isInEditMode) {
-		DrawOverlay();
-	}
+	return result;
 }
 
 void DemoCore::ClearFramebufferStack()
@@ -447,6 +399,38 @@ void DemoCore::KeyReleased(sf::Event::KeyEvent key)
 	}
 }
 
+void DemoCore::Draw()
+{
+	ClearFramebufferStack();
+
+	if (wireframeModeEnabled) {
+		glContext.PolygonMode(gl::enums::Face::FrontAndBack, gl::PolygonMode::Line);
+	}
+	else {
+		glContext.PolygonMode(gl::enums::Face::FrontAndBack, gl::PolygonMode::Fill);
+	}
+
+	glContext.Enable(gl::Capability::DepthTest);
+	GetCurrentFramebuffer().Bind(gl::Framebuffer::Target::Draw);
+
+	DrawScene();
+	if (isInEditMode) {
+		DrawEditMode();
+	}
+
+	//draw current framebuffer to screen
+	GetCurrentFramebuffer().SetVertexPosName("vertexPos");
+	GetCurrentFramebuffer().SetShaderProgram(&finalFramebufferCopy);
+
+	glContext.Enable(gl::Capability::DepthTest);
+	defaultFBO.Bind(gl::Framebuffer::Target::Draw);
+	glContext.Clear().ColorBuffer().DepthBuffer();
+
+	GetCurrentFramebuffer().Draw(*this);
+
+	DrawOverlay();
+}
+
 void DemoCore::DrawScene()
 {
 	sun.SetDirectionTowardsSource(gl::Vec3f(std::cos(GetElapsedTime().asSeconds()), 1.5, std::sin(GetElapsedTime().asSeconds())));
@@ -486,20 +470,63 @@ void DemoCore::DrawObjects()
 	}
 }
 
+void DemoCore::DrawEditMode()
+{
+	sf::Vector2i cursorPos = sf::Mouse::getPosition(*pWindow);
+
+	//invert y to suit opengl coordinates
+	cursorPos.y = screenHeight-cursorPos.y;
+
+	GLfloat depthAtCursor;
+	glContext.ReadPixels(cursorPos.x, cursorPos.y, 1, 1, gl::enums::PixelDataFormat::DepthComponent, gl::PixelDataType::Float, &depthAtCursor);
+
+	//assuming cursor is pointing on the terrain
+	gl::Vec4f cursorWorldPos = gl::Inverse(cam.GetViewProjectionTransform() * terrain.GetTransform()) * gl::Vec4f(
+		((float(cursorPos.x)/screenWidth)*2-1),
+		((float(cursorPos.y)/screenHeight)*2-1),
+		(depthAtCursor)*2-1,
+		1); 
+
+	cursorWorldPos = cursorWorldPos / cursorWorldPos.w();
+
+
+}
+
 void DemoCore::DrawOverlay()
 {
-	glContext.PolygonMode(gl::enums::Face::FrontAndBack, gl::PolygonMode::Fill);
-	glContext.Enable(gl::Capability::Blend);
-	glContext.BlendFunc(gl::BlendFunction::SrcAlpha, gl::BlendFunction::OneMinusSrcAlpha);
+	if (isInEditMode) {
+		//glContext.Clear().DepthBuffer();
+		glContext.Disable(gl::Capability::DepthTest);
+		glContext.PolygonMode(gl::enums::Face::FrontAndBack, gl::PolygonMode::Fill);
+		glContext.Enable(gl::Capability::Blend);
+		glContext.BlendFunc(gl::BlendFunction::SrcAlpha, gl::BlendFunction::OneMinusSrcAlpha);
 
-	sf::Text editModeText("Hey, this is my awesome test text!\nAlso the quick brown fox jumps over the lazy dog.", overlayFont);
-	editModeText.setCharacterSize(18);
+		sf::Text text("-Edit mode-", overlayFont);
+		text.setPosition(sf::Vector2f(30, 25));
+		text.setCharacterSize(18);
+		text.setColor(sf::Color(208, 59, 237, ~sf::Uint8(0)));
+		text.setStyle(sf::Text::Bold);
+		textDrawer.DrawBackground(glContext, text, sf::Color(50, 50, 50, 150), 5);
+		textDrawer.Draw(glContext, text);
 
-	editModeText.setColor(sf::Color::Yellow);
-	editModeText.setStyle(sf::Text::Bold);
+		text.setString(
+			"E -- toggle edit mode\n"
+			"0 -- select no tool\n"
+			"1 -- paint flat sand\n"
+			"2 -- paint sand texture\n"
+			"3 -- paint grass texture\n"
+			"4 -- spawn grass bunch\n"
+			"5 -- spawn rock bunch\n"
+			"6 -- place model"
+			);
+		text.setPosition(sf::Vector2f(2, 100));
+		text.setCharacterSize(16);
+		text.setStyle(sf::Text::Regular);
+		//text.setColor(sf::Color(205, 34, 240, ~sf::Uint8(0)));
+		text.setColor(sf::Color::Yellow);
+		textDrawer.DrawBackground(glContext, text, sf::Color(100, 100, 100, 150), 5);
+		textDrawer.Draw(glContext, text);
 
-	textDrawer.Draw(glContext, editModeText);
-	//DrawOverlayText(editModeText);
-
-	glContext.Disable(gl::Capability::Blend);
+		glContext.Disable(gl::Capability::Blend);
+	}
 }

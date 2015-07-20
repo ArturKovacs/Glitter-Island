@@ -18,6 +18,8 @@
 #include "Camera.hpp"
 #include "Fog.hpp"
 
+enum class SelectedTool { NO_TOOL, PAINT_FLAT_SAND, PAINT_SAND_TEXTURE, PAINT_GRASS_TEXTURE, SPAWN_GRASS_BUNCH, SPAWN_ROCK_BUNCH, PLACE_MODEL };
+
 class DemoCore
 {
 public:
@@ -46,7 +48,7 @@ public:
 	const DirectionalLight& GetSun() const;
 	const Camera& GetCamera() const;
 
-	void Draw();
+	static gl::Program LoadShaderProgramFromFiles(const std::string& vs_name, const std::string& fs_name);
 
 private: // graphical state
 	int screenWidth;
@@ -67,10 +69,12 @@ private: // misc
 	bool running;
 	sf::Clock clock;
 	double elapsedSec;
-	bool isInEditMode;
 	sf::Font overlayFont;
-	//CharacterDrawer characterDrawer;
 	TextDrawer textDrawer;
+
+private: //edit mode
+	bool isInEditMode;
+	SelectedTool selectedTool;
 
 private: // demo properties, user state
 	const float mouseSensitivity;
@@ -105,7 +109,9 @@ private:
 	void KeyPressed(sf::Event::KeyEvent key);
 	void KeyReleased(sf::Event::KeyEvent key);
 
+	void Draw();
 	void DrawScene();
 	void DrawObjects();
+	void DrawEditMode();
 	void DrawOverlay();
 };

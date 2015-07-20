@@ -6,17 +6,7 @@
 
 Water::Water(const float waterSize)
 {
-	gl::VertexShader vs;
-	vs.Source(LoadFileAsString(DemoCore::shadersFolderPath + "water_v.glsl"));
-	vs.Compile();
-	waterShader.AttachShader(vs);
-
-	gl::FragmentShader fs;
-	fs.Source(LoadFileAsString(DemoCore::shadersFolderPath + "water_f.glsl"));
-	fs.Compile();
-	waterShader.AttachShader(fs);
-
-	waterShader.Link();
+	waterShader = DemoCore::LoadShaderProgramFromFiles("water_v.glsl", "water_f.glsl");
 	waterShader.Use();
 
 	sh_MVP = gl::Uniform<gl::Mat4f>(waterShader, "MVP");

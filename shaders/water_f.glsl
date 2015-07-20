@@ -63,6 +63,7 @@ void main(void)
 	terrainPointPos = terrainPointPos/terrainPointPos.w;
 	
 	float terrainDistance = distance(terrainPointPos.xyz, posFromVert);
+	//TODO: this is not the actual water depth
 	float waterDepth = abs(terrainPointPos.y - posFromVert.y);
 	
 	////////
