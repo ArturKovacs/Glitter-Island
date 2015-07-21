@@ -5,6 +5,13 @@ project (Glitter-Island CXX)
 set_property(GLOBAL PROPERTY CXX_STANDARD 11)
 set_property(GLOBAL PROPERTY CXX_STANDARD_REQUIRED ON)
 
-add_subdirectory(GraphicsProject bin)
+# set(CMAKE_CONFIGURATION_TYPES Release Debug)
+# set(DEBUG_CONFIGURATIONS Debug)
+
+# add_custom_target(MyTarget DEPENDS Glitter-Island)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_HOME_DIRECTORY}/bin)
+
+add_subdirectory(GraphicsProject)
 # add_executable(bin/Glitter-Island GraphicsProject/)
 
