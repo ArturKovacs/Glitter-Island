@@ -49,7 +49,7 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float 
 
 	const int imgWidth = image.getSize().x;
 	const int imgHeight = image.getSize().y;
-	
+
 	if (imgWidth < 2 || imgHeight < 2) {
 		throw std::runtime_error("Terrain heightmap must be at least 2 pixel big in each direction!");
 	}
@@ -185,7 +185,7 @@ void Terrain::LoadTexture(gl::Texture& target, const std::string& filename, floa
 	sf::Image texture;
 
 	if (!texture.loadFromFile(filename)) {
-		throw std::exception((std::string("Can not load texture ") + filename).c_str());
+		throw std::runtime_error((std::string("Can not load texture ") + filename).c_str());
 	}
 
 	target.Bind(gl::Texture::Target::_2D);

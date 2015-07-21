@@ -10,11 +10,11 @@
  *
  * This function takes a filename that optionally contains an arbitrary path.
  * If the file loading is not succesful, an exception is thorwn containing a description of the cause.
- * 
+ *
  * @param filename File's name that is needed to be read.
  *
  * @return File's contents as a string.
  *
- * @throws std::exception
+ * @throws std::runtime_error
  */
 std::string LoadFileAsString(const std::string& filename);

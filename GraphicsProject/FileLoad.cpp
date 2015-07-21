@@ -5,9 +5,9 @@ std::string LoadFileAsString(const std::string& filename)
 	std::ifstream file(filename);
 
 	if (!file.is_open()) {
-		throw std::exception((std::string("Can not open file: ") + filename).c_str());
+		throw std::runtime_error((std::string("Can not open file: ") + filename).c_str());
 	}
-	
+
 	std::string result;
 
 	file.seekg(0, file.end);
@@ -19,7 +19,7 @@ std::string LoadFileAsString(const std::string& filename)
 	file.read((char*)result.data(), size);
 
 	if (file.fail()) {
-		throw std::exception((std::string("Error occured while reading file: ") + filename).c_str());
+		throw std::runtime_error((std::string("Error occured while reading file: ") + filename).c_str());
 	}
 
 	return result;

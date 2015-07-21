@@ -131,7 +131,7 @@ void GraphicalObject::LoadTexture(gl::Texture& target, const std::string& filena
 	sf::Image img;
 
 	if (!img.loadFromFile(filename)){
-		throw std::exception(filename.c_str());
+		throw std::runtime_error(filename.c_str());
 	}
 
 	img.flipVertically();

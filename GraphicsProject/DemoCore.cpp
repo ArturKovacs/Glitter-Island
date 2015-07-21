@@ -19,7 +19,7 @@ terrainSize(500), water(terrainSize * 7)
 	//assert(pWindow->isActive())
 
 	if (!overlayFont.loadFromFile("../font/Inconsolata.otf")) {
-		throw std::exception("Could not load font!");
+		throw std::runtime_error("Could not load font!");
 	}
 
 	circle = Mesh::GenerateCircle(1, 10);
@@ -63,7 +63,7 @@ terrainSize(500), water(terrainSize * 7)
 	{
 		Mesh mesh;
 		mesh.LoadFromFile(DemoCore::modelsFolderPath + "CerberusCycles.obj");
-		
+
 		GraphicalObject object;
 		object.SetMesh(std::move(mesh));
 
@@ -124,7 +124,7 @@ int DemoCore::Start()
 				running = false;
 			}
 
-			if ((event.type == sf::Event::KeyPressed)) {
+			if (event.type == sf::Event::KeyPressed) {
 				KeyPressed(event.key);
 			}
 			else if (event.type == sf::Event::KeyReleased) {
@@ -162,7 +162,7 @@ int DemoCore::Start()
 		else {
 			framesSinceLastFPSUpdate++;
 		}
-		
+
 		pWindow->display();
 	}
 
@@ -338,6 +338,9 @@ void DemoCore::KeyPressed(sf::Event::KeyEvent key)
 	case sf::Keyboard::D:
 		rightMovement = 1;
 		break;
+
+    default:
+        break;
 	}
 }
 
@@ -367,6 +370,9 @@ void DemoCore::KeyReleased(sf::Event::KeyEvent key)
 			rightMovement = 0;
 		}
 		break;
+
+    default:
+        break;
 	}
 }
 
@@ -432,7 +438,7 @@ void DemoCore::DrawObjects()
 	terrain.SetLightDir(gl::Normalized(sun.GetDirectionTowardsSource()));
 	terrain.SetTransform(gl::ModelMatrixf::Translation(-terrainSize*0.5, -waterLevel, terrainSize*0.5)*gl::ModelMatrixf::RotationA(gl::Vec3f(1, 0, 0), gl::Radians<float>(-gl::math::Pi() / 2)));
 	terrain.Draw(*this);
-	
+
 	for (auto& current : graphicalObjects) {
 		current.Draw(*this);
 	}

@@ -127,20 +127,20 @@ void TextDrawer::DrawBackground(gl::Context& glContext, const sf::Text& text, co
 	bgRect.top = text.getPosition().y - border;
 	bgRect.left = text.getPosition().x - border;
 
-	const sf::String& string = text.getString();
+	std::string string = text.getString().toAnsiString();
 	std::vector<sf::String> lines;
 
 	std::size_t prevLineEnd = 0;
 	std::size_t currLineEnd;
 
-	while ((currLineEnd = string.find("\n", prevLineEnd)) != sf::String::InvalidPos ) {
-		lines.push_back(string.substring(prevLineEnd, currLineEnd-prevLineEnd));
+	while ((currLineEnd = string.find('\n', prevLineEnd)) != std::string::npos ) {
+		lines.push_back(string.substr(prevLineEnd, currLineEnd-prevLineEnd));
 		prevLineEnd = currLineEnd+1;
 	}
 
-	const sf::Uint32 endPos = string.getSize();
+	const sf::Uint32 endPos = string.size();
 	if (prevLineEnd != endPos) {
-		lines.push_back(string.substring(prevLineEnd, endPos-prevLineEnd));
+		lines.push_back(string.substr(prevLineEnd, endPos-prevLineEnd));
 	}
 
 	unsigned int charSize = text.getCharacterSize();

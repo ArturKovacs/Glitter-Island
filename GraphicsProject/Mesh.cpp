@@ -32,7 +32,7 @@ void Mesh::LoadFromFile(const std::string& filename)
 {
 	std::ifstream file(filename);
 	if (!file.is_open()) {
-		throw std::exception((std::string("Can not open file: ") + filename).c_str());
+		throw std::runtime_error((std::string("Can not open file: ") + filename).c_str());
 	}
 
 	OBJMesh objMesh(file);
@@ -207,7 +207,9 @@ OBJMesh::OBJMesh(std::istream& objContent)
 {
 	std::cout << "Loading mesh!" << std::endl;
 
-	ForEachAttribute([&](AttributeCategory current){vertexAttributes.insert(std::make_pair(current, std::vector<gl::Vec3f>()));});
+	ForEachAttribute([&](AttributeCategory current){
+		vertexAttributes.insert(std::make_pair(current, std::vector<gl::Vec3f>()));
+    });
 
 	std::map<AttributeCategory, std::vector<gl::Vec3f> > attribLists;
 	attribLists.insert(std::make_pair(AttributeCategory::POSITION, std::vector<gl::Vec3f>()));
@@ -258,7 +260,7 @@ OBJMesh::OBJMesh(std::istream& objContent)
 			std::getline(objContent, values_str);
 			auto faceVertices = get_values_str<std::string>(values_str);
 			if (faceVertices.size() != 3) {
-				throw std::exception("Error loading obj file!\nReason: model has at least one face that is not a triangle.\nOnly triangle meshes are supported!");
+				throw std::runtime_error("Error loading obj file!\nReason: model has at least one face that is not a triangle.\nOnly triangle meshes are supported!");
 			}
 			for (auto& currentVertex : faceVertices) {
 				auto vertexAttribIndices = get_attrib_indices_from_vertex(currentVertex);

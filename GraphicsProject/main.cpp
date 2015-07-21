@@ -13,29 +13,29 @@ static void CheckGLError()
 		break;
 
 	case GL_INVALID_ENUM:
-		throw std::exception("GL_INVALID_ENUM");
+		throw std::runtime_error("GL_INVALID_ENUM");
 		break;
 	case GL_INVALID_VALUE:
-		throw std::exception("GL_INVALID_VALUE");
+		throw std::runtime_error("GL_INVALID_VALUE");
 		break;
 	case GL_INVALID_OPERATION:
-		throw std::exception("GL_INVALID_OPERATION");
+		throw std::runtime_error("GL_INVALID_OPERATION");
 		break;
 	case GL_INVALID_FRAMEBUFFER_OPERATION:
-		throw std::exception("GL_INVALID_FRAMEBUFFER_OPERATION");
+		throw std::runtime_error("GL_INVALID_FRAMEBUFFER_OPERATION");
 		break;
 	case GL_OUT_OF_MEMORY:
-		throw std::exception("GL_OUT_OF_MEMORY");
+		throw std::runtime_error("GL_OUT_OF_MEMORY");
 		break;
 	case GL_STACK_UNDERFLOW:
-		throw std::exception("GL_STACK_UNDERFLOW");
+		throw std::runtime_error("GL_STACK_UNDERFLOW");
 		break;
 	case GL_STACK_OVERFLOW:
-		throw std::exception("GL_STACK_OVERFLOW");
+		throw std::runtime_error("GL_STACK_OVERFLOW");
 		break;
 
 	default:
-		throw std::exception((std::string("Noooooooo... ") + std::to_string(e)).c_str());
+		throw std::runtime_error((std::string("Noooooooo... ") + std::to_string(e)).c_str());
 		break;
 	}
 }*/
@@ -59,7 +59,7 @@ int main()
 
 
 		if (glewInit() != GLEW_OK) {
-			throw std::exception("Can not initialize GLEW");
+			throw std::runtime_error("Can not initialize GLEW");
 		}
 
 		DemoCore demo(&window);
@@ -74,7 +74,7 @@ int main()
 		std::cout << err.Log() << std::endl;
 		system("PAUSE");
 	}
-	catch (std::exception& ex) {
+	catch (std::runtime_error& ex) {
 		std::cout << std::endl << "Exception: " << std::endl;
 		std::cout << ex.what() << std::endl;
 		system("PAUSE");

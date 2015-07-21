@@ -43,8 +43,8 @@ private:
 		int elementDimension;
 
 		VertexAttributeContainer(gl::Buffer&& buffer, const int elementDimension) : buffer(std::move(buffer)), elementDimension(elementDimension) {}
-		VertexAttributeContainer(VertexAttributeContainer&) = delete;
-		void operator=(VertexAttributeContainer&) = delete;
+		VertexAttributeContainer(const VertexAttributeContainer&) = delete;
+		void operator=(const VertexAttributeContainer&) = delete;
 		VertexAttributeContainer(VertexAttributeContainer&& r) : buffer(std::move(r.buffer)), elementDimension(r.elementDimension){}
 	};
 
@@ -52,7 +52,7 @@ private:
 	gl::VertexArray VAO;
 	gl::Buffer indices;
 
-	std::map<AttributeCategory,  VertexAttributeContainer> vertexAttributes;
+	std::map<AttributeCategory, VertexAttributeContainer> vertexAttributes;
 
 	gl::enums::PrimitiveType primitiveType;
 };
@@ -75,7 +75,7 @@ public:
 	std::vector<GLfloat> GetVertexAttribute(AttributeCategory target);
 
 private:
-	
+
 	template<typename elementType>
 	std::vector<GLfloat> GetFloatVector(const std::vector<elementType>& input, int inputDimensions)
 	{
@@ -96,6 +96,6 @@ private:
 
 		return result;
 	}
-	
+
 };
 
