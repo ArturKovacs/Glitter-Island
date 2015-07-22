@@ -9,12 +9,59 @@ const std::string DemoCore::shadersFolderPath = "../shaders/";
 const std::string DemoCore::imgFolderPath = "../img/";
 const std::string DemoCore::modelsFolderPath = "../models/";
 
+DemoCore::EditToolType DemoCore::GetToolType(DemoCore::EditTool tool)
+{
+	switch (tool) {
+	case EditTool::PAINT_FLAT_SAND:
+	case EditTool::PAINT_SAND_TEXTURE:
+	case EditTool::PAINT_GRASS_TEXTURE:
+		return EditToolType::PAINT;
+		break;
+
+	case EditTool::SPAWN_GRASS_BUNCH:
+	case EditTool::SPAWN_ROCK_BUNCH:
+		return EditToolType::SPAWN;
+		break;
+
+	case EditTool::PLACE_MODEL:
+		return EditToolType::PLACE;
+		break;
+
+	case EditTool::NO_TOOL:
+		return EditToolType::NO_TOOL;
+		break;
+
+	default:
+		assert(false);
+		break;
+	}
+}
+
+gl::Program DemoCore::LoadShaderProgramFromFiles(const std::string& vs_name, const std::string& fs_name)
+{
+	gl::Program result;
+
+	gl::VertexShader vs;
+	vs.Source(LoadFileAsString(shadersFolderPath + vs_name));
+	vs.Compile();
+
+	gl::FragmentShader fs;
+	fs.Source(LoadFileAsString(shadersFolderPath + fs_name));
+	fs.Compile();
+
+	result.AttachShader(vs);
+	result.AttachShader(fs);
+	result.Link();
+
+	return result;
+}
+
 DemoCore::DemoCore(sf::Window* pWindow) :
 running(false),
-isInEditMode(false),
+isInEditMode(false), selectedTool(EditTool::NO_TOOL),
 pWindow(pWindow),
 mouseSensitivity(0.005), camSpeed(2.5), fastSpeedMultiplyer(10),
-terrainSize(500), water(terrainSize * 7)
+terrainSize(500), waterLevel(49), water(terrainSize * 7)
 {
 	//assert(pWindow->isActive())
 
@@ -49,6 +96,10 @@ terrainSize(500), water(terrainSize * 7)
 	//terrain.LoadFromHeightMap(DemoCore::imgFolderPath + "heightMap.png", terrainSize, 0.06);
 	terrain.LoadFromHeightMap(DemoCore::imgFolderPath + "heightMap.png", terrainSize, 0.2);
 
+	//NOTE: rotation angle does intentionally differ from exactly pi/2.
+	//Reason: oglplus's matrix inversion function doesn't invert correctly for some transforms.
+	terrain.SetTransform(gl::ModelMatrixf::Translation(-terrainSize*0.5, -waterLevel, terrainSize*0.5)*gl::ModelMatrixf::RotationA(gl::Vec3f(1, 0, 0), gl::Radians<float>(-gl::math::Pi() / 2.001)));
+
 	skybox.LoadTextureFromFiles(
 		DemoCore::imgFolderPath + "sb4-x.bmp",
 		DemoCore::imgFolderPath + "sb1+x.bmp",
@@ -75,22 +126,12 @@ terrainSize(500), water(terrainSize * 7)
 		graphicalObjects.push_back(std::move(object));
 	}
 	*/
-}
 
-int DemoCore::Start()
-{
-	running = true;
+	/////////////////
+	//Init more variables
 
 	isInFastMode = false;
 	wireframeModeEnabled = false;
-
-	//pWindow->setActive();
-	pWindow->setKeyRepeatEnabled(false);
-
-	glContext.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glContext.ClearDepth(1.0f);
-	glContext.Enable(gl::enums::Capability::DepthTest);
-	glContext.Enable(gl::enums::Capability::CullFace);
 
 	isTrackingMouse = false;
 
@@ -100,6 +141,19 @@ int DemoCore::Start()
 	cam.SetScreenWidth(screenWidth);
 	cam.SetScreenHeight(screenHeight);
 	cam.SetPosition(gl::Vec3f(0, 5, 10));
+
+}
+
+int DemoCore::Start()
+{
+	running = true;
+
+	pWindow->setKeyRepeatEnabled(false);
+
+	glContext.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glContext.ClearDepth(1.0f);
+	glContext.Enable(gl::enums::Capability::DepthTest);
+	glContext.Enable(gl::enums::Capability::CullFace);
 
 	double lastFPSUpdateSec = 0;
 	double FPSUpdateDelaySec = 0.1;
@@ -143,6 +197,7 @@ int DemoCore::Start()
 		cam.MoveForward(forwardMovement * currSpeed * deltaSec);
 		cam.MoveRight(rightMovement * currSpeed * deltaSec);
 
+		Update();
 		Draw();
 
 		if (elapsedSec - lastMinResetSec > longestMinKeepSec) {
@@ -228,25 +283,6 @@ const DirectionalLight& DemoCore::GetSun() const
 const Camera& DemoCore::GetCamera() const
 {
 	return cam;
-}
-
-gl::Program DemoCore::LoadShaderProgramFromFiles(const std::string& vs_name, const std::string& fs_name)
-{
-	gl::Program result;
-
-	gl::VertexShader vs;
-	vs.Source(LoadFileAsString(shadersFolderPath + vs_name));
-	vs.Compile();
-
-	gl::FragmentShader fs;
-	fs.Source(LoadFileAsString(shadersFolderPath + fs_name));
-	fs.Compile();
-
-	result.AttachShader(vs);
-	result.AttachShader(fs);
-	result.Link();
-
-	return result;
 }
 
 
@@ -342,6 +378,34 @@ void DemoCore::KeyPressed(sf::Event::KeyEvent key)
     default:
         break;
 	}
+
+	if (isInEditMode) {
+		switch (key.code){
+		case sf::Keyboard::Num0:
+			selectedTool = EditTool::NO_TOOL;
+			break;
+		case sf::Keyboard::Num1:
+			selectedTool = EditTool::PAINT_FLAT_SAND;
+			break;
+		case sf::Keyboard::Num2:
+			selectedTool = EditTool::PAINT_SAND_TEXTURE;
+			break;
+		case sf::Keyboard::Num3:
+			selectedTool = EditTool::PAINT_GRASS_TEXTURE;
+			break;
+		case sf::Keyboard::Num4:
+			selectedTool = EditTool::SPAWN_GRASS_BUNCH;
+			break;
+		case sf::Keyboard::Num5:
+			selectedTool = EditTool::SPAWN_ROCK_BUNCH;
+			break;
+		case sf::Keyboard::Num6:
+			selectedTool = EditTool::PLACE_MODEL;
+			break;
+		default:
+			break;
+		}
+	}
 }
 
 void DemoCore::KeyReleased(sf::Event::KeyEvent key)
@@ -376,6 +440,106 @@ void DemoCore::KeyReleased(sf::Event::KeyEvent key)
 	}
 }
 
+void DemoCore::UpdatePointPosAtCursor()
+{
+	sf::Vector2i cursorPos = sf::Mouse::getPosition(*pWindow);
+
+	//invert y to suit opengl coordinates
+	cursorPos.y = screenHeight-cursorPos.y;
+
+	GLfloat depthAtPixel;
+	glContext.ReadPixels(cursorPos.x, cursorPos.y, 1, 1, gl::enums::PixelDataFormat::DepthComponent, gl::PixelDataType::Float, &depthAtPixel);
+
+	pointPosAtCursor = gl::Inverse(cam.GetViewProjectionTransform()) * gl::Vec4f(
+		((float(cursorPos.x)/screenWidth)*2-1),
+		((float(cursorPos.y)/screenHeight)*2-1),
+		(depthAtPixel)*2-1,
+		1);
+
+	pointPosAtCursor = pointPosAtCursor / pointPosAtCursor.w();
+}
+
+void DemoCore::Update()
+{
+	//sun.SetDirectionTowardsSource(gl::Vec3f(std::cos(GetElapsedTime().asSeconds()), 1.5, std::sin(GetElapsedTime().asSeconds())));
+	sun.SetDirectionTowardsSource(gl::Vec3f(1, 1, -1));
+
+    if (isInEditMode) {
+    	UpdatePointPosAtCursor();
+
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+
+			// 1, Calculate cursors pos on terrain material map (from cursors world pos)
+			// 2, Set pixels on terrain material map according to the selected tool
+			// 3, (Download material map to GPU to make changes visible)
+
+			switch (GetToolType(selectedTool)) {
+			case EditToolType::PAINT: {
+				gl::Vec2i cursorPosOnMaterialMap = terrain.GetMaterialMapPos(pointPosAtCursor);
+				sf::Image& materialMap = terrain.GetMaterialMap();
+				sf::Color selectedMaterialColor;
+				if (selectedTool == EditTool::PAINT_FLAT_SAND) {
+					selectedMaterialColor = sf::Color(0, 0, 0, 255);
+				}
+				else if(selectedTool == EditTool::PAINT_SAND_TEXTURE) {
+					selectedMaterialColor = sf::Color(0, 0, 255, 255);
+				}
+				else if(selectedTool == EditTool::PAINT_GRASS_TEXTURE) {
+					selectedMaterialColor = sf::Color(0, 255, 0, 255);
+				}
+
+				materialMap.setPixel(cursorPosOnMaterialMap.x(),
+										cursorPosOnMaterialMap.y(),
+										selectedMaterialColor);
+
+				terrain.UpdateMaterialMap();
+				break;
+			}
+			case EditToolType::SPAWN: {
+				break;
+			}
+			case EditToolType::PLACE: {
+				break;
+			}
+			case EditToolType::NO_TOOL: {
+				break;
+			}
+			default:
+				assert(false);
+			}
+
+			/*
+			switch (selectedTool) {
+			//TODO delete this test code
+			default:
+				std::cout << "Hmm..." << std::endl;
+			break;
+
+			case EditTool::PAINT_FLAT_SAND:
+				break;
+
+			case EditTool::PAINT_SAND_TEXTURE:
+				break;
+
+			case EditTool::PAINT_GRASS_TEXTURE:
+				break;
+
+			case EditTool::SPAWN_GRASS_BUNCH:
+				break;
+
+			case EditTool::SPAWN_ROCK_BUNCH:
+				break;
+
+			case EditTool::PLACE_MODEL:
+				break;
+
+			case EditTool::NO_TOOL:
+				break;
+			}*/
+		}
+    }
+}
+
 void DemoCore::Draw()
 {
 	ClearFramebufferStack();
@@ -407,9 +571,6 @@ void DemoCore::Draw()
 
 void DemoCore::DrawScene()
 {
-	sun.SetDirectionTowardsSource(gl::Vec3f(std::cos(GetElapsedTime().asSeconds()), 1.5, std::sin(GetElapsedTime().asSeconds())));
-	//sun.SetDirectionTowardsSource(gl::Vec3f(1, 1, -1));
-
 	glContext.Clear().ColorBuffer().DepthBuffer();
 	glContext.DepthFunc(gl::enums::CompareFunction::LEqual);
 
@@ -432,11 +593,8 @@ void DemoCore::DrawObjects()
 	gl::Mat4f view = cam.GetViewTransform();
 	gl::Mat4f viewProjection = projection*view;
 
-	//in meters as usual
-	const float waterLevel = 49;
-
 	terrain.SetLightDir(gl::Normalized(sun.GetDirectionTowardsSource()));
-	terrain.SetTransform(gl::ModelMatrixf::Translation(-terrainSize*0.5, -waterLevel, terrainSize*0.5)*gl::ModelMatrixf::RotationA(gl::Vec3f(1, 0, 0), gl::Radians<float>(-gl::math::Pi() / 2)));
+	//terrain.SetTransform(gl::ModelMatrixf::Translation(-terrainSize*0.5, -waterLevel, terrainSize*0.5)*gl::ModelMatrixf::RotationA(gl::Vec3f(1, 0, 0), gl::Radians<float>(-gl::math::Pi() / 2)));
 	terrain.Draw(*this);
 
 	for (auto& current : graphicalObjects) {
@@ -450,34 +608,18 @@ void DemoCore::DrawObjects()
 
 void DemoCore::DrawEditMode()
 {
-	sf::Vector2i cursorPos = sf::Mouse::getPosition(*pWindow);
+	EditToolType selectedToolType = GetToolType(selectedTool);
+	if (selectedToolType == EditToolType::PAINT) {
+		gl::Mat4f MVP = cam.GetViewProjectionTransform() * gl::ModelMatrixf::Translation(pointPosAtCursor.xyz()) * gl::ModelMatrixf::RotationX(gl::Radians<float>(gl::math::Pi()*0.5));
 
-	//invert y to suit opengl coordinates
-	cursorPos.y = screenHeight-cursorPos.y;
-
-	GLfloat depthAtCursor;
-	glContext.ReadPixels(cursorPos.x, cursorPos.y, 1, 1, gl::enums::PixelDataFormat::DepthComponent, gl::PixelDataType::Float, &depthAtCursor);
-
-	//assuming cursor is pointing on the terrain
-	gl::Vec4f cursorWorldPos = gl::Inverse(cam.GetViewProjectionTransform()) * gl::Vec4f(
-		((float(cursorPos.x)/screenWidth)*2-1),
-		((float(cursorPos.y)/screenHeight)*2-1),
-		(depthAtCursor)*2-1,
-		1);
-
-	cursorWorldPos = cursorWorldPos / cursorWorldPos.w();
-
-	//cursorWorldPos = gl::Vec4f(0, 20, 0, 1);
-
-	gl::Mat4f MVP = cam.GetViewProjectionTransform() * gl::ModelMatrixf::Translation(cursorWorldPos.xyz()) * gl::ModelMatrixf::RotationX(gl::Radians<float>(gl::math::Pi()*0.5));
-
-	//glContext.Disable(gl::Capability::CullFace);
-	glContext.Disable(gl::Capability::DepthTest);
-	glContext.LineWidth(2);
-	simpleColoredDrawer.Draw(glContext, circle, MVP, gl::Vec4f(1, 0.1, 0.5, 1));
-	glContext.LineWidth(1);
-	glContext.Enable(gl::Capability::DepthTest);
-	//glContext.Enable(gl::Capability::CullFace);
+		//glContext.Disable(gl::Capability::CullFace);
+		glContext.Disable(gl::Capability::DepthTest);
+		glContext.LineWidth(2);
+		simpleColoredDrawer.Draw(glContext, circle, MVP, gl::Vec4f(1, 0.1, 0.5, 1));
+		glContext.LineWidth(1);
+		glContext.Enable(gl::Capability::DepthTest);
+		//glContext.Enable(gl::Capability::CullFace);
+	}
 }
 
 void DemoCore::DrawOverlay()

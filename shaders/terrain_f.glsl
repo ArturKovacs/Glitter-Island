@@ -44,7 +44,8 @@ float checkerTex(const in vec2 pos)
 	const float size = 1;
 	const float edge = size*0.5;
 	
-	return max(float((mod(pos.x*freq, size) > edge) ^^ (mod(pos.y*freq, size) > edge)), 0.3);
+	//return max(float((mod(pos.x*freq, size) > edge) ^^ (mod(pos.y*freq, size) > edge)), 0.3);
+	return 1;
 }
 
 const vec3 sandColor = vec3(0.98, 0.98, 0.96);

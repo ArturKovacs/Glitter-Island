@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.6)
 
-add_executable(Glitter-Island 
+add_executable( ${EXECUTABLE_NAME} 
 AttributeCategory.cpp
 Camera.cpp
 CharacterDrawer.cpp

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "all_gl_headers.hpp"
+
 #include "Mesh.hpp"
 #include <SFML/Graphics.hpp>
 
@@ -7,9 +9,27 @@ class DemoCore;
 
 class Terrain
 {
+public:
+	Terrain();
+
+	void LoadFromHeightMap(const std::string& fileName, float scale, float heightMultiplyer, bool invertNormals = false);
+	void Draw(DemoCore& core);
+
+	void SetTransform(const gl::Mat4f& transform);
+	gl::Mat4f GetTransform() const;
+
+	void SetLightDir(const gl::Vec3f& vec);
+
+	sf::Image& GetMaterialMap();
+	gl::Vec2i GetMaterialMapPos(const gl::Vec4f worldPos) const;
+	void UpdateMaterialMap();
+
 private:
 	Mesh graphicalModel;
 	Mesh seabottom;
+
+	float terrainScale;
+	sf::Image materialMap;
 
 	gl::Texture materialTexture;
 	gl::Texture sandTexture;
@@ -24,19 +44,9 @@ private:
 
 	gl::Vec3f lightDir;
 
-public:
-	Terrain();
-
-	void LoadFromHeightMap(const std::string& fileName, float scale, float heightMultiplyer, bool invertNormals = false);
-	void Draw(DemoCore& core);
-
-	void SetTransform(const gl::Mat4f& transform);
-	gl::Mat4f GetTransform() const;
-
-	void SetLightDir(const gl::Vec3f& vec);
-
 private:
-	static void LoadTexture(gl::Texture& target, const std::string& filename, float anisotropy = 0);
+	static void LoadTexture(gl::Texture& target, sf::Image& srcImg, const std::string& filename, float anisotropy = 0);
+	static void LoadTexture(gl::Texture& target, const sf::Image& srcImg, float anisotropy = 0);
 
 	static gl::Vec3f GetLowerTriangleNormalFromQuad(const int bottomLeftVertexPosX, const int bottomLeftVertexPosY, const std::vector<gl::Vec3f>& positions, const int numHorizontalVertices);
 	static gl::Vec3f GetUpperTriangleNormalFromQuad(const int bottomLeftVertexPosX, const int bottomLeftVertexPosY, const std::vector<gl::Vec3f>& positions, const int numHorizontalVertices);

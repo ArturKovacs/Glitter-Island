@@ -1,16 +1,18 @@
 #include "Terrain.hpp"
 
-#include "all_gl_headers.hpp"
 #include "DemoCore.hpp"
 
-#include <oglplus/images/load.hpp>
+//#include <oglplus/images/load.hpp>
 #include "FileLoad.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <exception>
+#include <cmath>
 
 Terrain::Terrain()
 {
+	terrainScale = 0;
+
 	shaderProgram = DemoCore::LoadShaderProgramFromFiles("terrain_v.glsl", "terrain_f.glsl");
 	shaderProgram.Use();
 
@@ -26,15 +28,18 @@ Terrain::Terrain()
 		std::cout << err.what() << std::endl;
 	}
 
-	LoadTexture(sandTexture, DemoCore::imgFolderPath + "sand_seamless.png", 4);
-	LoadTexture(grassTexture, DemoCore::imgFolderPath + "grass_seamless.png", 4);
-	LoadTexture(materialTexture, DemoCore::imgFolderPath + "materialMap.png");
+	sf::Image tmpImg;
+	LoadTexture(sandTexture, tmpImg, DemoCore::imgFolderPath + "sand_seamless.png", 4);
+	LoadTexture(grassTexture, tmpImg, DemoCore::imgFolderPath + "grass_seamless.png", 4);
+	LoadTexture(materialTexture, materialMap, DemoCore::imgFolderPath + "materialMap.png");
 }
 
 void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float heightMultiplyer, bool invertNormals)
 {
 	static const int maxHeight = 255;
 	static const bool fromSRGB = false;
+
+	terrainScale = scale;
 
 	//gl::images::Image oglplusimg = gl::images::LoadByName("", fileName, true, true);
 	//oglplusimg.Pixel(0, 0, oglplusimg.Depth()).x;
@@ -180,14 +185,42 @@ void Terrain::SetLightDir(const gl::Vec3f& vec)
 	lightDir = vec;
 }
 
-void Terrain::LoadTexture(gl::Texture& target, const std::string& filename, float anisotropy)
+sf::Image& Terrain::GetMaterialMap()
 {
-	sf::Image texture;
+	return materialMap;
+}
 
-	if (!texture.loadFromFile(filename)) {
+gl::Vec2i Terrain::GetMaterialMapPos(const gl::Vec4f worldPos) const
+{
+	gl::Vec2i result;
+	gl::Vec4f normalizedTextureCoords = ((gl::Inverse(modelTransform) * worldPos)/terrainScale);
+	const sf::Vector2u imgSize = materialMap.getSize();
+	result[0] = std::round(normalizedTextureCoords.x() * imgSize.x)+0.1;
+	result[1] = std::round(normalizedTextureCoords.y() * imgSize.y)+0.1;
+	return result;
+}
+
+void Terrain::UpdateMaterialMap()
+{
+	LoadTexture(materialTexture, materialMap);
+}
+
+
+void Terrain::LoadTexture(gl::Texture& target, sf::Image& srcImg, const std::string& filename, float anisotropy)
+{
+	//sf::Image texture;
+
+	if (!srcImg.loadFromFile(filename)) {
 		throw std::runtime_error((std::string("Can not load texture ") + filename).c_str());
 	}
 
+	//srcImg.flipVertically();
+
+	LoadTexture(target, srcImg, anisotropy);
+}
+
+void Terrain::LoadTexture(gl::Texture& target, const sf::Image& srcImg, float anisotropy)
+{
 	target.Bind(gl::Texture::Target::_2D);
 	gl::Texture::MinFilter(gl::Texture::Target::_2D, gl::TextureMinFilter::Linear);
 	gl::Texture::MagFilter(gl::Texture::Target::_2D, gl::TextureMagFilter::Linear);
@@ -202,12 +235,12 @@ void Terrain::LoadTexture(gl::Texture& target, const std::string& filename, floa
 	gl::Texture::Image2D(gl::Texture::Target::_2D,
 		0,
 		gl::enums::PixelDataInternalFormat::SRGB8,
-		texture.getSize().x,
-		texture.getSize().y,
+		srcImg.getSize().x,
+		srcImg.getSize().y,
 		0,
 		gl::enums::PixelDataFormat::RGBA,
 		gl::enums::DataType::UnsignedByte,
-		texture.getPixelsPtr());
+		srcImg.getPixelsPtr());
 }
 
 /*

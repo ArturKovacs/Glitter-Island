@@ -18,14 +18,19 @@
 #include "Camera.hpp"
 #include "Fog.hpp"
 
-enum class SelectedTool { NO_TOOL, PAINT_FLAT_SAND, PAINT_SAND_TEXTURE, PAINT_GRASS_TEXTURE, SPAWN_GRASS_BUNCH, SPAWN_ROCK_BUNCH, PLACE_MODEL };
-
 class DemoCore
 {
 public:
+	enum class EditTool { NO_TOOL, PAINT_FLAT_SAND, PAINT_SAND_TEXTURE, PAINT_GRASS_TEXTURE, SPAWN_GRASS_BUNCH, SPAWN_ROCK_BUNCH, PLACE_MODEL };
+	enum class EditToolType { NO_TOOL, PAINT, SPAWN, PLACE };
+
 	static const std::string shadersFolderPath;
 	static const std::string imgFolderPath;
 	static const std::string modelsFolderPath;
+
+public:
+	static EditToolType GetToolType(EditTool tool);
+	static gl::Program LoadShaderProgramFromFiles(const std::string& vs_name, const std::string& fs_name);
 
 public:
 	DemoCore(sf::Window* pWindow);
@@ -47,8 +52,6 @@ public:
 
 	const DirectionalLight& GetSun() const;
 	const Camera& GetCamera() const;
-
-	static gl::Program LoadShaderProgramFromFiles(const std::string& vs_name, const std::string& fs_name);
 
 private: // graphical state
 	int screenWidth;
@@ -76,7 +79,8 @@ private: // misc
 
 private: //edit mode
 	bool isInEditMode;
-	SelectedTool selectedTool;
+	EditTool selectedTool;
+	gl::Vec4f pointPosAtCursor;
 
 private: // demo properties, user state
 	const float mouseSensitivity;
@@ -91,6 +95,7 @@ private: // demo properties, user state
 	float rightMovement;
 
 private: // scene, objects
+	const float waterLevel;
 	const float terrainSize;
 
 	DirectionalLight sun;
@@ -110,6 +115,11 @@ private:
 	void MouseMoved();
 	void KeyPressed(sf::Event::KeyEvent key);
 	void KeyReleased(sf::Event::KeyEvent key);
+
+	void UpdatePointPosAtCursor();
+	//gl::Vec4f GetPointPosAtPixel(sf::Vector2i pixelPos) const;
+
+	void Update();
 
 	void Draw();
 	void DrawScene();
