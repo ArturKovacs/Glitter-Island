@@ -1,4 +1,7 @@
 *.sln
 *.sdf
 *.suo
-
+*.exe
+*.ilk
+*.pdb
+_build/
