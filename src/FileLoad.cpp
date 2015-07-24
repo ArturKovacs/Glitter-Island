@@ -18,7 +18,7 @@ std::string LoadFileAsString(const std::string& filename)
 
 	file.read((char*)result.data(), size);
 
-	if (file.fail()) {
+	if (file.fail() && !file.eof()) {
 		throw std::runtime_error((std::string("Error occured while reading file: ") + filename).c_str());
 	}
 

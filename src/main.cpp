@@ -2,6 +2,7 @@
 #include <string>
 
 #include "DemoCore.hpp"
+#include "FileLoad.hpp"
 
 /*
 static void CheckGLError()
