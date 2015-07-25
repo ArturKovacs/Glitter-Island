@@ -37,8 +37,8 @@ is not used then oglplus is required to be installed.
 **OpenGL 3.3 is required to run this application.** If the program does not start, 
 it is recommended to update your display driver.
 
-Once the program is running the "standard mode" is active. In this mode the user can 
-observe the island. For movement, use [WASD keys](https://en.wikipedia.org/wiki/Arrow_keys#WASD_keys). 
+Once the program is running the user can observe the island. 
+For movement, use [WASD keys](https://en.wikipedia.org/wiki/Arrow_keys#WASD_keys). 
 Hold down SHIFT to fly faster. For looking, press space to capture mouse so that mouse movement 
 controlls view direction. Press space again to release mouse. 
 
