@@ -17,7 +17,25 @@ SimpleColoredDrawer.cpp
 Skybox.cpp
 Terrain.cpp
 TextDrawer.cpp
-Water.cpp)
+Water.cpp
+
+AttributeCategory.hpp
+Camera.hpp
+CharacterDrawer.hpp
+DefaultFramebuffer.hpp
+DemoCore.hpp
+DirectionalLight.hpp
+FileLoad.hpp
+Fog.hpp
+Framebuffer.hpp
+GraphicalObject.hpp
+IFramebuffer.hpp
+Mesh.hpp
+SimpleColoredDrawer.hpp
+Skybox.hpp
+Terrain.hpp
+TextDrawer.hpp
+Water.hpp)
 
 # Detect and add SFML
 # set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
@@ -86,7 +104,6 @@ endif()
 
 find_package (OpenGL 3 REQUIRED)
 if (OPENGL_FOUND)
-	message("${OPENGL_LIBRARIES}")
 	include_directories(${GL_INCLUDE_DIRS})
 	target_link_libraries(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
 else ()

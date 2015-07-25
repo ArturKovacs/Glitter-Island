@@ -21,15 +21,15 @@
 class DemoCore
 {
 public:
-	enum class EditTool { NO_TOOL, PAINT_FLAT_SAND, PAINT_SAND_TEXTURE, PAINT_GRASS_TEXTURE, SPAWN_GRASS_BUNCH, SPAWN_ROCK_BUNCH, PLACE_MODEL };
-	enum class EditToolType { NO_TOOL, PAINT, SPAWN, PLACE };
+	enum class EditorTool { NO_TOOL, PAINT_FLAT_SAND, PAINT_SAND_TEXTURE, PAINT_GRASS_TEXTURE, SPAWN_GRASS_BUNCH, SPAWN_ROCK_BUNCH, PLACE_MODEL };
+	enum class EditorToolType { NO_TOOL, PAINT, SPAWN, PLACE };
 
 	static const std::string shadersFolderPath;
 	static const std::string imgFolderPath;
 	static const std::string modelsFolderPath;
 
 public:
-	static EditToolType GetToolType(EditTool tool);
+	static EditorToolType GetToolType(EditorTool tool);
 	static gl::Program LoadShaderProgramFromFiles(const std::string& vs_name, const std::string& fs_name);
 
 public:
@@ -78,8 +78,8 @@ private: // misc
 	Mesh circle;
 
 private: //edit mode
-	bool isInEditMode;
-	EditTool selectedTool;
+	bool isInEditorMode;
+	EditorTool selectedTool;
 	gl::Vec4f pointPosAtCursor;
 
 private: // demo properties, user state
@@ -124,6 +124,6 @@ private:
 	void Draw();
 	void DrawScene();
 	void DrawObjects();
-	void DrawEditMode();
+	void DrawEditorMode();
 	void DrawOverlay();
 };

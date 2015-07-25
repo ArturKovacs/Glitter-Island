@@ -9,26 +9,26 @@ const std::string DemoCore::shadersFolderPath = "../shaders/";
 const std::string DemoCore::imgFolderPath = "../img/";
 const std::string DemoCore::modelsFolderPath = "../models/";
 
-DemoCore::EditToolType DemoCore::GetToolType(DemoCore::EditTool tool)
+DemoCore::EditorToolType DemoCore::GetToolType(DemoCore::EditorTool tool)
 {
 	switch (tool) {
-	case EditTool::PAINT_FLAT_SAND:
-	case EditTool::PAINT_SAND_TEXTURE:
-	case EditTool::PAINT_GRASS_TEXTURE:
-		return EditToolType::PAINT;
+	case EditorTool::PAINT_FLAT_SAND:
+	case EditorTool::PAINT_SAND_TEXTURE:
+	case EditorTool::PAINT_GRASS_TEXTURE:
+		return EditorToolType::PAINT;
 		break;
 
-	case EditTool::SPAWN_GRASS_BUNCH:
-	case EditTool::SPAWN_ROCK_BUNCH:
-		return EditToolType::SPAWN;
+	case EditorTool::SPAWN_GRASS_BUNCH:
+	case EditorTool::SPAWN_ROCK_BUNCH:
+		return EditorToolType::SPAWN;
 		break;
 
-	case EditTool::PLACE_MODEL:
-		return EditToolType::PLACE;
+	case EditorTool::PLACE_MODEL:
+		return EditorToolType::PLACE;
 		break;
 
-	case EditTool::NO_TOOL:
-		return EditToolType::NO_TOOL;
+	case EditorTool::NO_TOOL:
+		return EditorToolType::NO_TOOL;
 		break;
 
 	default:
@@ -58,7 +58,7 @@ gl::Program DemoCore::LoadShaderProgramFromFiles(const std::string& vs_name, con
 
 DemoCore::DemoCore(sf::Window* pWindow) :
 running(false),
-isInEditMode(false), selectedTool(EditTool::NO_TOOL),
+isInEditorMode(false), selectedTool(EditorTool::NO_TOOL),
 pWindow(pWindow),
 mouseSensitivity(0.005), camSpeed(2.5), fastSpeedMultiplyer(10),
 terrainSize(500), waterLevel(49), water(terrainSize * 7)
@@ -356,7 +356,7 @@ void DemoCore::KeyPressed(sf::Event::KeyEvent key)
 		break;
 
 	case sf::Keyboard::E:
-		isInEditMode = !isInEditMode;
+		isInEditorMode = !isInEditorMode;
 		break;
 
 	case sf::Keyboard::LShift:
@@ -379,28 +379,28 @@ void DemoCore::KeyPressed(sf::Event::KeyEvent key)
         break;
 	}
 
-	if (isInEditMode) {
+	if (isInEditorMode) {
 		switch (key.code){
 		case sf::Keyboard::Num0:
-			selectedTool = EditTool::NO_TOOL;
+			selectedTool = EditorTool::NO_TOOL;
 			break;
 		case sf::Keyboard::Num1:
-			selectedTool = EditTool::PAINT_FLAT_SAND;
+			selectedTool = EditorTool::PAINT_FLAT_SAND;
 			break;
 		case sf::Keyboard::Num2:
-			selectedTool = EditTool::PAINT_SAND_TEXTURE;
+			selectedTool = EditorTool::PAINT_SAND_TEXTURE;
 			break;
 		case sf::Keyboard::Num3:
-			selectedTool = EditTool::PAINT_GRASS_TEXTURE;
+			selectedTool = EditorTool::PAINT_GRASS_TEXTURE;
 			break;
 		case sf::Keyboard::Num4:
-			selectedTool = EditTool::SPAWN_GRASS_BUNCH;
+			selectedTool = EditorTool::SPAWN_GRASS_BUNCH;
 			break;
 		case sf::Keyboard::Num5:
-			selectedTool = EditTool::SPAWN_ROCK_BUNCH;
+			selectedTool = EditorTool::SPAWN_ROCK_BUNCH;
 			break;
 		case sf::Keyboard::Num6:
-			selectedTool = EditTool::PLACE_MODEL;
+			selectedTool = EditorTool::PLACE_MODEL;
 			break;
 		default:
 			break;
@@ -464,7 +464,7 @@ void DemoCore::Update()
 	//sun.SetDirectionTowardsSource(gl::Vec3f(std::cos(GetElapsedTime().asSeconds()), 1.5, std::sin(GetElapsedTime().asSeconds())));
 	sun.SetDirectionTowardsSource(gl::Vec3f(1, 1, -1));
 
-    if (isInEditMode) {
+    if (isInEditorMode) {
     	UpdatePointPosAtCursor();
 
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
@@ -474,17 +474,17 @@ void DemoCore::Update()
 			// 3, (Download material map to GPU to make changes visible)
 
 			switch (GetToolType(selectedTool)) {
-			case EditToolType::PAINT: {
+			case EditorToolType::PAINT: {
 				gl::Vec2i cursorPosOnMaterialMap = terrain.GetMaterialMapPos(pointPosAtCursor);
 				sf::Image& materialMap = terrain.GetMaterialMap();
 				sf::Color selectedMaterialColor;
-				if (selectedTool == EditTool::PAINT_FLAT_SAND) {
+				if (selectedTool == EditorTool::PAINT_FLAT_SAND) {
 					selectedMaterialColor = sf::Color(0, 0, 0, 255);
 				}
-				else if(selectedTool == EditTool::PAINT_SAND_TEXTURE) {
+				else if(selectedTool == EditorTool::PAINT_SAND_TEXTURE) {
 					selectedMaterialColor = sf::Color(0, 0, 255, 255);
 				}
-				else if(selectedTool == EditTool::PAINT_GRASS_TEXTURE) {
+				else if(selectedTool == EditorTool::PAINT_GRASS_TEXTURE) {
 					selectedMaterialColor = sf::Color(0, 255, 0, 255);
 				}
 
@@ -495,13 +495,13 @@ void DemoCore::Update()
 				terrain.UpdateMaterialMap();
 				break;
 			}
-			case EditToolType::SPAWN: {
+			case EditorToolType::SPAWN: {
 				break;
 			}
-			case EditToolType::PLACE: {
+			case EditorToolType::PLACE: {
 				break;
 			}
-			case EditToolType::NO_TOOL: {
+			case EditorToolType::NO_TOOL: {
 				break;
 			}
 			default:
@@ -515,25 +515,25 @@ void DemoCore::Update()
 				std::cout << "Hmm..." << std::endl;
 			break;
 
-			case EditTool::PAINT_FLAT_SAND:
+			case EditorTool::PAINT_FLAT_SAND:
 				break;
 
-			case EditTool::PAINT_SAND_TEXTURE:
+			case EditorTool::PAINT_SAND_TEXTURE:
 				break;
 
-			case EditTool::PAINT_GRASS_TEXTURE:
+			case EditorTool::PAINT_GRASS_TEXTURE:
 				break;
 
-			case EditTool::SPAWN_GRASS_BUNCH:
+			case EditorTool::SPAWN_GRASS_BUNCH:
 				break;
 
-			case EditTool::SPAWN_ROCK_BUNCH:
+			case EditorTool::SPAWN_ROCK_BUNCH:
 				break;
 
-			case EditTool::PLACE_MODEL:
+			case EditorTool::PLACE_MODEL:
 				break;
 
-			case EditTool::NO_TOOL:
+			case EditorTool::NO_TOOL:
 				break;
 			}*/
 		}
@@ -601,15 +601,15 @@ void DemoCore::DrawObjects()
 		current.Draw(*this);
 	}
 
-	if (isInEditMode) {
-		DrawEditMode();
+	if (isInEditorMode) {
+		DrawEditorMode();
 	}
 }
 
-void DemoCore::DrawEditMode()
+void DemoCore::DrawEditorMode()
 {
-	EditToolType selectedToolType = GetToolType(selectedTool);
-	if (selectedToolType == EditToolType::PAINT) {
+	EditorToolType selectedToolType = GetToolType(selectedTool);
+	if (selectedToolType == EditorToolType::PAINT) {
 		gl::Mat4f MVP = cam.GetViewProjectionTransform() * gl::ModelMatrixf::Translation(pointPosAtCursor.xyz()) * gl::ModelMatrixf::RotationX(gl::Radians<float>(gl::math::Pi()*0.5));
 
 		//glContext.Disable(gl::Capability::CullFace);
@@ -624,14 +624,14 @@ void DemoCore::DrawEditMode()
 
 void DemoCore::DrawOverlay()
 {
-	if (isInEditMode) {
+	if (isInEditorMode) {
 		//glContext.Clear().DepthBuffer();
 		glContext.Disable(gl::Capability::DepthTest);
 		glContext.PolygonMode(gl::enums::Face::FrontAndBack, gl::PolygonMode::Fill);
 		glContext.Enable(gl::Capability::Blend);
 		glContext.BlendFunc(gl::BlendFunction::SrcAlpha, gl::BlendFunction::OneMinusSrcAlpha);
 
-		sf::Text text("-Edit mode-", overlayFont);
+		sf::Text text("-Editor mode-", overlayFont);
 		text.setPosition(sf::Vector2f(30, 25));
 		text.setCharacterSize(18);
 		text.setColor(sf::Color(208, 59, 237, ~sf::Uint8(0)));
@@ -640,7 +640,7 @@ void DemoCore::DrawOverlay()
 		textDrawer.Draw(glContext, text);
 
 		text.setString(
-			"E -- toggle edit mode\n"
+			"E -- toggle editor mode\n"
 			"0 -- select no tool\n"
 			"1 -- paint flat sand\n"
 			"2 -- paint sand texture\n"
