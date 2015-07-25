@@ -52,7 +52,7 @@ Table of available keys:
 | A     | Move left                     | All    |
 | D     | Move right                    | All    |
 | SHIFT | Move faster                   | All    |
-| SPACE | Capture/release mouse capture | All    |
+| SPACE | Capture/Release mouse         | All    |
 | H     | Toggle wireframe display      | All    |
 | E     | Toggle "Editor mode"          | All    |
-| 0-9   | Select a tool                 | Editor |
+| 0-9   | Tool selection                | Editor |
