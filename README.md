@@ -22,12 +22,11 @@ can be generated using CMake.
 
 **OpenGL 3.3 is required to build and run this application.**
 
-Theres no dependencies needed to be installed for Visual Studio 2013, project is 
+Theres no dependencies needed to be installed for _Visual Studio 2013_, project is 
 ready to be used out-of-the-box for its compiler.
 
-In case of an other compiler the following dependencies' dev packages are required to be installed:
-- SFML of at least version 2.1
-- GLEW
+In case of an _other compiler_ the following dependencies' dev packages are required to be installed:
+SFML 2.1 (or higher) and GLEW.
 
 A particular configuration of oglplus is provided, but it can be optionally used or 
 discarded by setting a cmake variable to the desired value. If the provided oglplus 
