@@ -29,9 +29,9 @@ Terrain::Terrain()
 	}
 
 	sf::Image tmpImg;
-	LoadTexture(sandTexture, tmpImg, DemoCore::imgFolderPath + "sand_seamless.png", 4);
-	LoadTexture(grassTexture, tmpImg, DemoCore::imgFolderPath + "grass_seamless.png", 4);
-	LoadTexture(materialTexture, materialMap, DemoCore::imgFolderPath + "materialMap.png");
+	LoadTexture(sandTexture, tmpImg, DemoCore::imgFolderPath + "sand_seamless.png", false, 4);
+	LoadTexture(grassTexture, tmpImg, DemoCore::imgFolderPath + "grass_seamless.png", false, 4);
+	LoadTexture(materialTexture, materialMap, DemoCore::imgFolderPath + "materialMap.png", true);
 }
 
 void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float heightMultiplyer, bool invertNormals)
@@ -40,9 +40,6 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float 
 	static const bool fromSRGB = false;
 
 	terrainScale = scale;
-
-	//gl::images::Image oglplusimg = gl::images::LoadByName("", fileName, true, true);
-	//oglplusimg.Pixel(0, 0, oglplusimg.Depth()).x;
 
 	sf::Image image;
 
@@ -58,9 +55,6 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float 
 	if (imgWidth < 2 || imgHeight < 2) {
 		throw std::runtime_error("Terrain heightmap must be at least 2 pixel big in each direction!");
 	}
-
-	//const int coordinateDimensions = 3;
-	//const int texCoordDimensions = 2;
 
 	const int pixelCount = imgWidth * imgHeight;
 	const int totalVertexCount = pixelCount;
@@ -195,18 +189,24 @@ gl::Vec2i Terrain::GetMaterialMapPos(const gl::Vec4f worldPos) const
 	gl::Vec2i result;
 	gl::Vec4f normalizedTextureCoords = ((gl::Inverse(modelTransform) * worldPos)/terrainScale);
 	const sf::Vector2u imgSize = materialMap.getSize();
-	result[0] = std::round(normalizedTextureCoords.x() * imgSize.x)+0.1;
-	result[1] = std::round(normalizedTextureCoords.y() * imgSize.y)+0.1;
+	result[0] = std::floor(normalizedTextureCoords.x() * imgSize.x);
+	result[1] = std::floor(normalizedTextureCoords.y() * imgSize.y);
 	return result;
 }
 
-void Terrain::UpdateMaterialMap()
+float Terrain::GetMaterialMapPixelSizeInWorldScale() const
 {
-	LoadTexture(materialTexture, materialMap);
+	assert(materialMap.getSize().x == materialMap.getSize().y);
+	return terrainScale / materialMap.getSize().x;
+}
+
+void Terrain::DownloadMaterialMapToGPU()
+{
+	LoadTexture(materialTexture, materialMap, true);
 }
 
 
-void Terrain::LoadTexture(gl::Texture& target, sf::Image& srcImg, const std::string& filename, float anisotropy)
+void Terrain::LoadTexture(gl::Texture& target, sf::Image& srcImg, const std::string& filename, bool data, float anisotropy)
 {
 	//sf::Image texture;
 
@@ -219,7 +219,7 @@ void Terrain::LoadTexture(gl::Texture& target, sf::Image& srcImg, const std::str
 	LoadTexture(target, srcImg, anisotropy);
 }
 
-void Terrain::LoadTexture(gl::Texture& target, const sf::Image& srcImg, float anisotropy)
+void Terrain::LoadTexture(gl::Texture& target, const sf::Image& srcImg, bool data, float anisotropy)
 {
 	target.Bind(gl::Texture::Target::_2D);
 	gl::Texture::MinFilter(gl::Texture::Target::_2D, gl::TextureMinFilter::Linear);
@@ -234,7 +234,7 @@ void Terrain::LoadTexture(gl::Texture& target, const sf::Image& srcImg, float an
 
 	gl::Texture::Image2D(gl::Texture::Target::_2D,
 		0,
-		gl::enums::PixelDataInternalFormat::SRGB8,
+		data ? gl::enums::PixelDataInternalFormat::RGB : gl::enums::PixelDataInternalFormat::SRGB8,
 		srcImg.getSize().x,
 		srcImg.getSize().y,
 		0,

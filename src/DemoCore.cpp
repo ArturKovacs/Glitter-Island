@@ -57,8 +57,8 @@ gl::Program DemoCore::LoadShaderProgramFromFiles(const std::string& vs_name, con
 }
 
 DemoCore::DemoCore(sf::Window* pWindow) :
-running(false),
-isInEditorMode(false), selectedTool(EditorTool::NO_TOOL),
+running(false), cursorPrevPos(0.f, 0.f), cursorVelocity(0.f, 0.f),
+isInEditorMode(false), selectedTool(EditorTool::NO_TOOL), brushRadius(1),
 pWindow(pWindow),
 mouseSensitivity(0.005), camSpeed(2.5), fastSpeedMultiplyer(10),
 terrainSize(500), waterLevel(49), water(terrainSize * 7)
@@ -69,7 +69,7 @@ terrainSize(500), waterLevel(49), water(terrainSize * 7)
 		throw std::runtime_error("Could not load font!");
 	}
 
-	circle = Mesh::GenerateCircle(1, 10);
+	circle = Mesh::GenerateCircle(1, 16);
 
 	screenWidth = pWindow->getSize().x;
 	screenHeight = pWindow->getSize().y;
@@ -187,6 +187,9 @@ int DemoCore::Start()
 			if (event.type == sf::Event::MouseMoved) {
 				MouseMoved();
 			}
+			if (event.type == sf::Event::MouseWheelMoved) {
+				MouseWheelMoved(event.mouseWheel);
+			}
 			if (event.type == sf::Event::Resized) {
 				Resize(event.size.width, event.size.height);
 			}
@@ -197,7 +200,7 @@ int DemoCore::Start()
 		cam.MoveForward(forwardMovement * currSpeed * deltaSec);
 		cam.MoveRight(rightMovement * currSpeed * deltaSec);
 
-		Update();
+		Update(deltaSec);
 		Draw();
 
 		if (elapsedSec - lastMinResetSec > longestMinKeepSec) {
@@ -205,12 +208,12 @@ int DemoCore::Start()
 			lastMinResetSec = elapsedSec;
 		}
 		else {
-			recentMinFPS = 1/deltaSec < recentMinFPS ? 1/deltaSec : recentMinFPS;
+			recentMinFPS = std::min(int(currFPS), recentMinFPS);
 		}
 
 		if (elapsedSec - lastFPSUpdateSec > FPSUpdateDelaySec) {
-			int currFPS = std::round(framesSinceLastFPSUpdate / (elapsedSec - lastFPSUpdateSec));
-			pWindow->setTitle(sf::String("Glitter-Island <| FPS: ") + std::to_string(currFPS) + " current; " + std::to_string(recentMinFPS) + " recent min |>");
+			int updatedFPS = std::round(framesSinceLastFPSUpdate / (elapsedSec - lastFPSUpdateSec));
+			pWindow->setTitle(sf::String("Glitter-Island <| FPS: ") + std::to_string(updatedFPS) + " current; " + std::to_string(recentMinFPS) + " recent min |>");
 			lastFPSUpdateSec = elapsedSec;
 			framesSinceLastFPSUpdate = 0;
 		}
@@ -324,16 +327,14 @@ void DemoCore::Resize(const int width, const int height)
 
 void DemoCore::MouseMoved()
 {
-	if (isTrackingMouse) {
-		const sf::Vector2i windowCenter = sf::Vector2i(screenWidth / 2, screenHeight / 2);
-		const sf::Vector2i currPos = sf::Mouse::getPosition(*pWindow);
+	//moved mouse tracikg to update
+}
 
-		cam.RotateHorizontally(gl::Radians(-1.f*(currPos.x - windowCenter.x) * mouseSensitivity));
-		cam.RotateVertically(gl::Radians(-1.f*(currPos.y - windowCenter.y) * mouseSensitivity));
-
-		if (currPos != windowCenter) {
-			sf::Mouse::setPosition(windowCenter, *pWindow);
-		}
+void DemoCore::MouseWheelMoved(sf::Event::MouseWheelEvent wheelEvent)
+{
+	if (isInEditorMode) {
+		brushRadius += -wheelEvent.delta*0.5;
+		brushRadius = std::max(brushRadius, 0.5f);
 	}
 }
 
@@ -402,6 +403,15 @@ void DemoCore::KeyPressed(sf::Event::KeyEvent key)
 		case sf::Keyboard::Num6:
 			selectedTool = EditorTool::PLACE_MODEL;
 			break;
+		case sf::Keyboard::Add:
+			brushRadius += 0.5;
+			break;
+
+		case sf::Keyboard::Subtract:
+			brushRadius -= 0.5;
+			brushRadius = std::max(brushRadius, 0.5f);
+			break;
+
 		default:
 			break;
 		}
@@ -459,8 +469,28 @@ void DemoCore::UpdatePointPosAtCursor()
 	pointPosAtCursor = pointPosAtCursor / pointPosAtCursor.w();
 }
 
-void DemoCore::Update()
+void DemoCore::Update(float deltaSec)
 {
+	sf::Vector2i sfCursorPos = sf::Mouse::getPosition(*pWindow);
+	//sfCursorPos.y = screenHeight-sfCursorPos.y;
+
+	const gl::Vec2f cursorCurrPos(sfCursorPos.x, screenHeight-sfCursorPos.y);
+	cursorVelocity = (cursorCurrPos - cursorPrevPos) / deltaSec;
+	cursorPrevPos = cursorCurrPos;
+
+	if (isTrackingMouse) {
+		const sf::Vector2i windowCenter = sf::Vector2i(screenWidth / 2, screenHeight / 2);
+
+		cam.RotateHorizontally(gl::Radians(-1.f*(sfCursorPos.x - windowCenter.x) * mouseSensitivity));
+		cam.RotateVertically(gl::Radians(-1.f*(sfCursorPos.y - windowCenter.y) * mouseSensitivity));
+
+		if (sfCursorPos != windowCenter) {
+			sf::Mouse::setPosition(windowCenter, *pWindow);
+		}
+	}
+
+	currFPS = 1/deltaSec;
+
 	//sun.SetDirectionTowardsSource(gl::Vec3f(std::cos(GetElapsedTime().asSeconds()), 1.5, std::sin(GetElapsedTime().asSeconds())));
 	sun.SetDirectionTowardsSource(gl::Vec3f(1, 1, -1));
 
@@ -474,6 +504,11 @@ void DemoCore::Update()
 			// 3, (Download material map to GPU to make changes visible)
 
 			switch (GetToolType(selectedTool)) {
+				//TODO delete this test code
+			default:
+				std::cout << "Hmm..." << std::endl;
+			break;
+
 			case EditorToolType::PAINT: {
 				gl::Vec2i cursorPosOnMaterialMap = terrain.GetMaterialMapPos(pointPosAtCursor);
 				sf::Image& materialMap = terrain.GetMaterialMap();
@@ -488,11 +523,31 @@ void DemoCore::Update()
 					selectedMaterialColor = sf::Color(0, 255, 0, 255);
 				}
 
-				materialMap.setPixel(cursorPosOnMaterialMap.x(),
-										cursorPosOnMaterialMap.y(),
-										selectedMaterialColor);
+				const gl::Vec2f centerPos(cursorPosOnMaterialMap.x(), cursorPosOnMaterialMap.y());
 
-				terrain.UpdateMaterialMap();
+				auto weightFunc = [](float x_sq, float radius_sq){
+					return 1-(std::sqrt(x_sq)/std::sqrt(radius_sq));
+				};
+
+				for (int dy = -brushRadius; dy <= brushRadius; dy++) {
+					for (int dx = -brushRadius; dx <= brushRadius; dx++) {
+						const gl::Vec2f currPos(cursorPosOnMaterialMap.x() + dx, cursorPosOnMaterialMap.y() + dy);
+						const gl::Vec2f posDiff = currPos-centerPos;
+						float weight = weightFunc(gl::Dot(posDiff, posDiff), brushRadius*brushRadius) * (1-std::exp(-10.f*(deltaSec)));
+
+						if (weight > 0) {
+							const sf::Color originalColor = materialMap.getPixel(currPos.x(), currPos.y());
+							sf::Color finalColor(
+								selectedMaterialColor.r*weight + originalColor.r*(1 - weight),
+								selectedMaterialColor.g*weight + originalColor.g*(1 - weight),
+								selectedMaterialColor.b*weight + originalColor.b*(1 - weight));
+
+							materialMap.setPixel(currPos.x(), currPos.y(), finalColor);
+						}
+					}
+				}
+
+				terrain.DownloadMaterialMapToGPU();
 				break;
 			}
 			case EditorToolType::SPAWN: {
@@ -504,38 +559,9 @@ void DemoCore::Update()
 			case EditorToolType::NO_TOOL: {
 				break;
 			}
-			default:
-				assert(false);
+			//default:
+			//	assert(false);
 			}
-
-			/*
-			switch (selectedTool) {
-			//TODO delete this test code
-			default:
-				std::cout << "Hmm..." << std::endl;
-			break;
-
-			case EditorTool::PAINT_FLAT_SAND:
-				break;
-
-			case EditorTool::PAINT_SAND_TEXTURE:
-				break;
-
-			case EditorTool::PAINT_GRASS_TEXTURE:
-				break;
-
-			case EditorTool::SPAWN_GRASS_BUNCH:
-				break;
-
-			case EditorTool::SPAWN_ROCK_BUNCH:
-				break;
-
-			case EditorTool::PLACE_MODEL:
-				break;
-
-			case EditorTool::NO_TOOL:
-				break;
-			}*/
 		}
     }
 }
@@ -610,7 +636,14 @@ void DemoCore::DrawEditorMode()
 {
 	EditorToolType selectedToolType = GetToolType(selectedTool);
 	if (selectedToolType == EditorToolType::PAINT) {
-		gl::Mat4f MVP = cam.GetViewProjectionTransform() * gl::ModelMatrixf::Translation(pointPosAtCursor.xyz()) * gl::ModelMatrixf::RotationX(gl::Radians<float>(gl::math::Pi()*0.5));
+		float meshScale = terrain.GetMaterialMapPixelSizeInWorldScale() * brushRadius;
+		using ModelMatf = gl::ModelMatrixf;
+		gl::Mat4f MVP = 
+			cam.GetViewProjectionTransform() * 
+			ModelMatf::Translation(pointPosAtCursor.xyz()) * 
+			ModelMatf::Scale(meshScale, meshScale, meshScale) * 
+			//ModelMatf::RotationY(gl::Radians<float>(gl::math::Pi()*0.25)) *
+			ModelMatf::RotationX(gl::Radians<float>(gl::math::Pi()*0.5));
 
 		//glContext.Disable(gl::Capability::CullFace);
 		glContext.Disable(gl::Capability::DepthTest);

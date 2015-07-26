@@ -72,6 +72,9 @@ private: // misc
 	bool running;
 	sf::Clock clock;
 	double elapsedSec;
+	float currFPS;
+	gl::Vec2f cursorPrevPos;
+	gl::Vec2f cursorVelocity;
 	sf::Font overlayFont;
 	TextDrawer textDrawer;
 	SimpleColoredDrawer simpleColoredDrawer;
@@ -81,6 +84,7 @@ private: //edit mode
 	bool isInEditorMode;
 	EditorTool selectedTool;
 	gl::Vec4f pointPosAtCursor;
+	float brushRadius;
 
 private: // demo properties, user state
 	const float mouseSensitivity;
@@ -113,13 +117,14 @@ private:
 
 	void Resize(const int width, const int height);
 	void MouseMoved();
+	void MouseWheelMoved(sf::Event::MouseWheelEvent wheelEvent);
 	void KeyPressed(sf::Event::KeyEvent key);
 	void KeyReleased(sf::Event::KeyEvent key);
 
 	void UpdatePointPosAtCursor();
 	//gl::Vec4f GetPointPosAtPixel(sf::Vector2i pixelPos) const;
 
-	void Update();
+	void Update(float deltaSec);
 
 	void Draw();
 	void DrawScene();

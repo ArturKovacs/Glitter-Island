@@ -22,7 +22,8 @@ public:
 
 	sf::Image& GetMaterialMap();
 	gl::Vec2i GetMaterialMapPos(const gl::Vec4f worldPos) const;
-	void UpdateMaterialMap();
+	float GetMaterialMapPixelSizeInWorldScale() const;
+	void DownloadMaterialMapToGPU();
 
 private:
 	Mesh graphicalModel;
@@ -45,8 +46,8 @@ private:
 	gl::Vec3f lightDir;
 
 private:
-	static void LoadTexture(gl::Texture& target, sf::Image& srcImg, const std::string& filename, float anisotropy = 0);
-	static void LoadTexture(gl::Texture& target, const sf::Image& srcImg, float anisotropy = 0);
+	static void LoadTexture(gl::Texture& target, sf::Image& srcImg, const std::string& filename, bool data, float anisotropy = 0);
+	static void LoadTexture(gl::Texture& target, const sf::Image& srcImg, bool data, float anisotropy = 0);
 
 	static gl::Vec3f GetLowerTriangleNormalFromQuad(const int bottomLeftVertexPosX, const int bottomLeftVertexPosY, const std::vector<gl::Vec3f>& positions, const int numHorizontalVertices);
 	static gl::Vec3f GetUpperTriangleNormalFromQuad(const int bottomLeftVertexPosX, const int bottomLeftVertexPosY, const std::vector<gl::Vec3f>& positions, const int numHorizontalVertices);
