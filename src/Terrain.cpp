@@ -216,7 +216,7 @@ void Terrain::LoadTexture(gl::Texture& target, sf::Image& srcImg, const std::str
 
 	//srcImg.flipVertically();
 
-	LoadTexture(target, srcImg, anisotropy);
+	LoadTexture(target, srcImg, data, anisotropy);
 }
 
 void Terrain::LoadTexture(gl::Texture& target, const sf::Image& srcImg, bool data, float anisotropy)

@@ -51,6 +51,7 @@ Table of available keys:
 | A     | Move left                     | All    |
 | D     | Move right                    | All    |
 | SHIFT | Move faster                   | All    |
+| CTRL  | Move ultra fast               | All    |
 | SPACE | Capture/Release mouse         | All    |
 | H     | Toggle wireframe display      | All    |
 | E     | Toggle "Editor mode"          | All    |

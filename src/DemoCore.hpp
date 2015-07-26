@@ -21,16 +21,30 @@
 class DemoCore
 {
 public:
-	enum class EditorTool { NO_TOOL, PAINT_FLAT_SAND, PAINT_SAND_TEXTURE, PAINT_GRASS_TEXTURE, SPAWN_GRASS_BUNCH, SPAWN_ROCK_BUNCH, PLACE_MODEL };
+	enum class EditorTool { _FIRST = -1, NO_TOOL = 0, PAINT_FLAT_SAND, PAINT_SAND_TEXTURE, PAINT_GRASS_TEXTURE, SPAWN_GRASS_BUNCH, SPAWN_ROCK_BUNCH, PLACE_MODEL, _LAST };
 	enum class EditorToolType { NO_TOOL, PAINT, SPAWN, PLACE };
+
+	struct EditorToolInfo
+	{
+		std::int8_t id;
+		std::string description;
+	};
 
 	static const std::string shadersFolderPath;
 	static const std::string imgFolderPath;
 	static const std::string modelsFolderPath;
 
 public:
-	static EditorToolType GetToolType(EditorTool tool);
 	static gl::Program LoadShaderProgramFromFiles(const std::string& vs_name, const std::string& fs_name);
+	static EditorToolType GetToolType(EditorTool tool);
+	static EditorToolInfo GetToolInfo(EditorTool tool);
+	template<typename FuncType>
+	static void ForEachTool(FuncType func)
+	{
+		for (int i = static_cast<int>(EditorTool::_FIRST) + 1; i < static_cast<int>(EditorTool::_LAST); i++) {
+			func(static_cast<EditorTool>(i));
+		}
+	}
 
 public:
 	DemoCore(sf::Window* pWindow);
@@ -87,10 +101,14 @@ private: //edit mode
 	float brushRadius;
 
 private: // demo properties, user state
+	enum class SpeedMode { NORMAL, FAST, ULTRA };
+
 	const float mouseSensitivity;
 	const float camSpeed;
 	const float fastSpeedMultiplyer;
-	bool isInFastMode;
+	const float ultraSpeedMultiplyer;
+	SpeedMode currentSpeedMode;
+	//bool isInFastMode;
 
 	bool wireframeModeEnabled;
 
@@ -113,6 +131,8 @@ private: // scene, objects
 	std::vector<GraphicalObject> graphicalObjects;
 
 private:
+	float GetCurrentSpeed() const;
+
 	void ClearFramebufferStack();
 
 	void Resize(const int width, const int height);

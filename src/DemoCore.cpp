@@ -37,6 +37,43 @@ DemoCore::EditorToolType DemoCore::GetToolType(DemoCore::EditorTool tool)
 	}
 }
 
+DemoCore::EditorToolInfo DemoCore::GetToolInfo(DemoCore::EditorTool tool)
+{
+	EditorToolInfo result;
+
+	result.id = static_cast<std::int8_t>(tool);
+
+	switch (tool) {
+	case EditorTool::PAINT_FLAT_SAND:
+		result.description = "Paint flat sand";
+		break;
+	case EditorTool::PAINT_SAND_TEXTURE:
+		result.description = "Paint sand texture";
+		break;
+	case EditorTool::PAINT_GRASS_TEXTURE:
+		result.description = "Paint grass texture";
+		break;
+	case EditorTool::SPAWN_GRASS_BUNCH:
+		result.description = "Spawn grass bunch";
+		break;
+	case EditorTool::SPAWN_ROCK_BUNCH:
+		result.description = "Spawn rock bunch";
+		break;
+	case EditorTool::PLACE_MODEL:
+		result.description = "Place model";
+		break;
+	case EditorTool::NO_TOOL:
+		result.description = "Select no tool";
+		break;
+
+	default:
+		assert(false);
+		break;
+	}
+
+	return result;
+}
+
 gl::Program DemoCore::LoadShaderProgramFromFiles(const std::string& vs_name, const std::string& fs_name)
 {
 	gl::Program result;
@@ -60,7 +97,7 @@ DemoCore::DemoCore(sf::Window* pWindow) :
 running(false), cursorPrevPos(0.f, 0.f), cursorVelocity(0.f, 0.f),
 isInEditorMode(false), selectedTool(EditorTool::NO_TOOL), brushRadius(1),
 pWindow(pWindow),
-mouseSensitivity(0.005), camSpeed(2.5), fastSpeedMultiplyer(10),
+mouseSensitivity(0.005), camSpeed(3), fastSpeedMultiplyer(8.5), ultraSpeedMultiplyer(30),
 terrainSize(500), waterLevel(49), water(terrainSize * 7)
 {
 	//assert(pWindow->isActive())
@@ -130,7 +167,8 @@ terrainSize(500), waterLevel(49), water(terrainSize * 7)
 	/////////////////
 	//Init more variables
 
-	isInFastMode = false;
+	//isInFastMode = false;
+	currentSpeedMode = SpeedMode::NORMAL;
 	wireframeModeEnabled = false;
 
 	isTrackingMouse = false;
@@ -195,7 +233,7 @@ int DemoCore::Start()
 			}
 		}
 
-		float currSpeed = camSpeed * (isInFastMode ? fastSpeedMultiplyer : 1);
+		float currSpeed = GetCurrentSpeed();
 
 		cam.MoveForward(forwardMovement * currSpeed * deltaSec);
 		cam.MoveRight(rightMovement * currSpeed * deltaSec);
@@ -295,6 +333,26 @@ const Camera& DemoCore::GetCamera() const
 //
 ////////////////////////////////////////////
 
+float DemoCore::GetCurrentSpeed() const
+{
+	float result;
+
+	switch (currentSpeedMode) {
+	case SpeedMode::NORMAL:
+		result = camSpeed;
+		break;
+	case SpeedMode::FAST:
+		result = camSpeed * fastSpeedMultiplyer;
+		break;
+
+	case SpeedMode::ULTRA:
+		result = camSpeed * ultraSpeedMultiplyer;
+		break;
+	}
+
+	return result;
+}
+
 void DemoCore::ClearFramebufferStack()
 {
 	while (framebuffers.size() > 1) {
@@ -361,7 +419,11 @@ void DemoCore::KeyPressed(sf::Event::KeyEvent key)
 		break;
 
 	case sf::Keyboard::LShift:
-		isInFastMode = true;
+		//isInFastMode = true;
+		currentSpeedMode = SpeedMode::FAST;
+		break;
+	case sf::Keyboard::LControl:
+		currentSpeedMode = SpeedMode::ULTRA;
 		break;
 	case sf::Keyboard::W:
 		forwardMovement = 1;
@@ -422,7 +484,11 @@ void DemoCore::KeyReleased(sf::Event::KeyEvent key)
 {
 	switch (key.code){
 	case sf::Keyboard::LShift:
-		isInFastMode = false;
+		//isInFastMode = false;
+		if (currentSpeedMode == SpeedMode::FAST) {currentSpeedMode = SpeedMode::NORMAL;}
+		break;
+	case sf::Keyboard::LControl:
+		if (currentSpeedMode == SpeedMode::ULTRA) {currentSpeedMode = SpeedMode::NORMAL;}
 		break;
 	case sf::Keyboard::W:
 		if (forwardMovement > 0) {
@@ -504,11 +570,6 @@ void DemoCore::Update(float deltaSec)
 			// 3, (Download material map to GPU to make changes visible)
 
 			switch (GetToolType(selectedTool)) {
-				//TODO delete this test code
-			default:
-				std::cout << "Hmm..." << std::endl;
-			break;
-
 			case EditorToolType::PAINT: {
 				gl::Vec2i cursorPosOnMaterialMap = terrain.GetMaterialMapPos(pointPosAtCursor);
 				sf::Image& materialMap = terrain.GetMaterialMap();
@@ -531,18 +592,24 @@ void DemoCore::Update(float deltaSec)
 
 				for (int dy = -brushRadius; dy <= brushRadius; dy++) {
 					for (int dx = -brushRadius; dx <= brushRadius; dx++) {
-						const gl::Vec2f currPos(cursorPosOnMaterialMap.x() + dx, cursorPosOnMaterialMap.y() + dy);
-						const gl::Vec2f posDiff = currPos-centerPos;
-						float weight = weightFunc(gl::Dot(posDiff, posDiff), brushRadius*brushRadius) * (1-std::exp(-10.f*(deltaSec)));
+						gl::Vec2i currPosi(cursorPosOnMaterialMap.x() + dx, cursorPosOnMaterialMap.y() + dy);
 
-						if (weight > 0) {
-							const sf::Color originalColor = materialMap.getPixel(currPos.x(), currPos.y());
-							sf::Color finalColor(
-								selectedMaterialColor.r*weight + originalColor.r*(1 - weight),
-								selectedMaterialColor.g*weight + originalColor.g*(1 - weight),
-								selectedMaterialColor.b*weight + originalColor.b*(1 - weight));
+						if (currPosi.x() >= 0 && currPosi.x() < materialMap.getSize().x &&
+							currPosi.y() >= 0 && currPosi.y() < materialMap.getSize().y) {
 
-							materialMap.setPixel(currPos.x(), currPos.y(), finalColor);
+							const gl::Vec2f currPos(currPosi.x(), currPosi.y());
+							const gl::Vec2f posDiff = currPos - centerPos;
+							float weight = weightFunc(gl::Dot(posDiff, posDiff), brushRadius*brushRadius) * (1 - std::exp(-10.f*(deltaSec)));
+
+							if (weight > 0) {
+								const sf::Color originalColor = materialMap.getPixel(currPos.x(), currPos.y());
+								sf::Color finalColor(
+									selectedMaterialColor.r*weight + originalColor.r*(1 - weight),
+									selectedMaterialColor.g*weight + originalColor.g*(1 - weight),
+									selectedMaterialColor.b*weight + originalColor.b*(1 - weight));
+
+								materialMap.setPixel(currPosi.x(), currPosi.y(), finalColor);
+							}
 						}
 					}
 				}
@@ -559,8 +626,9 @@ void DemoCore::Update(float deltaSec)
 			case EditorToolType::NO_TOOL: {
 				break;
 			}
-			//default:
-			//	assert(false);
+			default:
+				assert(false);
+				break;
 			}
 		}
     }
@@ -672,22 +740,42 @@ void DemoCore::DrawOverlay()
 		textDrawer.DrawBackground(glContext, text, sf::Color(50, 50, 50, 150), 5);
 		textDrawer.Draw(glContext, text);
 
-		text.setString(
-			"E -- toggle editor mode\n"
-			"0 -- select no tool\n"
-			"1 -- paint flat sand\n"
-			"2 -- paint sand texture\n"
-			"3 -- paint grass texture\n"
-			"4 -- spawn grass bunch\n"
-			"5 -- spawn rock bunch\n"
-			"6 -- place model"
-			);
+		//Set complete text for calculating background correctly
+		sf::String str = "E -- Toggle editor mode";
+		ForEachTool([&](EditorTool current){
+			EditorToolInfo info = GetToolInfo(current);
+			str += std::string("\n") + std::to_string(info.id) + " -- " + info.description;
+		});
+		text.setString(str);
 		text.setPosition(sf::Vector2f(2, 100));
 		text.setCharacterSize(16);
 		text.setStyle(sf::Text::Regular);
-		//text.setColor(sf::Color(205, 34, 240, ~sf::Uint8(0)));
-		text.setColor(sf::Color::Yellow);
 		textDrawer.DrawBackground(glContext, text, sf::Color(100, 100, 100, 150), 5);
+
+		//Set only selected tool's text
+		str = "";
+		ForEachTool([&](EditorTool current){
+			str += std::string("\n");
+			if (current == selectedTool) {
+				EditorToolInfo info = GetToolInfo(current);
+				str += std::to_string(info.id) + " -- " + info.description;
+			}
+		});
+		text.setString(str);
+		text.setColor(sf::Color::Cyan);
+		textDrawer.Draw(glContext, text);
+
+		//Set all other text
+		str = "E -- Toggle editor mode";
+		ForEachTool([&](EditorTool current){
+			str += std::string("\n");
+			if (current != selectedTool) {
+				EditorToolInfo info = GetToolInfo(current);
+				str += std::to_string(info.id) + " -- " + info.description;
+			}
+		});
+		text.setString(str);
+		text.setColor(sf::Color::Yellow);
 		textDrawer.Draw(glContext, text);
 
 		glContext.Disable(gl::Capability::Blend);
