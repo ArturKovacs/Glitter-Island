@@ -1,8 +1,6 @@
 #include "Terrain.hpp"
 
 #include "DemoCore.hpp"
-
-//#include <oglplus/images/load.hpp>
 #include "FileLoad.hpp"
 
 #include <SFML/Graphics.hpp>
@@ -28,10 +26,12 @@ Terrain::Terrain()
 		std::cout << err.what() << std::endl;
 	}
 
+	materialMapFilename = DemoCore::imgFolderPath + "materialMap.png";
+
 	sf::Image tmpImg;
 	LoadTexture(sandTexture, tmpImg, DemoCore::imgFolderPath + "sand_seamless.png", false, 4);
 	LoadTexture(grassTexture, tmpImg, DemoCore::imgFolderPath + "grass_seamless.png", false, 4);
-	LoadTexture(materialTexture, materialMap, DemoCore::imgFolderPath + "materialMap.png", true);
+	LoadTexture(materialTexture, materialMap, materialMapFilename, true);
 }
 
 void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float heightMultiplyer, bool invertNormals)
@@ -205,11 +205,19 @@ void Terrain::DownloadMaterialMapToGPU()
 	LoadTexture(materialTexture, materialMap, true);
 }
 
+void Terrain::SaveMaterialMap() const {
+	materialMap.saveToFile(materialMapFilename);
+}
+
+
+////////////////////////////////////////////
+//
+// Private functions
+//
+////////////////////////////////////////////
 
 void Terrain::LoadTexture(gl::Texture& target, sf::Image& srcImg, const std::string& filename, bool data, float anisotropy)
 {
-	//sf::Image texture;
-
 	if (!srcImg.loadFromFile(filename)) {
 		throw std::runtime_error((std::string("Can not load texture ") + filename).c_str());
 	}
@@ -242,38 +250,6 @@ void Terrain::LoadTexture(gl::Texture& target, const sf::Image& srcImg, bool dat
 		gl::enums::DataType::UnsignedByte,
 		srcImg.getPixelsPtr());
 }
-
-/*
-gl::Vec3f Terrain::GetNormalInHeightMap(const sf::Image& heightMap, const int x, const int y, const float scale, const float heightMultiplyer)
-{
-	const float maxHeight = 255;
-
-	float currHeight = (heightMap.getPixel(x, y).r/maxHeight) * heightMultiplyer;
-
-	float heightBeforeX = currHeight;
-	float heightAfterX = currHeight;
-	float heightBeforeY = currHeight;
-	float heightAfterY = currHeight;
-
-	if (x-1 >= 0) {
-		heightBeforeX = (heightMap.getPixel(x-1, y).r/maxHeight) * heightMultiplyer;
-	}
-	if (x+1 < heightMap.getSize().x) {
-		heightAfterX = (heightMap.getPixel(x+1, y).r/maxHeight) * heightMultiplyer;
-	}
-	if (y-1 >= 0) {
-		heightBeforeY = (heightMap.getPixel(x, y-1).r/maxHeight) * heightMultiplyer;
-	}
-	if (y+1 < heightMap.getSize().y) {
-		heightAfterY = (heightMap.getPixel(x, y+1).r/maxHeight) * heightMultiplyer;
-	}
-
-	gl::Vec3f slopeX = gl::Vec3f(2 * (1.f/heightMap.getSize().x), 0, heightAfterX - heightBeforeX);
-	gl::Vec3f slopeY = gl::Vec3f(0, 2 * (1.f/heightMap.getSize().y), heightAfterY - heightBeforeY);
-
-	return gl::Normalized(gl::Cross(slopeX, slopeY));
-}
-*/
 
 gl::Vec3f Terrain::GetLowerTriangleNormalFromQuad(const int bottomLeftVertexPosX, const int bottomLeftVertexPosY, const std::vector<gl::Vec3f>& positions, const int numHorizontalVertices)
 {
@@ -333,9 +309,6 @@ void Terrain::CalculatePositionsAndTexCoords(std::vector<gl::Vec3f>* positions, 
 			float currHeight = image.getPixel(currX, currY).r;
 			if (fromSRGB) { currHeight = std::pow(currHeight/maxHeight, 2.2)*maxHeight; }
 
-			//gl::Vec3f normal = GetNormalInHeightMap(image, currX, currY, scale, heightMultiplyer);
-			//if (invertNormals) { normal = -1.f * normal; }
-
 			positions->at(GetVertexIndex(imgWidth, currX, currY)) = gl::Vec3f(float(currX)/(imgWidth-1), float(currY)/(imgHeight-1), (float(currHeight)/maxHeight)*heightMultiplyer)*scale;
 			texCoords->at(GetVertexIndex(imgWidth, currX, currY)) = gl::Vec2f(float(currX)/(imgWidth-1), float(currY)/(imgHeight-1));
 		}
@@ -360,9 +333,6 @@ void Terrain::CalculatePositionsAndTexCoords(std::vector<gl::Vec3f>* positions, 
 					const int neighbourIdX = currX+dx;
 					if (neighbourIdX >= 0 && neighbourIdX < imgWidth && neighbourIdY >= 0 && neighbourIdY < imgHeight) {
 						gl::Vec3f neighbourPos = positions->at(GetVertexIndex(imgWidth, neighbourIdX, neighbourIdY));
-						//const gl::Vec2f posDiff = currPlanePos-neighbourPos.xy();
-						//const float planeDistSqr = gl::Vec2f::DotProduct(posDiff, posDiff);
-						//const float neighbourWeight = std::exp(-planeDistSqr);
 						const float neighbourWeight = 1;
 						weightSum += neighbourWeight;
 						weightedHeightSum += neighbourPos.z()*neighbourWeight;

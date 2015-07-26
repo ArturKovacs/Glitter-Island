@@ -108,7 +108,6 @@ private: // demo properties, user state
 	const float fastSpeedMultiplyer;
 	const float ultraSpeedMultiplyer;
 	SpeedMode currentSpeedMode;
-	//bool isInFastMode;
 
 	bool wireframeModeEnabled;
 
@@ -142,7 +141,6 @@ private:
 	void KeyReleased(sf::Event::KeyEvent key);
 
 	void UpdatePointPosAtCursor();
-	//gl::Vec4f GetPointPosAtPixel(sf::Vector2i pixelPos) const;
 
 	void Update(float deltaSec);
 
@@ -151,4 +149,6 @@ private:
 	void DrawObjects();
 	void DrawEditorMode();
 	void DrawOverlay();
+
+	void SaveAll();
 };

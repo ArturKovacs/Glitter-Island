@@ -44,15 +44,20 @@ controlls view direction. Press space again to release mouse.
 
 Table of available keys:
 
-| Key   | Effect                        | Mode   |
-|-------|-------------------------------|--------|
-| W     | Move forward                  | All    |
-| S     | Move backward                 | All    |
-| A     | Move left                     | All    |
-| D     | Move right                    | All    |
-| SHIFT | Move faster                   | All    |
-| CTRL  | Move ultra fast               | All    |
-| SPACE | Capture/Release mouse         | All    |
-| H     | Toggle wireframe display      | All    |
-| E     | Toggle "Editor mode"          | All    |
-| 0-9   | Tool selection                | Editor |
+| Key / Input | Effect                        | Mode   |
+|-------------|-------------------------------|--------|
+| W           | Move forward                  | All    |
+| S           | Move backward                 | All    |
+| A           | Move left                     | All    |
+| D           | Move right                    | All    |
+| SHIFT       | Move faster                   | All    |
+| CTRL        | Move ultra fast               | All    |
+| SPACE       | Capture/Release mouse         | All    |
+| H           | Toggle wireframe display      | All    |
+| E           | Toggle "Editor mode"          | All    |
+| 0-9         | Tool selection                | Editor |
+| Scroll down | Increase brush radius         | Editor |
+| Scroll up   | Decrease brush radius         | Editor |
+| +           | Increase brush radius         | Editor |
+| -           | Decrease brush radius         | Editor |
+| M           | Save all changes              | Editor |

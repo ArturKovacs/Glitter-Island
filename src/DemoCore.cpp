@@ -167,7 +167,6 @@ terrainSize(500), waterLevel(49), water(terrainSize * 7)
 	/////////////////
 	//Init more variables
 
-	//isInFastMode = false;
 	currentSpeedMode = SpeedMode::NORMAL;
 	wireframeModeEnabled = false;
 
@@ -298,7 +297,6 @@ gl::Context& DemoCore::GetGLContext()
 sf::Time DemoCore::GetElapsedTime()
 {
 	return sf::seconds(elapsedSec);
-	//return clock.getElapsedTime();
 }
 
 bool DemoCore::GetWireframeModeEnabled() const
@@ -380,7 +378,6 @@ void DemoCore::Resize(const int width, const int height)
 	for (auto& current : framebuffers) {
 		current.SetResolution(width, height);
 	}
-	//GetCurrentFramebuffer().SetResolution(width, height);
 }
 
 void DemoCore::MouseMoved()
@@ -419,7 +416,6 @@ void DemoCore::KeyPressed(sf::Event::KeyEvent key)
 		break;
 
 	case sf::Keyboard::LShift:
-		//isInFastMode = true;
 		currentSpeedMode = SpeedMode::FAST;
 		break;
 	case sf::Keyboard::LControl:
@@ -441,6 +437,8 @@ void DemoCore::KeyPressed(sf::Event::KeyEvent key)
     default:
         break;
 	}
+
+	static int saveCount = 0;
 
 	if (isInEditorMode) {
 		switch (key.code){
@@ -466,12 +464,17 @@ void DemoCore::KeyPressed(sf::Event::KeyEvent key)
 			selectedTool = EditorTool::PLACE_MODEL;
 			break;
 		case sf::Keyboard::Add:
-			brushRadius += 0.5;
+			brushRadius += 4.0f;
+			break;
+		case sf::Keyboard::Subtract:
+			brushRadius -= 4.0f;
+			brushRadius = std::max(brushRadius, 0.5f);
 			break;
 
-		case sf::Keyboard::Subtract:
-			brushRadius -= 0.5;
-			brushRadius = std::max(brushRadius, 0.5f);
+		case sf::Keyboard::M:
+			pWindow->setTitle("Saving...");
+			SaveAll();
+			std::cout << saveCount++ << " Saved!" << std::endl;
 			break;
 
 		default:
@@ -484,7 +487,6 @@ void DemoCore::KeyReleased(sf::Event::KeyEvent key)
 {
 	switch (key.code){
 	case sf::Keyboard::LShift:
-		//isInFastMode = false;
 		if (currentSpeedMode == SpeedMode::FAST) {currentSpeedMode = SpeedMode::NORMAL;}
 		break;
 	case sf::Keyboard::LControl:
@@ -538,7 +540,6 @@ void DemoCore::UpdatePointPosAtCursor()
 void DemoCore::Update(float deltaSec)
 {
 	sf::Vector2i sfCursorPos = sf::Mouse::getPosition(*pWindow);
-	//sfCursorPos.y = screenHeight-sfCursorPos.y;
 
 	const gl::Vec2f cursorCurrPos(sfCursorPos.x, screenHeight-sfCursorPos.y);
 	cursorVelocity = (cursorCurrPos - cursorPrevPos) / deltaSec;
@@ -564,10 +565,6 @@ void DemoCore::Update(float deltaSec)
     	UpdatePointPosAtCursor();
 
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-
-			// 1, Calculate cursors pos on terrain material map (from cursors world pos)
-			// 2, Set pixels on terrain material map according to the selected tool
-			// 3, (Download material map to GPU to make changes visible)
 
 			switch (GetToolType(selectedTool)) {
 			case EditorToolType::PAINT: {
@@ -780,4 +777,9 @@ void DemoCore::DrawOverlay()
 
 		glContext.Disable(gl::Capability::Blend);
 	}
+}
+
+void DemoCore::SaveAll()
+{
+	terrain.SaveMaterialMap();
 }

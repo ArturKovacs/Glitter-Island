@@ -24,12 +24,14 @@ public:
 	gl::Vec2i GetMaterialMapPos(const gl::Vec4f worldPos) const;
 	float GetMaterialMapPixelSizeInWorldScale() const;
 	void DownloadMaterialMapToGPU();
+	void SaveMaterialMap() const;
 
 private:
 	Mesh graphicalModel;
 	Mesh seabottom;
 
 	float terrainScale;
+	std::string materialMapFilename;
 	sf::Image materialMap;
 
 	gl::Texture materialTexture;
