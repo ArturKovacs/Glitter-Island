@@ -227,7 +227,7 @@ void Terrain::LoadTexture(gl::Texture& target, sf::Image& srcImg, const std::str
 void Terrain::LoadTexture(gl::Texture& target, const sf::Image& srcImg, bool data, float anisotropy)
 {
 	target.Bind(gl::Texture::Target::_2D);
-	gl::Texture::MinFilter(gl::Texture::Target::_2D, gl::TextureMinFilter::Linear);
+	gl::Texture::MinFilter(gl::Texture::Target::_2D, gl::TextureMinFilter::LinearMipmapLinear);
 	gl::Texture::MagFilter(gl::Texture::Target::_2D, gl::TextureMagFilter::Linear);
 
 	if (anisotropy > 0) {
@@ -246,6 +246,8 @@ void Terrain::LoadTexture(gl::Texture& target, const sf::Image& srcImg, bool dat
 		gl::enums::PixelDataFormat::RGBA,
 		gl::enums::DataType::UnsignedByte,
 		srcImg.getPixelsPtr());
+
+	gl::Texture::GenerateMipmap(gl::Texture::Target::_2D);
 }
 
 gl::Vec3f Terrain::GetLowerTriangleNormalFromQuad(const int bottomLeftVertexPosX, const int bottomLeftVertexPosY, const std::vector<gl::Vec3f>& positions, const int numHorizontalVertices)
