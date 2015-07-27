@@ -37,19 +37,6 @@ Terrain.hpp
 TextDrawer.hpp
 Water.hpp)
 
-# Detect and add SFML
-# set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
-#Find any version 2.X of SFML
-#See the FindSFML.cmake file for additional details and instructions
-# find_package (SFML 2 OPTIONAL_COMPONENTS system window graphics)
-# if (SFML_FOUND)
-# 	include_directories(${SFML_INCLUDE_DIR})
-# 	target_link_libraries(${EXECUTABLE_NAME} ${SFML_LIBRARIES})
-# else ()
-# 	message(WARNING "Could not find SFML. Setting link libraries anyway, however this project will not build if SFML libraries can not be found by the compiler.")
-# 	set_sfml_library_linker_flags()
-# endif ()
-
 add_library(sfml-graphics UNKNOWN IMPORTED)
 add_library(sfml-window UNKNOWN IMPORTED)
 add_library(sfml-system UNKNOWN IMPORTED)
@@ -63,16 +50,32 @@ if (${USE_PROVIDED_OGLPLUS})
 	include_directories(${CMAKE_SOURCE_DIR}/extlibs/oglplus/include)
 endif()
 
-if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"))
+if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") OR ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU"))
 	# using Clang or GCC
 	set(CMAKE_CXX_FLAGS "-std=c++11" CACHE STRING "" FORCE)
-	set(CMAKE_EXE_LINKER_FLAGS "-lsfml-graphics -lsfml-window -lsfml-system -lGLEW -lGL" CACHE STRING "" FORCE)
 	
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-	# using GCC
-	message("Project might not build using GCC according to personal experiences. Clang is suggested!")
-	set(CMAKE_CXX_FLAGS "-std=c++11" CACHE STRING "" FORCE)
-	set(CMAKE_EXE_LINKER_FLAGS "-lsfml-graphics -lsfml-window -lsfml-system -lGLEW -lGL" CACHE STRING "" FORCE)
+	# Detect and add SFML
+	set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules" ${CMAKE_MODULE_PATH})
+	find_package (SFML 2.1 COMPONENTS system window graphics)
+	if (SFML_FOUND)
+		include_directories(${SFML_INCLUDE_DIR})
+		target_link_libraries(${EXECUTABLE_NAME} ${SFML_LIBRARIES})
+	else ()
+		message("Could not find SFML. Setting link libraries anyway, however this project will not build if SFML libraries can not be found by the compiler. (It's recommended to use Clang)")
+		set(SFML_LIBRARY_LINKER_FLAGS "-lsfml-graphics -lsfml-window -lsfml-system")
+		set_property(TARGET ${EXECUTABLE_NAME} APPEND_STRING PROPERTY LINK_FLAGS "${SFML_LIBRARY_LINKER_FLAGS}")
+	endif ()
+	
+	find_package(GLEW)
+	if (GLEW_FOUND)
+		include_directories(${GLEW_INCLUDE_DIRS})
+		target_link_libraries(${EXECUTABLE_NAME} ${GLEW_LIBRARIES})
+	else ()
+		message("Could not find GLEW. Setting link libraries anyway, however this project will not build if GLEW can not be found by the compiler. (It's recommended to use Clang)")
+		set(GLEW_LIBRARY_LINKER_FLAGS "-lGLEW")
+		set_property(TARGET ${EXECUTABLE_NAME} APPEND_STRING PROPERTY LINK_FLAGS "${GLEW_LIBRARY_LINKER_FLAGS}")
+	endif ()
+	
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	# using Visual Studio C++
 	# message("No support for MSVC at this time")
@@ -99,7 +102,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 else()
 	# unsupported compiler
 	# TODO: correct this message!
-	message("Only clang and MSVC compilers are supported at this time. Please set up your compiler settings manually (using cmake) or use one of the supported compilers.")
+	message("Only Clang, GCC and MSVC compilers are supported at this time. Please set up your compiler settings manually (using cmake) or use one of the supported compilers.")
 endif()
 
 find_package (OpenGL 3 REQUIRED)
