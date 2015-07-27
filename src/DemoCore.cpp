@@ -147,6 +147,8 @@ terrainSize(500), waterLevel(49), water(terrainSize * 7)
 
 	cam.SetFovY(gl::Degrees(70));
 
+	sun.SetColor(gl::Vec3f(1, 1, 1));
+
 	/*
 	{
 		Mesh mesh;
@@ -684,8 +686,6 @@ void DemoCore::DrawObjects()
 	gl::Mat4f view = cam.GetViewTransform();
 	gl::Mat4f viewProjection = projection*view;
 
-	terrain.SetLightDir(gl::Normalized(sun.GetDirectionTowardsSource()));
-	//terrain.SetTransform(gl::ModelMatrixf::Translation(-terrainSize*0.5, -waterLevel, terrainSize*0.5)*gl::ModelMatrixf::RotationA(gl::Vec3f(1, 0, 0), gl::Radians<float>(-gl::math::Pi() / 2)));
 	terrain.Draw(*this);
 
 	for (auto& current : graphicalObjects) {
@@ -703,10 +703,10 @@ void DemoCore::DrawEditorMode()
 	if (selectedToolType == EditorToolType::PAINT) {
 		float meshScale = terrain.GetMaterialMapPixelSizeInWorldScale() * brushRadius;
 		using ModelMatf = gl::ModelMatrixf;
-		gl::Mat4f MVP = 
-			cam.GetViewProjectionTransform() * 
-			ModelMatf::Translation(pointPosAtCursor.xyz()) * 
-			ModelMatf::Scale(meshScale, meshScale, meshScale) * 
+		gl::Mat4f MVP =
+			cam.GetViewProjectionTransform() *
+			ModelMatf::Translation(pointPosAtCursor.xyz()) *
+			ModelMatf::Scale(meshScale, meshScale, meshScale) *
 			//ModelMatf::RotationY(gl::Radians<float>(gl::math::Pi()*0.25)) *
 			ModelMatf::RotationX(gl::Radians<float>(gl::math::Pi()*0.5));
 

@@ -15,7 +15,8 @@ Terrain::Terrain()
 	shaderProgram.Use();
 
 	try {
-		sh_lightDir = gl::Uniform<gl::Vec3f>(shaderProgram, "lightDir");
+		sh_sunDir = gl::Uniform<gl::Vec3f>(shaderProgram, "sunDir");
+		sh_sunColor = gl::Uniform<gl::Vec3f>(shaderProgram, "sunColor");
 		sh_MVP = gl::Uniform<gl::Mat4f>(shaderProgram, "MVP");
 		sh_modelTransposedInverse = gl::Uniform<gl::Mat4f>(shaderProgram, "model_transposed_inverse");
 		gl::UniformSampler(shaderProgram, "sandTexture").Set(0);
@@ -152,7 +153,8 @@ void Terrain::Draw(DemoCore& core)
 	gl::Texture::Active(2);
 	materialTexture.Bind(gl::Texture::Target::_2D);
 
-	sh_lightDir.Set(lightDir);
+	sh_sunDir.Set(core.GetSun().GetDirectionTowardsSource());
+	sh_sunColor.Set(core.GetSun().GetColor());
 	sh_MVP.Set(core.GetCamera().GetViewProjectionTransform() * modelTransform);
 	sh_modelTransposedInverse.Set(SajatTransposeMertNemMukodikAzOglPlusOsTODO(gl::Inverse(modelTransform)));
 	//sh_modelTransposedInverse.Set(gl::Transposed(gl::Inverse(modelTransform)));
@@ -172,11 +174,6 @@ void Terrain::SetTransform(const gl::Mat4f& transform)
 gl::Mat4f Terrain::GetTransform() const
 {
 	return modelTransform;
-}
-
-void Terrain::SetLightDir(const gl::Vec3f& vec)
-{
-	lightDir = vec;
 }
 
 sf::Image& Terrain::GetMaterialMap()

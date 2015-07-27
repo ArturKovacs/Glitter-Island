@@ -18,8 +18,6 @@ public:
 	void SetTransform(const gl::Mat4f& transform);
 	gl::Mat4f GetTransform() const;
 
-	void SetLightDir(const gl::Vec3f& vec);
-
 	sf::Image& GetMaterialMap();
 	gl::Vec2i GetMaterialMapPos(const gl::Vec4f worldPos) const;
 	float GetMaterialMapPixelSizeInWorldScale() const;
@@ -43,9 +41,10 @@ private:
 	gl::Uniform<gl::Mat4f> sh_modelTransposedInverse;
 
 	gl::Program shaderProgram;
-	gl::Uniform<gl::Vec3f> sh_lightDir;
+	gl::Uniform<gl::Vec3f> sh_sunDir;
+	gl::Uniform<gl::Vec3f> sh_sunColor;
 
-	gl::Vec3f lightDir;
+	//gl::Vec3f lightDir;
 
 private:
 	static void LoadTexture(gl::Texture& target, sf::Image& srcImg, const std::string& filename, bool data, float anisotropy = 0);

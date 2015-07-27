@@ -4,43 +4,6 @@
 #include "DemoCore.hpp"
 #include "FileLoad.hpp"
 
-/*
-static void CheckGLError()
-{
-	GLenum e = glGetError();
-	switch (e)
-	{
-	case GL_NO_ERROR:
-		break;
-
-	case GL_INVALID_ENUM:
-		throw std::runtime_error("GL_INVALID_ENUM");
-		break;
-	case GL_INVALID_VALUE:
-		throw std::runtime_error("GL_INVALID_VALUE");
-		break;
-	case GL_INVALID_OPERATION:
-		throw std::runtime_error("GL_INVALID_OPERATION");
-		break;
-	case GL_INVALID_FRAMEBUFFER_OPERATION:
-		throw std::runtime_error("GL_INVALID_FRAMEBUFFER_OPERATION");
-		break;
-	case GL_OUT_OF_MEMORY:
-		throw std::runtime_error("GL_OUT_OF_MEMORY");
-		break;
-	case GL_STACK_UNDERFLOW:
-		throw std::runtime_error("GL_STACK_UNDERFLOW");
-		break;
-	case GL_STACK_OVERFLOW:
-		throw std::runtime_error("GL_STACK_OVERFLOW");
-		break;
-
-	default:
-		throw std::runtime_error((std::string("Noooooooo... ") + std::to_string(e)).c_str());
-		break;
-	}
-}*/
-
 int main()
 {
 	try {
@@ -87,3 +50,40 @@ int main()
 
 	return EXIT_FAILURE;
 }
+
+/*
+static void CheckGLError()
+{
+	GLenum e = glGetError();
+	switch (e)
+	{
+	case GL_NO_ERROR:
+		break;
+
+	case GL_INVALID_ENUM:
+		throw std::runtime_error("GL_INVALID_ENUM");
+		break;
+	case GL_INVALID_VALUE:
+		throw std::runtime_error("GL_INVALID_VALUE");
+		break;
+	case GL_INVALID_OPERATION:
+		throw std::runtime_error("GL_INVALID_OPERATION");
+		break;
+	case GL_INVALID_FRAMEBUFFER_OPERATION:
+		throw std::runtime_error("GL_INVALID_FRAMEBUFFER_OPERATION");
+		break;
+	case GL_OUT_OF_MEMORY:
+		throw std::runtime_error("GL_OUT_OF_MEMORY");
+		break;
+	case GL_STACK_UNDERFLOW:
+		throw std::runtime_error("GL_STACK_UNDERFLOW");
+		break;
+	case GL_STACK_OVERFLOW:
+		throw std::runtime_error("GL_STACK_OVERFLOW");
+		break;
+
+	default:
+		throw std::runtime_error((std::string("Noooooooo... ") + std::to_string(e)).c_str());
+		break;
+	}
+}*/

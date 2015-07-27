@@ -3,7 +3,8 @@
 uniform sampler2D materialTexture;
 uniform sampler2D sandTexture;
 uniform sampler2D grassTexture;
-uniform vec3 lightDir;
+uniform vec3 sunDir;
+uniform vec3 sunColor;
 
 in vec3 normalFromVert;
 in vec2 texCoordFromVert;
@@ -20,7 +21,7 @@ float smoothNoise(const in vec2 pos)
 	const float freq = 25000;
 	
 	float result = 0;
-	for (int i = 0; i < randomness; i++){
+	for (int i = 0; i < randomness; i++) {
 		result += clamp((((cos(pos.x*rand(i*3)*freq)*cos(pos.y*rand(i*3+2)*freq))*(clamp(rand(i*3+1)*50, 0.5, 1)))*4)+4, 0, 1);
 	}
 
@@ -50,16 +51,20 @@ float checkerTex(const in vec2 pos)
 
 const vec3 sandColor = vec3(0.98, 0.98, 0.96);
 
-void main(void) 
-{ 
+void main(void)
+{
 	vec2 texPos = texCoordFromVert*60;
 	vec3 normal = normalize(normalFromVert);
 	vec3 materialValue = texture(materialTexture, texCoordFromVert).rgb;
 	
-	vec3 sandSample = sandColor * texture(sandTexture, texPos).xyz * materialValue.b;
-	vec3 grassSample = texture(grassTexture, texPos).xyz * materialValue.g;
+	vec3 sandTexSample = sandColor * texture(sandTexture, texPos).xyz * materialValue.b;
+	vec3 grassTexSample = texture(grassTexture, texPos).xyz * materialValue.g;
 	
-	float defaultValue = max(1-(materialValue.x+materialValue.y+materialValue.z), 0);
+	float flatSandValue = max(1-(materialValue.r+materialValue.g+materialValue.b), 0);
+	vec3 flatSandSample = sandColor * flatSandValue;
 	
-	fragColor = vec4(max(dot(lightDir, normal), 0) * (sandSample + grassSample + defaultValue*sandColor) * checkerTex(texPos), 1.0); 
+	const vec3 ambientColor = vec3(0.04);
+	vec3 diffuseColor = sunColor * max(dot(sunDir, normal), 0);
+	
+	fragColor = vec4((diffuseColor + ambientColor) * (flatSandSample + sandTexSample + grassTexSample) * checkerTex(texPos), 1.0);
 } 
