@@ -1,3 +1,4 @@
 *.obj binary
 *.mtl binary
-extlibs/* -diff
+extlibs/* -diff -text
+
