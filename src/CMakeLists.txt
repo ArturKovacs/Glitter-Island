@@ -1,41 +1,58 @@
 
 add_executable( ${EXECUTABLE_NAME} 
 AttributeCategory.cpp
+BaseDemoContext.cpp
 Camera.cpp
-CharacterDrawer.cpp
 DefaultFramebuffer.cpp
 DemoCore.cpp
 DirectionalLight.cpp
-FileLoad.cpp
+EditorContext.cpp
 Fog.cpp
 Framebuffer.cpp
+GUIContext.cpp
 GraphicalObject.cpp
 IFramebuffer.cpp
-main.cpp
 Mesh.cpp
+ModelSelectionContext.cpp
 SimpleColoredDrawer.cpp
 Skybox.cpp
 Terrain.cpp
 TextDrawer.cpp
+Utility.cpp
 Water.cpp
+main.cpp
 
 AttributeCategory.hpp
+BaseDemoContext.hpp
 Camera.hpp
-CharacterDrawer.hpp
 DefaultFramebuffer.hpp
 DemoCore.hpp
 DirectionalLight.hpp
-FileLoad.hpp
+EditorContext.hpp
 Fog.hpp
 Framebuffer.hpp
+GUIContext.hpp
 GraphicalObject.hpp
 IFramebuffer.hpp
 Mesh.hpp
+ModelSelectionContext.hpp
 SimpleColoredDrawer.hpp
 Skybox.hpp
 Terrain.hpp
 TextDrawer.hpp
-Water.hpp)
+Utility.hpp
+Water.hpp
+all_gl_headers.hpp)
+
+source_group(GUIContext FILES
+BaseDemoContext.cpp
+EditorContext.cpp
+GUIContext.cpp
+ModelSelectionContext.cpp
+BaseDemoContext.hpp
+EditorContext.hpp
+GUIContext.hpp
+ModelSelectionContext.hpp)
 
 add_library(sfml-graphics UNKNOWN IMPORTED)
 add_library(sfml-window UNKNOWN IMPORTED)

@@ -1,7 +1,6 @@
 #include "Skybox.hpp"
 
 #include <SFML/Graphics.hpp>
-#include "FileLoad.hpp"
 #include "DemoCore.hpp"
 
 Skybox::Skybox()

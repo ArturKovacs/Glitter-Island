@@ -1,6 +1,5 @@
 #include "GraphicalObject.hpp"
 
-#include "FileLoad.hpp"
 #include "DemoCore.hpp"
 
 GraphicalObject::GraphicalObject()

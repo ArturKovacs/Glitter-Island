@@ -1,6 +1,5 @@
 #include "TextDrawer.hpp"
 
-#include "FileLoad.hpp"
 #include "DemoCore.hpp"
 
 TextDrawer::TextDrawer()
@@ -173,6 +172,72 @@ void TextDrawer::DrawBackground(gl::Context& glContext, const sf::Text& text, co
 
 	quadMesh.BindVAO();
 	glContext.DrawElements(quadMesh.GetPrimitiveType(), quadMesh.GetNumOfIndices(), quadMesh.indexTypeEnum);
+}
+
+void TextDrawer::DrawAsList(gl::Context& glContext, const sf::Text& text, const int highlightedRowID, const sf::Color& highlightedColor)
+{
+	if (!text.getFont()) {
+		return;
+	}
+
+	const sf::Font& font = *text.getFont();
+	unsigned int characterSize = text.getCharacterSize();
+	const sf::Texture& fontTexture = font.getTexture(characterSize);
+
+	quadMesh.BindVAO();
+	characterShader.Use();
+
+	gl::Texture::Active(0);
+	sf::Texture::bind(&fontTexture);
+
+	const sf::Color& color = text.getColor();
+	const gl::Vec4f gl_Color = gl::Vec4f(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f);
+	const gl::Vec4f gl_HighlightedColor = gl::Vec4f(highlightedColor.r / 255.f, highlightedColor.g / 255.f, highlightedColor.b / 255.f, highlightedColor.a / 255.f);
+
+	sf::Vector2f startPos = text.getPosition();
+	sf::Vector2f charPos = sf::Vector2f(0, characterSize);
+
+	const sf::String& string = text.getString();
+
+	int currRowID = 0;
+	sf::Uint32 prevChar = 0;
+	for (auto currChar : string) {
+
+		if (currChar == L'\n') {
+			charPos.y += characterSize + GetLineSpacing(font, characterSize);
+			charPos.x = 0;
+			prevChar = 0;
+			currRowID++;
+		}
+		else {
+			charPos.x += font.getKerning(prevChar, currChar, characterSize);
+			prevChar = currChar;
+
+			sf::Glyph glyph = font.getGlyph(currChar, characterSize, (text.getStyle() & sf::Text::Bold) != 0);
+
+			sf::Vector2f absolutePos = startPos + charPos + sf::Vector2f(glyph.bounds.left, glyph.bounds.top);
+			gl::Mat4f MVP = projectionMatrix * gl::ModelMatrixf::Translation(absolutePos.x, absolutePos.y, 0) * gl::ModelMatrixf::Scale(glyph.textureRect.width, glyph.textureRect.height, 0);
+			sh_char_MVP.Set(MVP);
+
+			gl::Vec2f texCoordsMin(float(glyph.textureRect.left) / fontTexture.getSize().x, float(glyph.textureRect.top) / fontTexture.getSize().y);
+			gl::Vec2f texCoordsMax = texCoordsMin + gl::Vec2f(float(glyph.textureRect.width) / fontTexture.getSize().x, float(glyph.textureRect.height) / fontTexture.getSize().y);
+
+			sh_char_texCoordMin.Set(texCoordsMin);
+			sh_char_texCoordMax.Set(texCoordsMax);
+
+			if (currRowID == highlightedRowID) {
+				sh_char_characterColor.Set(gl_HighlightedColor);
+			}
+			else {
+				sh_char_characterColor.Set(gl_Color);
+			}
+
+			//glContext.Disable(gl::Capability::CullFace);
+			glContext.DrawElements(quadMesh.GetPrimitiveType(), quadMesh.GetNumOfIndices(), quadMesh.indexTypeEnum);
+
+			charPos.x += glyph.advance;
+		}
+	}
 }
 
 float TextDrawer::GetLineSpacing(const sf::Font& font, unsigned int characterSize)

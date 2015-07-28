@@ -87,8 +87,6 @@ private: // misc
 	sf::Clock clock;
 	double elapsedSec;
 	float currFPS;
-	gl::Vec2f cursorPrevPos;
-	gl::Vec2f cursorVelocity;
 	sf::Font overlayFont;
 	TextDrawer textDrawer;
 	SimpleColoredDrawer simpleColoredDrawer;
@@ -99,6 +97,10 @@ private: //edit mode
 	EditorTool selectedTool;
 	gl::Vec4f pointPosAtCursor;
 	float brushRadius;
+	bool showModelSelection;
+	int howeredModelID;
+	int selectedModelID;
+	std::vector<std::string> modelFileList;
 
 private: // demo properties, user state
 	enum class SpeedMode { NORMAL, FAST, ULTRA };
@@ -140,7 +142,10 @@ private:
 	void KeyPressed(sf::Event::KeyEvent key);
 	void KeyReleased(sf::Event::KeyEvent key);
 
+	void DisplayModelSelection();
+
 	void UpdatePointPosAtCursor();
+	void UpdateModelFileList();
 
 	void Update(float deltaSec);
 

@@ -2,11 +2,21 @@
 #include <string>
 
 #include "DemoCore.hpp"
-#include "FileLoad.hpp"
+#include "Utility.hpp"
 
 int main()
 {
 	try {
+		//TEST
+		auto test = Util::GetFileNamesInDirectory("../models/");
+
+		for (auto& current : test) {
+			std::cout << current << std::endl;
+		}
+
+		std::cout << "---" << std::endl;
+
+
 		sf::Window window(sf::VideoMode(800, 600), "Loading", sf::Style::Default, sf::ContextSettings(24));
 
 		///////////////////////////////////////////////

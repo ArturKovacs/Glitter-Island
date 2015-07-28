@@ -3,7 +3,7 @@
 #include <SFML/Window.hpp>
 #include <SFML/OpenGL.hpp>
 
-#include "FileLoad.hpp"
+#include "Utility.hpp"
 
 const std::string DemoCore::shadersFolderPath = "../shaders/";
 const std::string DemoCore::imgFolderPath = "../img/";
@@ -79,11 +79,15 @@ gl::Program DemoCore::LoadShaderProgramFromFiles(const std::string& vs_name, con
 	gl::Program result;
 
 	gl::VertexShader vs;
-	vs.Source(LoadFileAsString(shadersFolderPath + vs_name));
+	gl::GLSLSource vs_src((shadersFolderPath + vs_name).c_str(), gl::GLSLSource::FromFile_());
+	vs.Source(vs_src);
+	//vs.Source(LoadFileAsString(shadersFolderPath + vs_name));
 	vs.Compile();
 
 	gl::FragmentShader fs;
-	fs.Source(LoadFileAsString(shadersFolderPath + fs_name));
+	gl::GLSLSource fs_src((shadersFolderPath + fs_name).c_str(), gl::GLSLSource::FromFile_());
+	fs.Source(fs_src);
+	//fs.Source(LoadFileAsString(shadersFolderPath + fs_name));
 	fs.Compile();
 
 	result.AttachShader(vs);
@@ -94,8 +98,8 @@ gl::Program DemoCore::LoadShaderProgramFromFiles(const std::string& vs_name, con
 }
 
 DemoCore::DemoCore(sf::Window* pWindow) :
-running(false), cursorPrevPos(0.f, 0.f), cursorVelocity(0.f, 0.f),
-isInEditorMode(false), selectedTool(EditorTool::NO_TOOL), brushRadius(1),
+running(false),
+isInEditorMode(false), selectedTool(EditorTool::NO_TOOL), brushRadius(1), showModelSelection(false), howeredModelID(0), selectedModelID(0),
 pWindow(pWindow),
 mouseSensitivity(0.005), camSpeed(3), fastSpeedMultiplyer(8.5), ultraSpeedMultiplyer(30),
 terrainSize(500), waterLevel(49), water(terrainSize * 7)
@@ -397,7 +401,7 @@ void DemoCore::MouseWheelMoved(sf::Event::MouseWheelEvent wheelEvent)
 
 void DemoCore::KeyPressed(sf::Event::KeyEvent key)
 {
-	switch (key.code){
+	switch (key.code) {
 	case sf::Keyboard::Escape:
 		running = false;
 		break;
@@ -443,7 +447,7 @@ void DemoCore::KeyPressed(sf::Event::KeyEvent key)
 	static int saveCount = 0;
 
 	if (isInEditorMode) {
-		switch (key.code){
+		switch (key.code) {
 		case sf::Keyboard::Num0:
 			selectedTool = EditorTool::NO_TOOL;
 			break;
@@ -464,6 +468,9 @@ void DemoCore::KeyPressed(sf::Event::KeyEvent key)
 			break;
 		case sf::Keyboard::Num6:
 			selectedTool = EditorTool::PLACE_MODEL;
+			showModelSelection = true;
+			howeredModelID = selectedModelID;
+			UpdateModelFileList();
 			break;
 		case sf::Keyboard::Add:
 			brushRadius += 4.0f;
@@ -482,12 +489,31 @@ void DemoCore::KeyPressed(sf::Event::KeyEvent key)
 		default:
 			break;
 		}
+
+		if (showModelSelection) {
+			switch (key.code) {
+			case sf::Keyboard::Up:
+				howeredModelID--;
+				howeredModelID = std::max(howeredModelID, 0);
+				break;
+			case sf::Keyboard::Down:
+				howeredModelID++;
+				howeredModelID = std::min<int>(howeredModelID, modelFileList.size()-1);
+				break;
+			case sf::Keyboard::Return:
+				showModelSelection = false;
+				selectedModelID = howeredModelID;
+				break;
+			default:
+				break;
+			}
+		}
 	}
 }
 
 void DemoCore::KeyReleased(sf::Event::KeyEvent key)
 {
-	switch (key.code){
+	switch (key.code) {
 	case sf::Keyboard::LShift:
 		if (currentSpeedMode == SpeedMode::FAST) {currentSpeedMode = SpeedMode::NORMAL;}
 		break;
@@ -520,6 +546,11 @@ void DemoCore::KeyReleased(sf::Event::KeyEvent key)
 	}
 }
 
+void DemoCore::DisplayModelSelection()
+{
+
+}
+
 void DemoCore::UpdatePointPosAtCursor()
 {
 	sf::Vector2i cursorPos = sf::Mouse::getPosition(*pWindow);
@@ -539,13 +570,27 @@ void DemoCore::UpdatePointPosAtCursor()
 	pointPosAtCursor = pointPosAtCursor / pointPosAtCursor.w();
 }
 
+void DemoCore::UpdateModelFileList()
+{
+	// Find all model files in models directory
+	auto tmpList = Util::GetFileNamesInDirectory("../models");
+
+	modelFileList.clear();
+
+	// only keep supported model files!
+	for (int i = 0; i < tmpList.size(); i++) {
+		const auto& current = tmpList[i];
+		const std::string extention = ".obj";
+		const bool correctExtension = current.rfind(extention) == current.length() - extention.length();
+		if (correctExtension) {
+			modelFileList.push_back(current);
+		}
+	}
+}
+
 void DemoCore::Update(float deltaSec)
 {
 	sf::Vector2i sfCursorPos = sf::Mouse::getPosition(*pWindow);
-
-	const gl::Vec2f cursorCurrPos(sfCursorPos.x, screenHeight-sfCursorPos.y);
-	cursorVelocity = (cursorCurrPos - cursorPrevPos) / deltaSec;
-	cursorPrevPos = cursorCurrPos;
 
 	if (isTrackingMouse) {
 		const sf::Vector2i windowCenter = sf::Vector2i(screenWidth / 2, screenHeight / 2);
@@ -737,6 +782,7 @@ void DemoCore::DrawOverlay()
 		textDrawer.DrawBackground(glContext, text, sf::Color(50, 50, 50, 150), 5);
 		textDrawer.Draw(glContext, text);
 
+		
 		//Set complete text for calculating background correctly
 		sf::String str = "E -- Toggle editor mode";
 		ForEachTool([&](EditorTool current){
@@ -747,33 +793,28 @@ void DemoCore::DrawOverlay()
 		text.setPosition(sf::Vector2f(2, 100));
 		text.setCharacterSize(16);
 		text.setStyle(sf::Text::Regular);
-		textDrawer.DrawBackground(glContext, text, sf::Color(100, 100, 100, 150), 5);
-
-		//Set only selected tool's text
-		str = "";
-		ForEachTool([&](EditorTool current){
-			str += std::string("\n");
-			if (current == selectedTool) {
-				EditorToolInfo info = GetToolInfo(current);
-				str += std::to_string(info.id) + " -- " + info.description;
-			}
-		});
-		text.setString(str);
-		text.setColor(sf::Color::Cyan);
-		textDrawer.Draw(glContext, text);
-
-		//Set all other text
-		str = "E -- Toggle editor mode";
-		ForEachTool([&](EditorTool current){
-			str += std::string("\n");
-			if (current != selectedTool) {
-				EditorToolInfo info = GetToolInfo(current);
-				str += std::to_string(info.id) + " -- " + info.description;
-			}
-		});
-		text.setString(str);
 		text.setColor(sf::Color::Yellow);
-		textDrawer.Draw(glContext, text);
+		textDrawer.DrawBackground(glContext, text, sf::Color(100, 100, 100, 150), 5);
+		textDrawer.DrawAsList(glContext, text, GetToolInfo(selectedTool).id+1, sf::Color::Cyan);
+
+		if (showModelSelection) {
+			const int columnElementCount = 15;
+
+			std::string visibleList;
+
+			const int listFirstElementID = howeredModelID - howeredModelID % columnElementCount;
+
+			for (int i = 0; i < columnElementCount && (listFirstElementID + i < modelFileList.size()); i++) {
+				visibleList += modelFileList.at(listFirstElementID + i) + '\n';
+			}
+			visibleList.pop_back();
+
+			text.setString(visibleList);
+			text.setPosition(300, 50);
+			textDrawer.DrawBackground(glContext, text, sf::Color(100, 100, 100, 150), 5);
+			textDrawer.DrawAsList(glContext, text, howeredModelID-listFirstElementID, sf::Color::Cyan);
+		}
+
 
 		glContext.Disable(gl::Capability::Blend);
 	}

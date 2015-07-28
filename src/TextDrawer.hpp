@@ -14,6 +14,7 @@ public:
 	void SetScreenResolution(gl::Vec2i res);
 	void Draw(gl::Context& glContext, const sf::Text& text);
 	void DrawBackground(gl::Context& glContext, const sf::Text& text, const sf::Color& color, const float border = 0);
+	void DrawAsList(gl::Context& glContext, const sf::Text& text, const int highlightedRowID, const sf::Color& highlightedColor);
 
 private:
 	gl::Mat4f projectionMatrix;

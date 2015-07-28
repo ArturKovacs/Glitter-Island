@@ -1,17 +1,17 @@
 #include "Fog.hpp"
 
 #include "DemoCore.hpp"
-#include "FileLoad.hpp"
+#include "Utility.hpp"
 
 Fog::Fog()
 {
 	gl::VertexShader vs;
-	vs.Source(LoadFileAsString(DemoCore::shadersFolderPath + "fog_v.glsl"));
+	vs.Source(Util::LoadFileAsString(DemoCore::shadersFolderPath + "fog_v.glsl"));
 	vs.Compile();
 	shaderProgram.AttachShader(vs);
 
 	gl::FragmentShader fs;
-	fs.Source(LoadFileAsString(DemoCore::shadersFolderPath + "fog_f.glsl"));
+	fs.Source(Util::LoadFileAsString(DemoCore::shadersFolderPath + "fog_f.glsl"));
 	fs.Compile();
 	shaderProgram.AttachShader(fs);
 
