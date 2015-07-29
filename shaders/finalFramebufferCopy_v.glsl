@@ -7,7 +7,7 @@ in vec2 vertexPos;
 
 out vec2 textureCoords;
 
-void main(void)
+void main()
 {
 	gl_Position = vec4(vertexPos, 0, 1.0);
 	textureCoords = vec2(

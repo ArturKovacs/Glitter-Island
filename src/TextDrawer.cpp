@@ -193,6 +193,12 @@ void TextDrawer::DrawAsList(gl::Context& glContext, const sf::Text& text, const 
 	const sf::Color& color = text.getColor();
 	const gl::Vec4f gl_Color = gl::Vec4f(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f);
 	const gl::Vec4f gl_HighlightedColor = gl::Vec4f(highlightedColor.r / 255.f, highlightedColor.g / 255.f, highlightedColor.b / 255.f, highlightedColor.a / 255.f);
+	if (0 == highlightedRowID) {
+		sh_char_characterColor.Set(gl_HighlightedColor);
+	}
+	else {
+		sh_char_characterColor.Set(gl_Color);
+	}
 
 	sf::Vector2f startPos = text.getPosition();
 	sf::Vector2f charPos = sf::Vector2f(0, characterSize);
@@ -208,6 +214,12 @@ void TextDrawer::DrawAsList(gl::Context& glContext, const sf::Text& text, const 
 			charPos.x = 0;
 			prevChar = 0;
 			currRowID++;
+			if (currRowID == highlightedRowID) {
+				sh_char_characterColor.Set(gl_HighlightedColor);
+			}
+			else {
+				sh_char_characterColor.Set(gl_Color);
+			}
 		}
 		else {
 			charPos.x += font.getKerning(prevChar, currChar, characterSize);
@@ -224,13 +236,6 @@ void TextDrawer::DrawAsList(gl::Context& glContext, const sf::Text& text, const 
 
 			sh_char_texCoordMin.Set(texCoordsMin);
 			sh_char_texCoordMax.Set(texCoordsMax);
-
-			if (currRowID == highlightedRowID) {
-				sh_char_characterColor.Set(gl_HighlightedColor);
-			}
-			else {
-				sh_char_characterColor.Set(gl_Color);
-			}
 
 			//glContext.Disable(gl::Capability::CullFace);
 			glContext.DrawElements(quadMesh.GetPrimitiveType(), quadMesh.GetNumOfIndices(), quadMesh.indexTypeEnum);

@@ -30,6 +30,8 @@ void Fog::Draw(DemoCore& core)
 	auto& screenFB = core.GetCurrentFramebuffer();
 	core.PushFramebuffer();
 
+	screenFB.SetColorTexName("screenColor");
+	screenFB.SetDepthTexName("screenDepth");
 	screenFB.SetVertexPosName("vertexPos");
 	screenFB.SetShaderProgram(&shaderProgram);
 	

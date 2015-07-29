@@ -60,8 +60,8 @@ Skybox::Skybox()
 	fadeoutShader = DemoCore::LoadShaderProgramFromFiles("passthrough2_v.glsl", "skybox_fadeout_f.glsl");
 	fadeoutShader.Use();
 
-	gl::UniformSampler(fadeoutShader, "screenColor").Set(0);
-	gl::UniformSampler(fadeoutShader, "screenDepth").Set(1);
+	//gl::UniformSampler(fadeoutShader, "screenColor").Set(0);
+	//gl::UniformSampler(fadeoutShader, "screenDepth").Set(1);
 	gl::UniformSampler(fadeoutShader, "skyboxColor").Set(2);
 }
 
@@ -155,6 +155,8 @@ void Skybox::Draw(DemoCore& core)
 	core.PushFramebuffer();
 	glContext.Clear().DepthBuffer();
 
+	screenFB.SetColorTexName("screenColor");
+	screenFB.SetDepthTexName("screenDepth");
 	screenFB.SetShaderProgram(&fadeoutShader);
 
 	fadeoutShader.Use();

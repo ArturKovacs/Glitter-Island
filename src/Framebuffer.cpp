@@ -2,7 +2,8 @@
 
 #include "DemoCore.hpp"
 
-Framebuffer::Framebuffer(const int width, const int height) : vertexPosName("vertexPos"), pShaderProgram(nullptr)
+Framebuffer::Framebuffer(const int width, const int height) : 
+colorTexName("colorTex"), depthTexName("depthTex"), vertexPosName("vertexPos"), pShaderProgram(nullptr)
 {
 	colorTex.Bind(gl::Texture::Target::_2D);
 	gl::Texture::MinFilter(gl::Texture::Target::_2D, gl::TextureMinFilter::Linear);
@@ -68,9 +69,13 @@ const gl::Texture& Framebuffer::GetDepthTexture() const
 void Framebuffer::SetShaderProgram(const gl::Program* program)
 {
 	VAO.Bind();
+
 	pShaderProgram = program;
 
 	pShaderProgram->Use();
+
+	gl::UniformSampler(*pShaderProgram, colorTexName).Set(0);
+	gl::UniformSampler(*pShaderProgram, depthTexName).Set(1);
 
 	gl::VertexArrayAttrib attrib(*pShaderProgram, vertexPosName.c_str());
 	attrib.Setup<GLfloat>(2);
@@ -138,4 +143,14 @@ void Framebuffer::Draw(DemoCore& core)
 void Framebuffer::SetVertexPosName(const std::string& name)
 {
 	vertexPosName = name;
+}
+
+void Framebuffer::SetColorTexName(const std::string& name)
+{
+	colorTexName = name;
+}
+
+void Framebuffer::SetDepthTexName(const std::string& name)
+{
+	depthTexName = name;
 }

@@ -16,35 +16,24 @@
 #include "Skybox.hpp"
 #include "Water.hpp"
 #include "Camera.hpp"
-#include "Fog.hpp"
+#include "GUIContext.hpp"
+#include "EditorContext.hpp"
 
-class DemoCore
+class DemoCore : GUIContext
 {
 public:
-	enum class EditorTool { _FIRST = -1, NO_TOOL = 0, PAINT_FLAT_SAND, PAINT_SAND_TEXTURE, PAINT_GRASS_TEXTURE, SPAWN_GRASS_BUNCH, SPAWN_ROCK_BUNCH, PLACE_MODEL, _LAST };
-	enum class EditorToolType { NO_TOOL, PAINT, SPAWN, PLACE };
-
-	struct EditorToolInfo
-	{
-		std::int8_t id;
-		std::string description;
-	};
-
 	static const std::string shadersFolderPath;
 	static const std::string imgFolderPath;
 	static const std::string modelsFolderPath;
 
 public:
 	static gl::Program LoadShaderProgramFromFiles(const std::string& vs_name, const std::string& fs_name);
-	static EditorToolType GetToolType(EditorTool tool);
-	static EditorToolInfo GetToolInfo(EditorTool tool);
-	template<typename FuncType>
-	static void ForEachTool(FuncType func)
-	{
-		for (int i = static_cast<int>(EditorTool::_FIRST) + 1; i < static_cast<int>(EditorTool::_LAST); i++) {
-			func(static_cast<EditorTool>(i));
-		}
-	}
+
+public: //TODO These members are only made public temporarily! Make them private asap
+	sf::Font overlayFont;
+	TextDrawer textDrawer;
+	SimpleColoredDrawer simpleColoredDrawer;
+	Mesh circle;
 
 public:
 	DemoCore(sf::Window* pWindow);
@@ -63,9 +52,14 @@ public:
 
 	DirectionalLight& GetSun();
 	Camera& GetCamera();
+	Terrain& GetTerrain();
 
 	const DirectionalLight& GetSun() const;
 	const Camera& GetCamera() const;
+
+	sf::Window* GetWindow();
+
+	void SaveAll();
 
 private: // graphical state
 	int screenWidth;
@@ -87,20 +81,12 @@ private: // misc
 	sf::Clock clock;
 	double elapsedSec;
 	float currFPS;
-	sf::Font overlayFont;
-	TextDrawer textDrawer;
-	SimpleColoredDrawer simpleColoredDrawer;
-	Mesh circle;
+
+	EditorContext editorContext;
+	std::vector<GUIContext*> activeGUIStack;
 
 private: //edit mode
-	bool isInEditorMode;
-	EditorTool selectedTool;
-	gl::Vec4f pointPosAtCursor;
-	float brushRadius;
-	bool showModelSelection;
-	int howeredModelID;
-	int selectedModelID;
-	std::vector<std::string> modelFileList;
+	//Moved to context
 
 private: // demo properties, user state
 	enum class SpeedMode { NORMAL, FAST, ULTRA };
@@ -127,7 +113,7 @@ private: // scene, objects
 	Terrain terrain;
 	Skybox skybox;
 	Water water;
-	Fog fog;
+	//Fog fog;
 
 	std::vector<GraphicalObject> graphicalObjects;
 
@@ -136,24 +122,27 @@ private:
 
 	void ClearFramebufferStack();
 
+	void ContextManagerUpdate(float deltaSec);
+	void ContextManagerDraw();
+	void ContextManagerMouseWheelMoved(sf::Event::MouseWheelEvent wheelEvent);
+	void ContextManagerKeyPressed(sf::Event::KeyEvent key);
+	void ContextManagerKeyReleased(sf::Event::KeyEvent key);
+
+
 	void Resize(const int width, const int height);
-	void MouseMoved();
-	void MouseWheelMoved(sf::Event::MouseWheelEvent wheelEvent);
-	void KeyPressed(sf::Event::KeyEvent key);
-	void KeyReleased(sf::Event::KeyEvent key);
 
-	void DisplayModelSelection();
+	void EnteringContext() override;
+	void LeavingContext() override;
 
-	void UpdatePointPosAtCursor();
-	void UpdateModelFileList();
+	void MouseWheelMoved(sf::Event::MouseWheelEvent wheelEvent) override;
+	void KeyPressed(sf::Event::KeyEvent key) override;
+	void KeyReleased(sf::Event::KeyEvent key) override;
 
-	void Update(float deltaSec);
+	void Update(float deltaSec) override;
 
-	void Draw();
+	void Draw() override;
+	void DrawOverlayElements() override;
 	void DrawScene();
 	void DrawObjects();
 	void DrawEditorMode();
-	void DrawOverlay();
-
-	void SaveAll();
 };
