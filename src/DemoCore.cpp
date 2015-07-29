@@ -14,16 +14,22 @@ gl::Program DemoCore::LoadShaderProgramFromFiles(const std::string& vs_name, con
 	gl::Program result;
 
 	gl::VertexShader vs;
-	gl::GLSLSource vs_src((shadersFolderPath + vs_name).c_str(), gl::GLSLSource::FromFile_());
-	vs.Source(vs_src);
-	//vs.Source(LoadFileAsString(shadersFolderPath + vs_name));
-	vs.Compile();
+	vs.Source(Util::LoadFileAsString(shadersFolderPath + vs_name));
+	try {
+		vs.Compile();
+	}
+	catch (gl::Error& err) {
+		throw std::runtime_error(std::string(err.what()) + "\n\nIn file: " + vs_name + "\n\nLog:\n" + err.Log());
+	}
 
 	gl::FragmentShader fs;
-	gl::GLSLSource fs_src((shadersFolderPath + fs_name).c_str(), gl::GLSLSource::FromFile_());
-	fs.Source(fs_src);
-	//fs.Source(LoadFileAsString(shadersFolderPath + fs_name));
-	fs.Compile();
+	fs.Source(Util::LoadFileAsString(shadersFolderPath + fs_name));
+	try {
+		fs.Compile();
+	}
+	catch (gl::Error& err) {
+		throw std::runtime_error(std::string(err.what()) + "\n\nIn file: " + fs_name + "\n\nLog:\n" + err.Log());
+	}
 
 	result.AttachShader(vs);
 	result.AttachShader(fs);
@@ -351,11 +357,12 @@ void DemoCore::ContextManagerDraw()
 	GetCurrentFramebuffer().Bind(gl::Framebuffer::Target::Draw);
 
 	//DrawScene();
-	//TODO fix editor mode rendering
-	//for (auto current : activeGUIStack) {
-	//	current->Draw();
-	//}
-	activeGUIStack.front()->Draw();
+	for (auto current : activeGUIStack) {
+		current->Draw();
+	}
+	//activeGUIStack.front()->Draw();
+
+	simpleColoredDrawer.Draw(glContext, circle, cam.GetViewProjectionTransform(), gl::Vec4f(1, 1, 0, 1));
 
 	//draw current framebuffer to screen
 	GetCurrentFramebuffer().SetVertexPosName("vertexPos");
@@ -597,11 +604,5 @@ void DemoCore::DrawObjects()
 
 	for (auto& current : graphicalObjects) {
 		current.Draw(*this);
-	}
-
-	//TODO Fix this ugly hack!
-	auto editorContextIterator = std::find(activeGUIStack.begin(), activeGUIStack.end(), &editorContext);
-	if (editorContextIterator != activeGUIStack.end()) {
-		(*editorContextIterator)->Draw();
 	}
 }

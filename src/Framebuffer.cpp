@@ -77,7 +77,8 @@ void Framebuffer::SetShaderProgram(const gl::Program* program)
 	gl::UniformSampler(*pShaderProgram, colorTexName).Set(0);
 	gl::UniformSampler(*pShaderProgram, depthTexName).Set(1);
 
-	gl::VertexArrayAttrib attrib(*pShaderProgram, vertexPosName.c_str());
+	vertexPos.Bind(gl::Buffer::Target::Array);
+	gl::VertexArrayAttrib attrib(*pShaderProgram, vertexPosName);
 	attrib.Setup<GLfloat>(2);
 	attrib.Enable();
 }

@@ -84,9 +84,9 @@ GLsizei Mesh::GetNumOfIndices() const
 
 void Mesh::AttachVertexAttribute(const AttributeCategory targetAttribute, const gl::Program& shaderProgram, const std::string& nameInShader) const
 {
-	VAO.Bind();
 	const auto& attributeContainer = vertexAttributes.at(targetAttribute);
 
+	VAO.Bind();
 	attributeContainer.buffer.Bind(gl::Buffer::Target::Array);
 	gl::VertexArrayAttrib attribute(shaderProgram, nameInShader);
 	attribute.Setup<GLfloat>(attributeContainer.elementDimension);

@@ -4,19 +4,21 @@
 #include "DemoCore.hpp"
 #include "Utility.hpp"
 
+void CustomPause()
+{
+#if defined(_WIN32)
+	system("PAUSE");
+#endif
+}
+
+std::string ToPrintable(const char* c_str)
+{
+	return c_str == nullptr ? "" : c_str;
+}
+
 int main()
 {
 	try {
-		//TEST
-		auto test = Util::GetFileNamesInDirectory("../models/");
-
-		for (auto& current : test) {
-			std::cout << current << std::endl;
-		}
-
-		std::cout << "---" << std::endl;
-
-
 		sf::Window window(sf::VideoMode(800, 600), "Loading", sf::Style::Default, sf::ContextSettings(24));
 
 		///////////////////////////////////////////////
@@ -42,20 +44,23 @@ int main()
 	catch (gl::Error& err) {
 		std::cout << std::endl << "Exception: " << std::endl;
 		std::cout << err.what() << std::endl;
-		std::cout << "File: " << (err.SourceFile() == nullptr ? "" : err.SourceFile()) << std::endl;
-		std::cout << "Line: " << err.SourceLine() << std::endl;
+		std::cout << "Target name: " << ToPrintable(err.TargetName()) << std::endl;
+		std::cout << "Identifier: " << ToPrintable(err.Identifier()) << std::endl;
+		std::cout << "Subj desc: " << err.SubjectDesc() << std::endl;
+		std::cout << "Obj desc: " << err.ObjectDesc() << std::endl;
+		std::cout << std::endl;
 		std::cout << "Log:" << std::endl;
 		std::cout << err.Log() << std::endl;
-		system("PAUSE");
+		CustomPause();
 	}
 	catch (std::runtime_error& ex) {
 		std::cout << std::endl << "Exception: " << std::endl;
 		std::cout << ex.what() << std::endl;
-		system("PAUSE");
+		CustomPause();
 	}
 	catch (...) {
 		std::cout << "Uknown exception occured!" << std::endl;
-		system("PAUSE");
+		CustomPause();
 	}
 
 	return EXIT_FAILURE;
