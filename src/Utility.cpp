@@ -1,12 +1,15 @@
 #include "Utility.hpp"
 
+#include <stdexcept>
+#include <string>
+
 #if defined(_WIN32)
 #include <windows.h>
 #else
 #include <dirent.h>
 #endif
 
-namespace Util
+namespace util
 {
 	std::string LoadFileAsString(const std::string& filename)
 	{
@@ -79,19 +82,27 @@ namespace Util
 		return result;
 
 		#else
-
-		static_assert(false, "This is an intentionnal compiler error, signaling that this part of the code is still undone.");
-		
-		//TODO !!!!!!!!
+                
+		std::vector<std::string> result;
+                
 		DIR* dirp = opendir(dirPath.c_str());
-		while ((dp = readdir(dirp)) != NULL) {
-			if (dp->d_namlen == len && !strcmp(dp->d_name, name)) {
-				(void)closedir(dirp);
-				return FOUND;
+                
+		if (dirp != NULL) {
+			dirent* ent;
+			while ((ent = readdir(dirp)) != NULL) {
+				//if it is a regular file
+				if (ent->d_type == DT_REG) {
+					result.push_back(std::move(std::string(ent->d_name)));
+				}
 			}
+
+			closedir(dirp);
 		}
-		(void)closedir(dirp);
-		return NOT_FOUND;
+		else {
+			throw std::runtime_error("Could not open target directory!");
+		}
+
+		return result;
 
 		#endif
 	}

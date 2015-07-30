@@ -14,7 +14,7 @@ gl::Program DemoCore::LoadShaderProgramFromFiles(const std::string& vs_name, con
 	gl::Program result;
 
 	gl::VertexShader vs;
-	vs.Source(Util::LoadFileAsString(shadersFolderPath + vs_name));
+	vs.Source(util::LoadFileAsString(shadersFolderPath + vs_name));
 	try {
 		vs.Compile();
 	}
@@ -23,7 +23,7 @@ gl::Program DemoCore::LoadShaderProgramFromFiles(const std::string& vs_name, con
 	}
 
 	gl::FragmentShader fs;
-	fs.Source(Util::LoadFileAsString(shadersFolderPath + fs_name));
+	fs.Source(util::LoadFileAsString(shadersFolderPath + fs_name));
 	try {
 		fs.Compile();
 	}
@@ -417,6 +417,26 @@ void DemoCore::ContextManagerKeyReleased(sf::Event::KeyEvent key)
 	}
 }
 
+void DemoCore::PassKeyPressed(GUIContext* sourceContext, sf::Event::KeyEvent key)
+{
+	auto iterator = std::find(activeGUIStack.begin(), activeGUIStack.end(), sourceContext);
+	
+	if (iterator != activeGUIStack.end() && iterator != activeGUIStack.begin()) {
+		iterator--;
+		(*iterator)->KeyPressed(key);
+	}
+}
+
+void DemoCore::PassKeyReleased(GUIContext* sourceContext, sf::Event::KeyEvent key)
+{
+	auto iterator = std::find(activeGUIStack.begin(), activeGUIStack.end(), sourceContext);
+	
+	if (iterator != activeGUIStack.end() && iterator != activeGUIStack.begin()) {
+		iterator--;
+		(*iterator)->KeyReleased(key);
+	}
+}
+
 void DemoCore::Resize(const int width, const int height)
 {
 	screenWidth = width;
@@ -581,7 +601,7 @@ void DemoCore::Draw()
 	water.Draw(*this);
 
 	//(TODO) WARNING: Drawing Skybox twice! It's only purpose is to make water fade out.
-	//Please note that drawing skybox ONLY after water is not a good souliton, beacuse without a skybox behind water, it will refract black background making distant water black.
+	//Please note that drawing skybox ONLY after water is not a good solution, because without a skybox behind water, it will refract black background making distant water black.
 	skybox.Draw(*this);
 }
 

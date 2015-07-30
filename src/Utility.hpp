@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace Util
+namespace util
 {
 
 	/**

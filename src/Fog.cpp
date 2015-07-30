@@ -6,12 +6,12 @@
 Fog::Fog()
 {
 	gl::VertexShader vs;
-	vs.Source(Util::LoadFileAsString(DemoCore::shadersFolderPath + "fog_v.glsl"));
+	vs.Source(util::LoadFileAsString(DemoCore::shadersFolderPath + "fog_v.glsl"));
 	vs.Compile();
 	shaderProgram.AttachShader(vs);
 
 	gl::FragmentShader fs;
-	fs.Source(Util::LoadFileAsString(DemoCore::shadersFolderPath + "fog_f.glsl"));
+	fs.Source(util::LoadFileAsString(DemoCore::shadersFolderPath + "fog_f.glsl"));
 	fs.Compile();
 	shaderProgram.AttachShader(fs);
 

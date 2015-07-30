@@ -127,7 +127,9 @@ private:
 	void ContextManagerMouseWheelMoved(sf::Event::MouseWheelEvent wheelEvent);
 	void ContextManagerKeyPressed(sf::Event::KeyEvent key);
 	void ContextManagerKeyReleased(sf::Event::KeyEvent key);
-
+        
+        void PassKeyPressed(GUIContext* sourceContext, sf::Event::KeyEvent key);
+        void PassKeyReleased(GUIContext* sourceContext, sf::Event::KeyEvent key);
 
 	void Resize(const int width, const int height);
 

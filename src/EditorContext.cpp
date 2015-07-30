@@ -308,7 +308,7 @@ void EditorContext::DrawOverlayElements()
 void EditorContext::UpdateModelFileList()
 {
 	// Find all model files in models directory
-	auto tmpList = Util::GetFileNamesInDirectory("../models");
+	auto tmpList = util::GetFileNamesInDirectory("../models");
 
 	modelFileList.clear();
 
