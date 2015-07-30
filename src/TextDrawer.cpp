@@ -132,41 +132,12 @@ void TextDrawer::DrawBackground(gl::Context& glContext, const sf::Text& text, co
 	bgRect.top = -border;
 	bgRect.left = -border;
 
-	std::string string = text.getString().toAnsiString();
-	std::vector<sf::String> lines;
-
-	std::size_t prevLineEnd = 0;
-	std::size_t currLineEnd;
-
-	while ((currLineEnd = string.find('\n', prevLineEnd)) != std::string::npos ) {
-		lines.push_back(string.substr(prevLineEnd, currLineEnd-prevLineEnd));
-		prevLineEnd = currLineEnd+1;
-	}
-
-	const sf::Uint32 endPos = string.size();
-	if (prevLineEnd != endPos) {
-		lines.push_back(string.substr(prevLineEnd, endPos-prevLineEnd));
-	}
-
 	unsigned int charSize = text.getCharacterSize();
-	bool bold = (text.getStyle() & sf::Text::Bold) != 0;
 
-	float maxWidth = 0;
-	for (const auto& currLine : lines) {
-		float widthAccumulator = 0;
-		sf::Uint32 prevChar = 0;
-		for (const auto currChar : currLine) {
-			const auto& glyph = text.getFont()->getGlyph(currChar, charSize, bold);
-			widthAccumulator += text.getFont()->getKerning(prevChar, currChar, charSize);
-			widthAccumulator += glyph.advance;
-			prevChar = currChar;
-		}
-
-		maxWidth = std::max(maxWidth, widthAccumulator);
-	}
+	float maxWidth = GetTextWidth(text);
 
 	const float lineSpacing = GetLineSpacing(*text.getFont(), charSize);
-	bgRect.height = lines.size() * (charSize + lineSpacing) - lineSpacing + 2*border;
+	bgRect.height = GetTextHeight(text) + 2*border;
 	bgRect.width = maxWidth + 2*border;
 
 	const float* ptr = text.getTransform().getMatrix();
@@ -216,6 +187,55 @@ void TextDrawer::DrawAsList(gl::Context& glContext, const sf::Text& text, const 
 	textToDraw.setString(highlightedOnly);
 	textToDraw.setColor(highlightedColor);
 	Draw(glContext, textToDraw);
+}
+
+float TextDrawer::GetTextWidth(const sf::Text& text)
+{
+	const sf::String& str = text.getString();
+
+	unsigned int charSize = text.getCharacterSize();
+	bool bold = (text.getStyle() & sf::Text::Bold) != 0;
+
+	sf::Uint32 prevChar = 0;
+	float maxWidth = 0;
+	float widthAccumulator = 0;
+	for (auto currChar : str) {
+		if (currChar == (unsigned int)'\n') {
+			maxWidth = std::max(maxWidth, widthAccumulator);
+			widthAccumulator = 0;
+			prevChar = 0;
+		}
+		else {
+			const auto& glyph = text.getFont()->getGlyph(currChar, charSize, bold);
+			widthAccumulator += text.getFont()->getKerning(prevChar, currChar, charSize);
+			widthAccumulator += glyph.advance;
+			prevChar = currChar;
+		}
+	}
+
+	maxWidth = std::max(maxWidth, widthAccumulator);
+
+	return maxWidth;
+}
+
+float TextDrawer::GetTextHeight(const sf::Text& text)
+{
+	const sf::String& str = text.getString();
+
+	if (str.getSize() == 0) {
+		return 0;
+	}
+
+	int lineCount = 1;
+	for (auto currChar : str) {
+		if (currChar == (unsigned int)'\n') {
+			lineCount++;
+		}
+	}
+
+	int charSize = text.getCharacterSize();
+	float lineSpacing = GetLineSpacing(*text.getFont(), charSize);
+	return (lineCount * (charSize + lineSpacing)) - lineSpacing;
 }
 
 float TextDrawer::GetLineSpacing(const sf::Font& font, unsigned int characterSize)

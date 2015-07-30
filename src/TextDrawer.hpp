@@ -9,6 +9,10 @@
 class TextDrawer
 {
 public:
+	static float GetTextWidth(const sf::Text& text);
+	static float GetTextHeight(const sf::Text& text);
+
+public:
 	TextDrawer();
 
 	void SetScreenResolution(gl::Vec2i res);
