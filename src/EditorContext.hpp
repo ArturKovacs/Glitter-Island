@@ -2,6 +2,10 @@
 
 #include "GUIContext.hpp"
 
+
+//WARNING assuming that model selection won't include this file!
+#include "ModelSelectionContext.hpp"
+
 class EditorContext : public GUIContext
 {
 public:
@@ -26,12 +30,10 @@ public:
 	}
 
 public:
-	EditorContext(DemoCore* pDemoCore);
+	EditorContext(ContextManager* pContextManager, DemoCore* pDemoCore);
 	~EditorContext();
 
-	void MouseWheelMoved(sf::Event::MouseWheelEvent wheelEvent) override;
-	void KeyPressed(sf::Event::KeyEvent key) override;
-	void KeyReleased(sf::Event::KeyEvent key) override;
+	void HandleWindowEvent(const sf::Event& event) override;
 
 	void EnteringContext() override;
 	void LeavingContext() override;
@@ -45,12 +47,11 @@ private:
 	EditorTool selectedTool;
 	gl::Vec4f pointPosAtCursor;
 	float brushRadius;
-	bool showModelSelection;
-	int howeredModelID;
-	int selectedModelID;
-	std::vector<std::string> modelFileList;
+	//bool showModelSelection;
+
+	ModelSelectionContext modelSelectionContext;
 
 private:
-	void UpdateModelFileList();
+	void KeyPressed(const sf::Event& event);
 	void UpdatePointPosAtCursor();
 };

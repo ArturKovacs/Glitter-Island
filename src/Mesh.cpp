@@ -107,7 +107,6 @@ Mesh Mesh::GenerateTriangle(float size)
 		size, 0.0f, 0.0f,
 		0.0f, size, 0.0f
 	};
-
 	result.SetVertexAttributeBuffer(AttributeCategory::POSITION, vertexPos);
 
 	std::vector<GLfloat> vertexNormal = {
@@ -115,11 +114,9 @@ Mesh Mesh::GenerateTriangle(float size)
 		0.0f, 0.0f, -1.0f,
 		0.0f, 0.0f, -1.0f
 	};
-
 	result.SetVertexAttributeBuffer(AttributeCategory::NORMAL, vertexNormal);
 
 	std::vector<IndexType> indexData = {0, 1, 2};
-
 	result.SetIndices(indexData);
 
 	result.SetPrimitiveType(gl::enums::PrimitiveType::Triangles);
@@ -132,24 +129,50 @@ Mesh Mesh::GenerateCircle(float radius, int resolution)
 	Mesh result;
 
 	std::vector<gl::Vec2f> vertexPosData(resolution);
-
 	for (int i = 0; i < resolution; i++) {
 		float currAngle = (float(i)/resolution)*2*gl::math::Pi();
 		vertexPosData.at(i) = gl::Vec2f(std::cos(currAngle)*radius, std::sin(currAngle)*radius);
 	}
-
 	result.SetVertexAttributeElementDimensions(AttributeCategory::POSITION, 2);
 	result.SetVertexAttributeBuffer(AttributeCategory::POSITION, vertexPosData);
 
 	std::vector<IndexType> indexData(resolution);
-
 	for (int i = 0; i < resolution; i++) {
 		indexData.at(i) = i;
 	}
 	result.SetIndices(indexData);
 
-	//result.SetPrimitiveType(gl::enums::PrimitiveType::Triangles);
 	result.SetPrimitiveType(gl::enums::PrimitiveType::LineLoop);
+
+	return std::move(result);
+}
+
+Mesh Mesh::GenerateRectangle(float sizeX, float sizeY)
+{
+	Mesh result;
+
+	std::vector<gl::Vec2f> vertexPos = {
+		gl::Vec2f(-sizeX*0.5f, -sizeY*0.5f),
+		gl::Vec2f(+sizeX*0.5f, -sizeY*0.5f),
+		gl::Vec2f(+sizeX*0.5f, +sizeY*0.5f),
+		gl::Vec2f(-sizeX*0.5f, +sizeY*0.5f),
+	};
+	result.SetVertexAttributeBuffer(AttributeCategory::POSITION, vertexPos);
+	result.SetVertexAttributeElementDimensions(AttributeCategory::POSITION, 2);
+
+	std::vector<gl::Vec3f> vertexNormal = {
+		gl::Vec3f(0, 0, 1),
+		gl::Vec3f(0, 0, 1),
+		gl::Vec3f(0, 0, 1),
+		gl::Vec3f(0, 0, 1),
+	};
+	result.SetVertexAttributeBuffer(AttributeCategory::NORMAL, vertexNormal);
+	result.SetVertexAttributeElementDimensions(AttributeCategory::NORMAL, 3);
+
+	std::vector<IndexType> indexData = {0, 1, 2, 3};
+	result.SetIndices(indexData);
+
+	result.SetPrimitiveType(gl::enums::PrimitiveType::TriangleFan);
 
 	return std::move(result);
 }

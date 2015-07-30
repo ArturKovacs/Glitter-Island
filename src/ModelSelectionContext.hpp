@@ -2,19 +2,30 @@
 
 #include "GUIContext.hpp"
 
+#include "Mesh.hpp"
+
 class ModelSelectionContext : public GUIContext
 {
 public:
-	ModelSelectionContext(DemoCore* pDemoCore);
+	ModelSelectionContext(ContextManager* pContextManager, DemoCore* pDemoCore);
 	~ModelSelectionContext();
 
-	void MouseWheelMoved(sf::Event::MouseWheelEvent wheelEvent) override;
-	void KeyPressed(sf::Event::KeyEvent key) override;
-	void KeyReleased(sf::Event::KeyEvent key) override;
+	void HandleWindowEvent(const sf::Event& event) override;
 
 	void EnteringContext() override;
 	void LeavingContext() override;
 
-	void Update(float deltaTime) override;
+	void Update(float deltaSec) override;
 	void Draw() override;
+	void DrawOverlayElements() override;
+
+private:
+	Mesh screenRectangle;
+
+	int howeredModelID;
+	int selectedModelID;
+	std::vector<std::string> modelFileList;
+
+private:
+	void UpdateModelFileList();
 };

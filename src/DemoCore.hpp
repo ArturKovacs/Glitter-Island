@@ -16,10 +16,13 @@
 #include "Skybox.hpp"
 #include "Water.hpp"
 #include "Camera.hpp"
-#include "GUIContext.hpp"
+//#include "GUIContext.hpp"
+#include "BaseDemoContext.hpp"
 #include "EditorContext.hpp"
+#include "ContextManager.hpp"
 
-class DemoCore : GUIContext
+//TODO move this context to base demo context
+class DemoCore
 {
 public:
 	static const std::string shadersFolderPath;
@@ -39,6 +42,7 @@ public:
 	DemoCore(sf::Window* pWindow);
 
 	int Start();
+	void Stop();
 
 	void PushFramebuffer();
 	void PopFramebuffer();
@@ -53,9 +57,10 @@ public:
 	DirectionalLight& GetSun();
 	Camera& GetCamera();
 	Terrain& GetTerrain();
+	float GetMouseSensitivity();
 
-	const DirectionalLight& GetSun() const;
-	const Camera& GetCamera() const;
+	//const DirectionalLight& GetSun() const;
+	//const Camera& GetCamera() const;
 
 	sf::Window* GetWindow();
 
@@ -81,70 +86,20 @@ private: // misc
 	sf::Clock clock;
 	double elapsedSec;
 	float currFPS;
-
-	EditorContext editorContext;
-	std::vector<GUIContext*> activeGUIStack;
-
-private: //edit mode
-	//Moved to context
-
-private: // demo properties, user state
-	enum class SpeedMode { NORMAL, FAST, ULTRA };
+	ContextManager contextManager;
+	BaseDemoContext baseDemoContext;
 
 	const float mouseSensitivity;
-	const float camSpeed;
-	const float fastSpeedMultiplyer;
-	const float ultraSpeedMultiplyer;
-	SpeedMode currentSpeedMode;
-
-	bool wireframeModeEnabled;
-
-	bool isTrackingMouse;
-	float forwardMovement;
-	float rightMovement;
-
-private: // scene, objects
-	const float waterLevel;
-	const float terrainSize;
-
-	DirectionalLight sun;
 	Camera cam;
 
-	Terrain terrain;
-	Skybox skybox;
-	Water water;
-	//Fog fog;
-
-	std::vector<GraphicalObject> graphicalObjects;
-
 private:
-	float GetCurrentSpeed() const;
-
 	void ClearFramebufferStack();
 
-	void ContextManagerUpdate(float deltaSec);
-	void ContextManagerDraw();
-	void ContextManagerMouseWheelMoved(sf::Event::MouseWheelEvent wheelEvent);
-	void ContextManagerKeyPressed(sf::Event::KeyEvent key);
-	void ContextManagerKeyReleased(sf::Event::KeyEvent key);
-        
-        void PassKeyPressed(GUIContext* sourceContext, sf::Event::KeyEvent key);
-        void PassKeyReleased(GUIContext* sourceContext, sf::Event::KeyEvent key);
+	void CoreDraw();
+
+	//void ContextManagerMouseWheelMoved(sf::Event::MouseWheelEvent wheelEvent);
+	//void ContextManagerKeyPressed(sf::Event::KeyEvent key);
+	//void ContextManagerKeyReleased(sf::Event::KeyEvent key);
 
 	void Resize(const int width, const int height);
-
-	void EnteringContext() override;
-	void LeavingContext() override;
-
-	void MouseWheelMoved(sf::Event::MouseWheelEvent wheelEvent) override;
-	void KeyPressed(sf::Event::KeyEvent key) override;
-	void KeyReleased(sf::Event::KeyEvent key) override;
-
-	void Update(float deltaSec) override;
-
-	void Draw() override;
-	void DrawOverlayElements() override;
-	void DrawScene();
-	void DrawObjects();
-	void DrawEditorMode();
 };

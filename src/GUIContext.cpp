@@ -1,8 +1,9 @@
 #include "GUIContext.hpp"
 
+#include "ContextManager.hpp"
 #include "DemoCore.hpp"
 
-GUIContext::GUIContext(DemoCore* pDemoCore) : pDemoCore(pDemoCore), requireFocus(false)
+GUIContext::GUIContext(ContextManager* pContextManager, DemoCore* pDemoCore) : pContextManager(pContextManager), pDemoCore(pDemoCore), requireFocus(false)
 {}
 
 GUIContext::~GUIContext()

@@ -3,20 +3,19 @@
 #include "all_gl_headers.hpp"
 #include <SFML/Window.hpp>
 
+class ContextManager;
 class DemoCore;
 
 class GUIContext
 {
 public:
-	GUIContext(DemoCore* pDemoCore);
+	GUIContext(ContextManager* pContextManager, DemoCore* pDemoCore);
 	virtual ~GUIContext();
 
 	virtual void EnteringContext() = 0;
 	virtual void LeavingContext() = 0;
 
-	virtual void MouseWheelMoved(sf::Event::MouseWheelEvent wheelEvent) = 0;
-	virtual void KeyPressed(sf::Event::KeyEvent key) = 0;
-	virtual void KeyReleased(sf::Event::KeyEvent key) = 0;
+	virtual void HandleWindowEvent(const sf::Event& event) = 0;
 
 	virtual void Update(float deltaSec) = 0;
 	virtual void Draw() = 0;
@@ -26,6 +25,7 @@ public:
 	bool GetRequireFocus() const;
 
 protected:
+	ContextManager* pContextManager;
 	DemoCore* pDemoCore;
 	bool requireFocus;
 };

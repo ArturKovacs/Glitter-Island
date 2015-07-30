@@ -35,6 +35,7 @@ public:
 
 	static Mesh GenerateTriangle(float size);
 	static Mesh GenerateCircle(float radius, int resolution);
+	static Mesh GenerateRectangle(float sizeX, float sizeY);
 
 private:
 	struct VertexAttributeContainer

@@ -68,22 +68,19 @@ EditorContext::EditorToolInfo EditorContext::GetToolInfo(EditorContext::EditorTo
 	return result;
 }
 
-EditorContext::EditorContext(DemoCore* pDemoCore) : 
-GUIContext(pDemoCore),
-selectedTool(EditorTool::NO_TOOL), brushRadius(1), showModelSelection(false), howeredModelID(0), selectedModelID(0)
+EditorContext::EditorContext(ContextManager* pContextManager, DemoCore* pDemoCore) : 
+GUIContext(pContextManager, pDemoCore),
+modelSelectionContext(pContextManager, pDemoCore),
+selectedTool(EditorTool::NO_TOOL), brushRadius(1)
 {}
 
 EditorContext::~EditorContext()
 {}
 
-void EditorContext::MouseWheelMoved(sf::Event::MouseWheelEvent wheelEvent)
+void EditorContext::KeyPressed(const sf::Event& event)
 {
-	brushRadius += -wheelEvent.delta*0.5;
-	brushRadius = std::max(brushRadius, 0.5f);
-}
+	const sf::Event::KeyEvent& key = event.key;
 
-void EditorContext::KeyPressed(sf::Event::KeyEvent key)
-{
 	switch (key.code) {
 	case sf::Keyboard::Num0:
 		selectedTool = EditorTool::NO_TOOL;
@@ -105,9 +102,10 @@ void EditorContext::KeyPressed(sf::Event::KeyEvent key)
 		break;
 	case sf::Keyboard::Num6:
 		selectedTool = EditorTool::PLACE_MODEL;
-		showModelSelection = true;
-		howeredModelID = selectedModelID;
-		UpdateModelFileList();
+		//showModelSelection = true;
+		//howeredModelID = selectedModelID;
+		pContextManager->PushContext(&modelSelectionContext);
+		//UpdateModelFileList();
 		break;
 	case sf::Keyboard::Add:
 		brushRadius += 4.0f;
@@ -121,40 +119,39 @@ void EditorContext::KeyPressed(sf::Event::KeyEvent key)
 		pDemoCore->SaveAll();
 		break;
 
+	case sf::Keyboard::E:
+		if (pContextManager->GetTopContext() == this) {
+			pContextManager->PopContext();
+		}
+		break;
+
 	default:
+		pContextManager->PassEvent(this, event);
 		break;
 	}
 
-	if (showModelSelection) {
-		switch (key.code) {
-		case sf::Keyboard::Up:
-			howeredModelID--;
-			howeredModelID = std::max(howeredModelID, 0);
-			break;
-		case sf::Keyboard::Down:
-			howeredModelID++;
-			howeredModelID = std::min<int>(howeredModelID, modelFileList.size()-1);
-			break;
-		case sf::Keyboard::Return:
-			showModelSelection = false;
-			selectedModelID = howeredModelID;
-			break;
-		default:
-			break;
-		}
+	//show model selection
+}
+
+void EditorContext::HandleWindowEvent(const sf::Event& event)
+{
+	if (event.type == sf::Event::MouseWheelMoved) {
+		brushRadius += -event.mouseWheel.delta*0.5;
+		brushRadius = std::max(brushRadius, 0.5f);
+	}
+	else if (event.type == sf::Event::KeyPressed) {
+		KeyPressed(event);
+	}
+	else {
+		pContextManager->PassEvent(this, event);
 	}
 }
 
-void EditorContext::KeyReleased(sf::Event::KeyEvent key)
+void EditorContext::EnteringContext() 
 {}
 
-void EditorContext::EnteringContext() 
-{
-}
-
 void EditorContext::LeavingContext()
-{
-}
+{}
 
 void EditorContext::Update(float deltaSec) 
 {
@@ -256,11 +253,6 @@ void EditorContext::DrawOverlayElements()
 	gl::Context& glContext = pDemoCore->GetGLContext();
 
 	//TODO move overlay rendering to Core! Other obejcts should only be able to add overlay elements to core - review this statement!! -
-	//glContext.Clear().DepthBuffer();
-	glContext.Disable(gl::Capability::DepthTest);
-	glContext.PolygonMode(gl::enums::Face::FrontAndBack, gl::PolygonMode::Fill);
-	glContext.Enable(gl::Capability::Blend);
-	glContext.BlendFunc(gl::BlendFunction::SrcAlpha, gl::BlendFunction::OneMinusSrcAlpha);
 
 	sf::Text text("-Editor mode-", pDemoCore->overlayFont);
 	text.setPosition(sf::Vector2f(30, 25));
@@ -284,43 +276,9 @@ void EditorContext::DrawOverlayElements()
 	pDemoCore->textDrawer.DrawBackground(glContext, text, sf::Color(100, 100, 100, 150), 5);
 	pDemoCore->textDrawer.DrawAsList(glContext, text, GetToolInfo(selectedTool).id+1, sf::Color::Cyan);
 
-	if (showModelSelection) {
-		const int columnElementCount = 15;
-
-		std::string visibleList;
-
-		const int listFirstElementID = howeredModelID - howeredModelID % columnElementCount;
-
-		for (int i = 0; i < columnElementCount && (listFirstElementID + i < modelFileList.size()); i++) {
-			visibleList += modelFileList.at(listFirstElementID + i) + '\n';
-		}
-		visibleList.pop_back();
-
-		text.setString(visibleList);
-		text.setPosition(300, 50);
-		pDemoCore->textDrawer.DrawBackground(glContext, text, sf::Color(100, 100, 100, 150), 5);
-		pDemoCore->textDrawer.DrawAsList(glContext, text, howeredModelID-listFirstElementID, sf::Color::Cyan);
-	}
-
-	glContext.Disable(gl::Capability::Blend);
-}
-
-void EditorContext::UpdateModelFileList()
-{
-	// Find all model files in models directory
-	auto tmpList = util::GetFileNamesInDirectory("../models");
-
-	modelFileList.clear();
-
-	// only keep supported model files!
-	for (int i = 0; i < tmpList.size(); i++) {
-		const auto& current = tmpList[i];
-		const std::string extention = ".obj";
-		const bool correctExtension = current.rfind(extention) == current.length() - extention.length();
-		if (correctExtension) {
-			modelFileList.push_back(current);
-		}
-	}
+	//if (showModelSelection) {
+		//moved
+	//}
 }
 
 void EditorContext::UpdatePointPosAtCursor()
