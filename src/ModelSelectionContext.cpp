@@ -57,6 +57,11 @@ void ModelSelectionContext::HandleWindowEvent(const sf::Event& event)
 void ModelSelectionContext::EnteringContext() 
 {
 	UpdateModelFileList();
+	if (selectedModelID >= modelFileList.size()) {
+		selectedModelID = 0;
+	}
+	
+	howeredModelID = selectedModelID;
 }
 
 void ModelSelectionContext::LeavingContext()
@@ -89,11 +94,11 @@ void ModelSelectionContext::DrawOverlayElements()
 		visibleList.pop_back(); // Remove last line feed
 
 		sf::Text text(visibleList, pDemoCore->overlayFont);
-		text.setCharacterSize(20);
+		text.setCharacterSize(16);
 
 		text.setPosition(300, 50);
-		pDemoCore->textDrawer.DrawBackground(glContext, text, sf::Color(100, 100, 100, 200), 5);
-		pDemoCore->textDrawer.DrawAsList(glContext, text, howeredModelID - listFirstElementID, sf::Color::Blue);
+		pDemoCore->textDrawer.DrawBackground(glContext, text, sf::Color(100, 100, 100, 255), 5);
+		pDemoCore->textDrawer.DrawAsList(glContext, text, howeredModelID - listFirstElementID, sf::Color::Magenta);
 	}
 }
 

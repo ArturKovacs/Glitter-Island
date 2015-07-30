@@ -235,16 +235,13 @@ void EditorContext::Draw()
 			pDemoCore->GetCamera().GetViewProjectionTransform() *
 			ModelMatf::Translation(pointPosAtCursor.xyz()) *
 			ModelMatf::Scale(meshScale, meshScale, meshScale) *
-			//ModelMatf::RotationY(gl::Radians<float>(gl::math::Pi()*0.25)) *
 			ModelMatf::RotationX(gl::Radians<float>(gl::math::Pi()*0.5));
 
-		//glContext.Disable(gl::Capability::CullFace);
 		glContext.Disable(gl::Capability::DepthTest);
 		glContext.LineWidth(2);
 		pDemoCore->simpleColoredDrawer.Draw(glContext, pDemoCore->circle, MVP, gl::Vec4f(1, 0.1, 0.5, 1));
 		glContext.LineWidth(1);
 		glContext.Enable(gl::Capability::DepthTest);
-		//glContext.Enable(gl::Capability::CullFace);
 	}
 }
 
@@ -272,13 +269,9 @@ void EditorContext::DrawOverlayElements()
 	text.setPosition(sf::Vector2f(2, 100));
 	text.setCharacterSize(16);
 	text.setStyle(sf::Text::Regular);
-	text.setColor(sf::Color::Yellow);
+	text.setColor(sf::Color::White);
 	pDemoCore->textDrawer.DrawBackground(glContext, text, sf::Color(100, 100, 100, 150), 5);
 	pDemoCore->textDrawer.DrawAsList(glContext, text, GetToolInfo(selectedTool).id+1, sf::Color::Cyan);
-
-	//if (showModelSelection) {
-		//moved
-	//}
 }
 
 void EditorContext::UpdatePointPosAtCursor()

@@ -82,8 +82,14 @@ void TextDrawer::Draw(gl::Context& glContext, const sf::Text& text)
 	const sf::Color& color = text.getColor();
 	sh_char_characterColor.Set(gl::Vec4f(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f));
 
-	sf::Vector2f startPos = text.getPosition();
-	sf::Vector2f charPos = sf::Vector2f(0, characterSize);
+	const float* ptr = text.getTransform().getMatrix();
+	gl::Mat4f baseTransform = gl::Mat4f(
+		ptr[0], ptr[4], ptr[8], ptr[12],
+		ptr[1], ptr[5], ptr[9], ptr[13],
+		ptr[2], ptr[6], ptr[10], ptr[14],
+		ptr[3], ptr[7], ptr[11], ptr[15]);
+
+	sf::Vector2f charOffset = sf::Vector2f(0, characterSize);
 
 	const sf::String& string = text.getString();
 
@@ -91,18 +97,18 @@ void TextDrawer::Draw(gl::Context& glContext, const sf::Text& text)
 	for (auto currChar : string) {
 
 		if (currChar == L'\n') {
-			charPos.y += characterSize + GetLineSpacing(font, characterSize);
-			charPos.x = 0;
+			charOffset.y += characterSize + GetLineSpacing(font, characterSize);
+			charOffset.x = 0;
 			prevChar = 0;
 		}
 		else {
-			charPos.x += font.getKerning(prevChar, currChar, characterSize);
+			charOffset.x += font.getKerning(prevChar, currChar, characterSize);
 			prevChar = currChar;
 
 			sf::Glyph glyph = font.getGlyph(currChar, characterSize, (text.getStyle() & sf::Text::Bold) != 0);
 
-			sf::Vector2f absolutePos = startPos + charPos + sf::Vector2f(glyph.bounds.left, glyph.bounds.top);
-			gl::Mat4f MVP = projectionMatrix * gl::ModelMatrixf::Translation(absolutePos.x, absolutePos.y, 0) * gl::ModelMatrixf::Scale(glyph.textureRect.width, glyph.textureRect.height, 0);
+			sf::Vector2f charPos = charOffset + sf::Vector2f(glyph.bounds.left, glyph.bounds.top);
+			gl::Mat4f MVP = projectionMatrix * baseTransform * gl::ModelMatrixf::Translation(charPos.x, charPos.y, 0) * gl::ModelMatrixf::Scale(glyph.textureRect.width, glyph.textureRect.height, 0);
 			sh_char_MVP.Set(MVP);
 
 			gl::Vec2f texCoordsMin(float(glyph.textureRect.left) / fontTexture.getSize().x, float(glyph.textureRect.top) / fontTexture.getSize().y);
@@ -114,7 +120,7 @@ void TextDrawer::Draw(gl::Context& glContext, const sf::Text& text)
 			//glContext.Disable(gl::Capability::CullFace);
 			glContext.DrawElements(quadMesh.GetPrimitiveType(), quadMesh.GetNumOfIndices(), quadMesh.indexTypeEnum);
 
-			charPos.x += glyph.advance;
+			charOffset.x += glyph.advance;
 		}
 	}
 }
@@ -123,8 +129,8 @@ void TextDrawer::DrawBackground(gl::Context& glContext, const sf::Text& text, co
 {
 	sf::IntRect bgRect;
 
-	bgRect.top = text.getPosition().y - border;
-	bgRect.left = text.getPosition().x - border;
+	bgRect.top = -border;
+	bgRect.left = -border;
 
 	std::string string = text.getString().toAnsiString();
 	std::vector<sf::String> lines;
@@ -163,9 +169,16 @@ void TextDrawer::DrawBackground(gl::Context& glContext, const sf::Text& text, co
 	bgRect.height = lines.size() * (charSize + lineSpacing) - lineSpacing + 2*border;
 	bgRect.width = maxWidth + 2*border;
 
+	const float* ptr = text.getTransform().getMatrix();
+	gl::Mat4f baseTransform = gl::Mat4f(
+		ptr[0], ptr[4], ptr[8], ptr[12],
+		ptr[1], ptr[5], ptr[9], ptr[13],
+		ptr[2], ptr[6], ptr[10], ptr[14],
+		ptr[3], ptr[7], ptr[11], ptr[15]);
+
 	backgroundShader.Use();
 
-	gl::Mat4f MVP = projectionMatrix * gl::ModelMatrixf::Translation(bgRect.left, bgRect.top, 0) * gl::ModelMatrixf::Scale(bgRect.width, bgRect.height, 0);
+	gl::Mat4f MVP = projectionMatrix * baseTransform * gl::ModelMatrixf::Translation(bgRect.left, bgRect.top, 0) * gl::ModelMatrixf::Scale(bgRect.width, bgRect.height, 0);
 	sh_bg_MVP.Set(MVP);
 
 	sh_bg_color.Set(gl::Vec4f(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f));
@@ -176,73 +189,33 @@ void TextDrawer::DrawBackground(gl::Context& glContext, const sf::Text& text, co
 
 void TextDrawer::DrawAsList(gl::Context& glContext, const sf::Text& text, const int highlightedRowID, const sf::Color& highlightedColor)
 {
-	if (!text.getFont()) {
-		return;
-	}
+	sf::Text textToDraw = text;
 
-	const sf::Font& font = *text.getFont();
-	unsigned int characterSize = text.getCharacterSize();
-	const sf::Texture& fontTexture = font.getTexture(characterSize);
-
-	quadMesh.BindVAO();
-	characterShader.Use();
-
-	gl::Texture::Active(0);
-	sf::Texture::bind(&fontTexture);
-
-	const sf::Color& color = text.getColor();
-	const gl::Vec4f gl_Color = gl::Vec4f(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f);
-	const gl::Vec4f gl_HighlightedColor = gl::Vec4f(highlightedColor.r / 255.f, highlightedColor.g / 255.f, highlightedColor.b / 255.f, highlightedColor.a / 255.f);
-	if (0 == highlightedRowID) {
-		sh_char_characterColor.Set(gl_HighlightedColor);
-	}
-	else {
-		sh_char_characterColor.Set(gl_Color);
-	}
-
-	sf::Vector2f startPos = text.getPosition();
-	sf::Vector2f charPos = sf::Vector2f(0, characterSize);
-
-	const sf::String& string = text.getString();
+	sf::String highlightedOnly;
+	sf::String othersOnly;
 
 	int currRowID = 0;
-	sf::Uint32 prevChar = 0;
-	for (auto currChar : string) {
+	for (auto currChar : text.getString()) {
+		const bool isLineFeed = currChar == (unsigned int)'\n';
 
-		if (currChar == L'\n') {
-			charPos.y += characterSize + GetLineSpacing(font, characterSize);
-			charPos.x = 0;
-			prevChar = 0;
-			currRowID++;
-			if (currRowID == highlightedRowID) {
-				sh_char_characterColor.Set(gl_HighlightedColor);
-			}
-			else {
-				sh_char_characterColor.Set(gl_Color);
-			}
+		if (currRowID != highlightedRowID || isLineFeed) {
+			othersOnly += currChar;
 		}
-		else {
-			charPos.x += font.getKerning(prevChar, currChar, characterSize);
-			prevChar = currChar;
+		if (currRowID == highlightedRowID || isLineFeed) {
+			highlightedOnly += currChar;
+		}
 
-			sf::Glyph glyph = font.getGlyph(currChar, characterSize, (text.getStyle() & sf::Text::Bold) != 0);
-
-			sf::Vector2f absolutePos = startPos + charPos + sf::Vector2f(glyph.bounds.left, glyph.bounds.top);
-			gl::Mat4f MVP = projectionMatrix * gl::ModelMatrixf::Translation(absolutePos.x, absolutePos.y, 0) * gl::ModelMatrixf::Scale(glyph.textureRect.width, glyph.textureRect.height, 0);
-			sh_char_MVP.Set(MVP);
-
-			gl::Vec2f texCoordsMin(float(glyph.textureRect.left) / fontTexture.getSize().x, float(glyph.textureRect.top) / fontTexture.getSize().y);
-			gl::Vec2f texCoordsMax = texCoordsMin + gl::Vec2f(float(glyph.textureRect.width) / fontTexture.getSize().x, float(glyph.textureRect.height) / fontTexture.getSize().y);
-
-			sh_char_texCoordMin.Set(texCoordsMin);
-			sh_char_texCoordMax.Set(texCoordsMax);
-
-			//glContext.Disable(gl::Capability::CullFace);
-			glContext.DrawElements(quadMesh.GetPrimitiveType(), quadMesh.GetNumOfIndices(), quadMesh.indexTypeEnum);
-
-			charPos.x += glyph.advance;
+		if (isLineFeed) {
+			currRowID++;
 		}
 	}
+
+	textToDraw.setString(othersOnly);
+	Draw(glContext, textToDraw);
+
+	textToDraw.setString(highlightedOnly);
+	textToDraw.setColor(highlightedColor);
+	Draw(glContext, textToDraw);
 }
 
 float TextDrawer::GetLineSpacing(const sf::Font& font, unsigned int characterSize)
