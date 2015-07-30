@@ -1,48 +1,7 @@
 
-add_executable( ${EXECUTABLE_NAME} 
-AttributeCategory.cpp
-BaseDemoContext.cpp
-Camera.cpp
-DefaultFramebuffer.cpp
-DemoCore.cpp
-DirectionalLight.cpp
-EditorContext.cpp
-Fog.cpp
-Framebuffer.cpp
-GUIContext.cpp
-GraphicalObject.cpp
-IFramebuffer.cpp
-Mesh.cpp
-ModelSelectionContext.cpp
-SimpleColoredDrawer.cpp
-Skybox.cpp
-Terrain.cpp
-TextDrawer.cpp
-Utility.cpp
-Water.cpp
-main.cpp
+file(GLOB all_src_files "*.cpp" "*.hpp")
 
-AttributeCategory.hpp
-BaseDemoContext.hpp
-Camera.hpp
-DefaultFramebuffer.hpp
-DemoCore.hpp
-DirectionalLight.hpp
-EditorContext.hpp
-Fog.hpp
-Framebuffer.hpp
-GUIContext.hpp
-GraphicalObject.hpp
-IFramebuffer.hpp
-Mesh.hpp
-ModelSelectionContext.hpp
-SimpleColoredDrawer.hpp
-Skybox.hpp
-Terrain.hpp
-TextDrawer.hpp
-Utility.hpp
-Water.hpp
-all_gl_headers.hpp)
+add_executable(${EXECUTABLE_NAME} ${all_src_files})
 
 source_group(GUIContext FILES
 BaseDemoContext.cpp
