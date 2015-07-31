@@ -28,7 +28,8 @@ GraphicalObject::GraphicalObject()
 }
 
 GraphicalObject::GraphicalObject(GraphicalObject&& r):
-mesh(std::move(r.mesh)),
+//mesh(std::move(r.mesh)),
+pMesh(r.pMesh),
 albedoTexture(std::move(r.albedoTexture)),
 normalMap(std::move(r.normalMap)),
 specularTexture(std::move(r.specularTexture)),
@@ -43,7 +44,8 @@ modelTransform(std::move(r.modelTransform))
 
 GraphicalObject& GraphicalObject::operator=(GraphicalObject&& r)
 {
-	mesh = std::move(r.mesh);
+	//mesh = std::move(r.mesh);
+	pMesh = r.pMesh;
 	albedoTexture = std::move(r.albedoTexture);
 	normalMap = std::move(r.normalMap);
 	specularTexture = std::move(r.specularTexture);
@@ -58,19 +60,22 @@ GraphicalObject& GraphicalObject::operator=(GraphicalObject&& r)
 	return *this;
 }
 
-void GraphicalObject::SetMesh(Mesh&& newMesh)
+void GraphicalObject::SetMesh(Mesh* newMesh)
 {
-	mesh = std::move(newMesh);
+	//mesh = std::move(newMesh);
+	pMesh = newMesh;
 
-	mesh.AttachVertexAttribute(AttributeCategory::POSITION, shaderProgram, "vertexPos");
-	mesh.AttachVertexAttribute(AttributeCategory::NORMAL, shaderProgram, "vertexNormal");
-	mesh.AttachVertexAttribute(AttributeCategory::TEX_COORD, shaderProgram, "vertexTexCoord");
-	mesh.AttachVertexAttribute(AttributeCategory::TANGENT, shaderProgram, "vertexTangent");
+	//TODO if one mesh can only have a single set of shaders attached to it,
+	//then attaching should be done every time before drawing
+	pMesh->AttachVertexAttribute(AttributeCategory::POSITION, shaderProgram, "vertexPos");
+	pMesh->AttachVertexAttribute(AttributeCategory::NORMAL, shaderProgram, "vertexNormal");
+	pMesh->AttachVertexAttribute(AttributeCategory::TEX_COORD, shaderProgram, "vertexTexCoord");
+	pMesh->AttachVertexAttribute(AttributeCategory::TANGENT, shaderProgram, "vertexTangent");
 }
 
-Mesh& GraphicalObject::GetMesh()
+Mesh* GraphicalObject::GetMesh()
 {
-	return mesh;
+	return pMesh;
 }
 
 static gl::Mat4f SajatTransposeMertNemMukodikAzOglPlusOsTODO(const gl::Mat4f& input)
@@ -111,8 +116,8 @@ void GraphicalObject::Draw(DemoCore& core)
 	gl::Texture::Active(3);
 	roughnessTexture.Bind(gl::Texture::Target::_2D);
 
-	mesh.BindVAO();
-	glContext.DrawElements(mesh.GetPrimitiveType(), mesh.GetNumOfIndices(), mesh.indexTypeEnum);
+	pMesh->BindVAO();
+	glContext.DrawElements(pMesh->GetPrimitiveType(), pMesh->GetNumOfIndices(), pMesh->indexTypeEnum);
 }
 
 void GraphicalObject::SetTransform(const gl::Mat4f& transform)

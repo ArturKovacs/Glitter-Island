@@ -21,12 +21,11 @@ namespace util
 	 */
 	std::string LoadFileAsString(const std::string& filename);
 
-
 	/**
 	 * \brief Get a list of all files contained in a given directory.
 	 *
 	 * Iterates through a directory and stores all filenames in a list of std::strings.
-	 * Directory does not traversed recursively. Which means that files inside any directory 
+	 * Directory does not traversed recursively. Which means that files inside any directory
 	 * inside the target directory will not be listed.
 	 *
 	 * @param dirPath Directory's path where the files should be listed from.

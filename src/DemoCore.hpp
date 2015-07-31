@@ -29,7 +29,6 @@ public:
 
 public:
 	static gl::Program LoadShaderProgramFromFiles(const std::string& vs_name, const std::string& fs_name);
-	static GraphicalObject LoadGraphicalObjectFromFile(const std::string& filename);
 
 public: //TODO These members are only made public temporarily! Make them private asap
 	sf::Font overlayFont;
@@ -58,12 +57,12 @@ public:
 	Terrain& GetTerrain();
 	float GetMouseSensitivity();
 
+	sf::Window* GetWindow();
+
 	void AddGraphicalObject(GraphicalObject&& newObject);
 
-	//const DirectionalLight& GetSun() const;
-	//const Camera& GetCamera() const;
-
-	sf::Window* GetWindow();
+	Mesh* LoadMeshFromFile(const std::string& filename);
+	GraphicalObject LoadGraphicalObjectFromFile(const std::string& filename);
 
 	void SaveAll();
 
@@ -92,6 +91,9 @@ private: // misc
 
 	const float mouseSensitivity;
 	Camera cam;
+
+private: //resources
+	std::map<std::string, Mesh*> meshes;
 
 private:
 	void ClearFramebufferStack();

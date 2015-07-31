@@ -28,6 +28,7 @@ Mesh& Mesh::operator=(Mesh&& r)
 	return *this;
 }
 
+/*
 void Mesh::LoadFromFile(const std::string& filename)
 {
 	std::ifstream file(filename);
@@ -40,7 +41,7 @@ void Mesh::LoadFromFile(const std::string& filename)
 	SetIndices(objMesh.GetIndices());
 
 	ForEachAttribute([&](AttributeCategory current){
-		auto& attributeBuffer = objMesh.GetVertexAttribute(current);
+		auto attributeBuffer = objMesh.GetVertexAttribute(current);
 		if (attributeBuffer.size() > 0) {
 			SetVertexAttributeBuffer(current, attributeBuffer);
 		}
@@ -48,6 +49,7 @@ void Mesh::LoadFromFile(const std::string& filename)
 
 	SetPrimitiveType(gl::PrimitiveType::Triangles);
 }
+*/
 
 void Mesh::SetIndices(const std::vector<IndexType>& indexArray)
 {
@@ -314,6 +316,7 @@ OBJMesh::OBJMesh(std::istream& objContent)
 		float currentProgress = (currPos / length)*displayRes;
 		while (currentProgress - displayedProgress > 1) {
 			std::cout << '-' << displayRes-displayedProgress;
+			std::cout.flush();
 			displayedProgress++;
 		}
 	}

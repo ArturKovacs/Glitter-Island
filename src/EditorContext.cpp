@@ -68,7 +68,7 @@ EditorContext::EditorToolInfo EditorContext::GetToolInfo(EditorContext::EditorTo
 	return result;
 }
 
-EditorContext::EditorContext(ContextManager* pContextManager, DemoCore* pDemoCore) : 
+EditorContext::EditorContext(ContextManager* pContextManager, DemoCore* pDemoCore) :
 GUIContext(pContextManager, pDemoCore),
 modelSelectionContext(pContextManager, pDemoCore),
 selectedTool(EditorTool::NO_TOOL), brushRadius(1)
@@ -94,13 +94,13 @@ void EditorContext::HandleWindowEvent(const sf::Event& event)
 	}
 }
 
-void EditorContext::EnteringContext() 
+void EditorContext::EnteringContext()
 {}
 
 void EditorContext::LeavingContext()
 {}
 
-void EditorContext::Update(float deltaSec) 
+void EditorContext::Update(float deltaSec)
 {
 	UpdatePointPosAtCursor();
 
@@ -170,7 +170,7 @@ void EditorContext::Update(float deltaSec)
 	}
 }
 
-void EditorContext::Draw() 
+void EditorContext::Draw()
 {
 	gl::Context& glContext = pDemoCore->GetGLContext();
 
@@ -205,7 +205,7 @@ void EditorContext::DrawOverlayElements()
 	text.setStyle(sf::Text::Bold);
 	pDemoCore->textDrawer.DrawBackground(glContext, text, sf::Color(50, 50, 50, 150), 5);
 	pDemoCore->textDrawer.Draw(glContext, text);
-		
+
 	//Set complete text for calculating background correctly
 	sf::String str = "E -- Toggle editor mode";
 	ForEachTool([&](EditorTool current){
@@ -226,7 +226,7 @@ void EditorContext::MouseButtonPressed(const sf::Event& event)
 	if (event.mouseButton.button == sf::Mouse::Button::Left) {
 
 		if (selectedTool == EditorTool::PLACE_MODEL) {
-			GraphicalObject loadedObject = DemoCore::LoadGraphicalObjectFromFile(modelSelectionContext.GetSelectedModelFilename());
+			GraphicalObject loadedObject = pDemoCore->LoadGraphicalObjectFromFile(modelSelectionContext.GetSelectedModelFilename());
 			loadedObject.SetTransform(gl::ModelMatrixf::Translation(0, 3, 0) * gl::ModelMatrixf::Translation(pointPosAtCursor));
 
 			pDemoCore->AddGraphicalObject(std::move(loadedObject));

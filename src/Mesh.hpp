@@ -18,7 +18,7 @@ public:
 	Mesh(Mesh&&);
 	Mesh& operator=(Mesh&&);
 
-	void LoadFromFile(const std::string& filename);
+	//void LoadFromFile(const std::string& filename);
 
 	void SetIndices(const std::vector<IndexType>& indexArray);
 	void SetPrimitiveType(gl::enums::PrimitiveType type);

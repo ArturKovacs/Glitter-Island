@@ -20,8 +20,8 @@ public:
 	GraphicalObject(GraphicalObject&&);
 	GraphicalObject& operator=(GraphicalObject&&);
 
-	void SetMesh(Mesh&& newMesh);
-	Mesh& GetMesh();
+	void SetMesh(Mesh* newMesh);
+	Mesh* GetMesh();
 
 	void Draw(DemoCore& core);
 
@@ -35,7 +35,7 @@ public:
 private:
 	//ADD TO MOVE CONSTRUTOR, AND MOVE ASSIGNMENT OPERATOR
 
-	Mesh mesh;
+	Mesh* pMesh;
 
 	gl::Texture albedoTexture;
 	gl::Texture normalMap;

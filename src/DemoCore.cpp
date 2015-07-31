@@ -38,30 +38,6 @@ gl::Program DemoCore::LoadShaderProgramFromFiles(const std::string& vs_name, con
 	return result;
 }
 
-GraphicalObject DemoCore::LoadGraphicalObjectFromFile(const std::string& filename)
-{
-	GraphicalObject result;
-
-	{
-		Mesh mesh;
-		mesh.LoadFromFile(DemoCore::modelsFolderPath + filename);
-
-		result.SetMesh(std::move(mesh));
-	}
-
-	std::string materialFilename = filename.substr(0, filename.rfind(".obj")) + ".mtl";
-
-	try {
-		result.LoadMaterial(DemoCore::modelsFolderPath + materialFilename);
-	}
-	catch (std::runtime_error& ex) {
-		std::cout << "Exception occured while loading material for: " << filename << std::endl;
-		std::cout << "Message: " << ex.what() << std::endl;
-	}
-
-	return std::move(result);
-}
-
 DemoCore::DemoCore(sf::Window* pWindow) :
 running(false),
 contextManager(this),
@@ -251,21 +227,69 @@ void DemoCore::AddGraphicalObject(GraphicalObject&& newObject)
 	baseDemoContext.AddGraphicalObject(std::move(newObject));
 }
 
-/*
-const DirectionalLight& DemoCore::GetSun() const
-{
-	return sun;
-}
-
-const Camera& DemoCore::GetCamera() const
-{
-	return cam;
-}
-*/
-
 sf::Window* DemoCore::GetWindow()
 {
 	return pWindow;
+}
+
+Mesh* DemoCore::LoadMeshFromFile(const std::string& filename)
+{
+	auto elementIter = meshes.find(filename);
+	if (elementIter != meshes.end()) {
+		return (*elementIter).second;
+	}
+
+	std::ifstream file(filename);
+	if (!file.is_open()) {
+		throw std::runtime_error((std::string("Can not open file: ") + filename).c_str());
+	}
+
+	OBJMesh objMesh(file);
+
+	Mesh* newMesh = new Mesh;
+
+	newMesh->SetIndices(objMesh.GetIndices());
+
+	ForEachAttribute([&](AttributeCategory current){
+		auto attributeBuffer = objMesh.GetVertexAttribute(current);
+		if (attributeBuffer.size() > 0) {
+			newMesh->SetVertexAttributeBuffer(current, attributeBuffer);
+		}
+	});
+
+	newMesh->SetPrimitiveType(gl::PrimitiveType::Triangles);
+
+	meshes[filename] = newMesh;
+
+	return newMesh;
+}
+
+GraphicalObject DemoCore::LoadGraphicalObjectFromFile(const std::string& filename)
+{
+	GraphicalObject result;
+
+	{
+		Mesh* pMesh = LoadMeshFromFile(DemoCore::modelsFolderPath + filename);
+		//mesh.LoadFromFile(DemoCore::modelsFolderPath + filename);
+
+		result.SetMesh(pMesh);
+	}
+
+	const std::string materialFilename = filename.substr(0, filename.rfind(".obj")) + ".mtl";
+
+	std::cout << "Loading material..." << std::endl;
+
+	try {
+		result.LoadMaterial(DemoCore::modelsFolderPath + materialFilename);
+	}
+	catch (std::runtime_error& ex) {
+		std::cout << "Exception occured while loading material for: " << filename << std::endl;
+		std::cout << "Message: " << ex.what() << std::endl;
+	}
+
+	std::cout << "Loaded graphical object" << std::endl;
+
+	return std::move(result);
 }
 
 void DemoCore::SaveAll()
