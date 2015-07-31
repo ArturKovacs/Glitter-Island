@@ -21,10 +21,10 @@ GraphicalObject::GraphicalObject()
 		std::cout << err.what() << std::endl;
 	}
 
-	LoadTexture(albedoTexture, DemoCore::imgFolderPath + "Cerberus_A.tga", TextureType::COLOR);
-	LoadTexture(normalMap, DemoCore::imgFolderPath + "Cerberus_N.tga", TextureType::DATA);
-	LoadTexture(specularTexture, DemoCore::imgFolderPath + "Cerberus_M.tga", TextureType::DATA);
-	LoadTexture(roughnessTexture, DemoCore::imgFolderPath + "Cerberus_R.tga", TextureType::DATA);
+	//LoadTexture(albedoTexture, DemoCore::imgFolderPath + "Cerberus_A.tga", TextureType::COLOR);
+	//LoadTexture(normalMap, DemoCore::imgFolderPath + "Cerberus_N.tga", TextureType::DATA);
+	//LoadTexture(specularTexture, DemoCore::imgFolderPath + "Cerberus_M.tga", TextureType::DATA);
+	//LoadTexture(roughnessTexture, DemoCore::imgFolderPath + "Cerberus_R.tga", TextureType::DATA);
 }
 
 GraphicalObject::GraphicalObject(GraphicalObject&& r):
@@ -125,12 +125,51 @@ gl::Mat4f GraphicalObject::GetTransform() const
 	return modelTransform;
 }
 
+void GraphicalObject::LoadMaterial(const std::string& filename)
+{
+	std::ifstream file(filename);
+
+	if (!file.is_open()) {
+		throw std::runtime_error(std::string("Could not open material file: ") + filename);
+	}
+
+	std::string read;
+	std::string texFilename;
+
+	while (file >> read) {
+		if (read == "map_Kd") {
+			file >> texFilename;
+
+			LoadTexture(albedoTexture, DemoCore::imgFolderPath + texFilename, TextureType::COLOR);
+		}
+		else if (read == "map_Ks") {
+			file >> texFilename;
+
+			LoadTexture(specularTexture, DemoCore::imgFolderPath + texFilename, TextureType::COLOR);
+		}
+		else if (read == "map_Ns") {
+			file >> texFilename;
+
+			//TODO map_Ns is the the inverse of roughness!!
+			LoadTexture(roughnessTexture, DemoCore::imgFolderPath + texFilename, TextureType::COLOR);
+		}
+		else if (read == "map_Bump" || read == "map_bump" || read == "bump") {
+			file >> texFilename;
+
+			LoadTexture(normalMap, DemoCore::imgFolderPath + texFilename, TextureType::COLOR);
+		}
+		else {
+			file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		}
+	}
+}
+
 void GraphicalObject::LoadTexture(gl::Texture& target, const std::string& filename, TextureType type)
 {
 	sf::Image img;
 
 	if (!img.loadFromFile(filename)){
-		throw std::runtime_error(filename.c_str());
+		throw std::runtime_error(filename);
 	}
 
 	img.flipVertically();

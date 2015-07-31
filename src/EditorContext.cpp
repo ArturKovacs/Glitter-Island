@@ -77,62 +77,6 @@ selectedTool(EditorTool::NO_TOOL), brushRadius(1)
 EditorContext::~EditorContext()
 {}
 
-void EditorContext::KeyPressed(const sf::Event& event)
-{
-	const sf::Event::KeyEvent& key = event.key;
-
-	switch (key.code) {
-	case sf::Keyboard::Num0:
-		selectedTool = EditorTool::NO_TOOL;
-		break;
-	case sf::Keyboard::Num1:
-		selectedTool = EditorTool::PAINT_FLAT_SAND;
-		break;
-	case sf::Keyboard::Num2:
-		selectedTool = EditorTool::PAINT_SAND_TEXTURE;
-		break;
-	case sf::Keyboard::Num3:
-		selectedTool = EditorTool::PAINT_GRASS_TEXTURE;
-		break;
-	case sf::Keyboard::Num4:
-		selectedTool = EditorTool::SPAWN_GRASS_BUNCH;
-		break;
-	case sf::Keyboard::Num5:
-		selectedTool = EditorTool::SPAWN_ROCK_BUNCH;
-		break;
-	case sf::Keyboard::Num6:
-		selectedTool = EditorTool::PLACE_MODEL;
-		//showModelSelection = true;
-		//howeredModelID = selectedModelID;
-		pContextManager->PushContext(&modelSelectionContext);
-		//UpdateModelFileList();
-		break;
-	case sf::Keyboard::Add:
-		brushRadius += 4.0f;
-		break;
-	case sf::Keyboard::Subtract:
-		brushRadius -= 4.0f;
-		brushRadius = std::max(brushRadius, 0.5f);
-		break;
-
-	case sf::Keyboard::M:
-		pDemoCore->SaveAll();
-		break;
-
-	case sf::Keyboard::E:
-		if (pContextManager->GetTopContext() == this) {
-			pContextManager->PopContext();
-		}
-		break;
-
-	default:
-		pContextManager->PassEvent(this, event);
-		break;
-	}
-
-	//show model selection
-}
-
 void EditorContext::HandleWindowEvent(const sf::Event& event)
 {
 	if (event.type == sf::Event::MouseWheelMoved) {
@@ -141,6 +85,9 @@ void EditorContext::HandleWindowEvent(const sf::Event& event)
 	}
 	else if (event.type == sf::Event::KeyPressed) {
 		KeyPressed(event);
+	}
+	else if (event.type == sf::Event::MouseButtonPressed) {
+		MouseButtonPressed(event);
 	}
 	else {
 		pContextManager->PassEvent(this, event);
@@ -272,6 +219,73 @@ void EditorContext::DrawOverlayElements()
 	text.setColor(sf::Color::White);
 	pDemoCore->textDrawer.DrawBackground(glContext, text, sf::Color(100, 100, 100, 150), 5);
 	pDemoCore->textDrawer.DrawAsList(glContext, text, GetToolInfo(selectedTool).id+1, sf::Color::Cyan);
+}
+
+void EditorContext::MouseButtonPressed(const sf::Event& event)
+{
+	if (event.mouseButton.button == sf::Mouse::Button::Left) {
+
+		if (selectedTool == EditorTool::PLACE_MODEL) {
+			GraphicalObject loadedObject = DemoCore::LoadGraphicalObjectFromFile(modelSelectionContext.GetSelectedModelFilename());
+			loadedObject.SetTransform(gl::ModelMatrixf::Translation(0, 3, 0) * gl::ModelMatrixf::Translation(pointPosAtCursor));
+
+			pDemoCore->AddGraphicalObject(std::move(loadedObject));
+		}
+	}
+}
+
+void EditorContext::KeyPressed(const sf::Event& event)
+{
+	const sf::Event::KeyEvent& key = event.key;
+
+	switch (key.code) {
+	case sf::Keyboard::Num0:
+		selectedTool = EditorTool::NO_TOOL;
+		break;
+	case sf::Keyboard::Num1:
+		selectedTool = EditorTool::PAINT_FLAT_SAND;
+		break;
+	case sf::Keyboard::Num2:
+		selectedTool = EditorTool::PAINT_SAND_TEXTURE;
+		break;
+	case sf::Keyboard::Num3:
+		selectedTool = EditorTool::PAINT_GRASS_TEXTURE;
+		break;
+	case sf::Keyboard::Num4:
+		selectedTool = EditorTool::SPAWN_GRASS_BUNCH;
+		break;
+	case sf::Keyboard::Num5:
+		selectedTool = EditorTool::SPAWN_ROCK_BUNCH;
+		break;
+	case sf::Keyboard::Num6:
+		selectedTool = EditorTool::PLACE_MODEL;
+		//showModelSelection = true;
+		//howeredModelID = selectedModelID;
+		pContextManager->PushContext(&modelSelectionContext);
+		//UpdateModelFileList();
+		break;
+	case sf::Keyboard::Add:
+		brushRadius += 4.0f;
+		break;
+	case sf::Keyboard::Subtract:
+		brushRadius -= 4.0f;
+		brushRadius = std::max(brushRadius, 0.5f);
+		break;
+
+	case sf::Keyboard::M:
+		pDemoCore->SaveAll();
+		break;
+
+	case sf::Keyboard::E:
+		if (pContextManager->GetTopContext() == this) {
+			pContextManager->PopContext();
+		}
+		break;
+
+	default:
+		pContextManager->PassEvent(this, event);
+		break;
+	}
 }
 
 void EditorContext::UpdatePointPosAtCursor()

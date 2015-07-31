@@ -19,6 +19,8 @@ public:
 	void Draw() override;
 	void DrawOverlayElements() override;
 
+	std::string GetSelectedModelFilename() const;
+
 private:
 	Mesh screenRectangle;
 

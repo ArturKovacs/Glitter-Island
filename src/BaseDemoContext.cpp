@@ -131,6 +131,11 @@ void BaseDemoContext::Draw()
 void BaseDemoContext::DrawOverlayElements()
 {}
 
+void BaseDemoContext::AddGraphicalObject(GraphicalObject&& newObject)
+{
+	graphicalObjects.push_back(std::move(newObject));
+}
+
 float BaseDemoContext::GetCurrentSpeed() const
 {
 	float result;
@@ -264,5 +269,6 @@ void BaseDemoContext::DrawObjects()
 
 	for (auto& current : graphicalObjects) {
 		current.Draw(*pDemoCore);
+		//pDemoCore->simpleColoredDrawer.Draw(pDemoCore->GetGLContext(), current.GetMesh(), cam.GetViewProjectionTransform() * current.GetTransform(), gl::Vec4f(1, 1, 0, 0.7));
 	}
 }

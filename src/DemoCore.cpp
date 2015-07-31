@@ -38,6 +38,30 @@ gl::Program DemoCore::LoadShaderProgramFromFiles(const std::string& vs_name, con
 	return result;
 }
 
+GraphicalObject DemoCore::LoadGraphicalObjectFromFile(const std::string& filename)
+{
+	GraphicalObject result;
+
+	{
+		Mesh mesh;
+		mesh.LoadFromFile(DemoCore::modelsFolderPath + filename);
+
+		result.SetMesh(std::move(mesh));
+	}
+
+	std::string materialFilename = filename.substr(0, filename.rfind(".obj")) + ".mtl";
+
+	try {
+		result.LoadMaterial(DemoCore::modelsFolderPath + materialFilename);
+	}
+	catch (std::runtime_error& ex) {
+		std::cout << "Exception occured while loading material for: " << filename << std::endl;
+		std::cout << "Message: " << ex.what() << std::endl;
+	}
+
+	return std::move(result);
+}
+
 DemoCore::DemoCore(sf::Window* pWindow) :
 running(false),
 contextManager(this),
@@ -220,6 +244,11 @@ Terrain& DemoCore::GetTerrain()
 float DemoCore::GetMouseSensitivity()
 {
 	return mouseSensitivity;
+}
+
+void DemoCore::AddGraphicalObject(GraphicalObject&& newObject)
+{
+	baseDemoContext.AddGraphicalObject(std::move(newObject));
 }
 
 /*

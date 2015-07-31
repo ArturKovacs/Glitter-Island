@@ -14,8 +14,8 @@ class GraphicalObject
 public:
 	GraphicalObject();
 
-	GraphicalObject(GraphicalObject&) = delete;
-	GraphicalObject& operator=(GraphicalObject&) = delete;
+	GraphicalObject(const GraphicalObject&) = delete;
+	GraphicalObject& operator=(const GraphicalObject&) = delete;
 
 	GraphicalObject(GraphicalObject&&);
 	GraphicalObject& operator=(GraphicalObject&&);
@@ -27,6 +27,10 @@ public:
 
 	void SetTransform(const gl::Mat4f& transform);
 	gl::Mat4f GetTransform() const;
+
+
+	//TODO remove this function, create separate Material class.
+	void LoadMaterial(const std::string& filename);
 
 private:
 	//ADD TO MOVE CONSTRUTOR, AND MOVE ASSIGNMENT OPERATOR
@@ -48,5 +52,5 @@ private:
 	gl::Mat4f modelTransform;
 
 private:
-	void LoadTexture(gl::Texture& target, const std::string& filename, TextureType type);
+	static void LoadTexture(gl::Texture& target, const std::string& filename, TextureType type);
 };

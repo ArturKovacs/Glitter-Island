@@ -40,7 +40,10 @@ void Mesh::LoadFromFile(const std::string& filename)
 	SetIndices(objMesh.GetIndices());
 
 	ForEachAttribute([&](AttributeCategory current){
-		SetVertexAttributeBuffer(current, objMesh.GetVertexAttribute(current));
+		auto& attributeBuffer = objMesh.GetVertexAttribute(current);
+		if (attributeBuffer.size() > 0) {
+			SetVertexAttributeBuffer(current, attributeBuffer);
+		}
 	});
 
 	SetPrimitiveType(gl::PrimitiveType::Triangles);
@@ -310,7 +313,7 @@ OBJMesh::OBJMesh(std::istream& objContent)
 		float currPos = objContent.tellg();
 		float currentProgress = (currPos / length)*displayRes;
 		while (currentProgress - displayedProgress > 1) {
-			std::cout << '/';
+			std::cout << '-' << displayRes-displayedProgress;
 			displayedProgress++;
 		}
 	}
@@ -352,7 +355,6 @@ std::vector<Mesh::IndexType>& OBJMesh::GetIndices()
 {
 	return indices;
 }
-
 
 std::vector<GLfloat> OBJMesh::GetVertexAttribute(AttributeCategory target)
 {

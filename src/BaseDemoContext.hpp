@@ -27,6 +27,8 @@ public:
 	void Draw() override;
 	void DrawOverlayElements() override;
 
+	void AddGraphicalObject(GraphicalObject&& newObject);
+
 	float GetCurrentSpeed() const;
 	bool GetWireframeModeEnabled() const;
 

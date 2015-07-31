@@ -9,3 +9,8 @@ Ks 0.500000 0.500000 0.500000
 Ni 1.000000
 d 1.000000
 illum 2
+
+map_Kd Cerberus_A.tga
+map_Ks Cerberus_M.tga      # specular color texture map
+map_Ns Cerberus_R.tga      # specular highlight component
+map_bump Cerberus_N.tga    # some implementations use 'map_bump' instead of 'bump' below

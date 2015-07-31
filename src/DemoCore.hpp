@@ -16,12 +16,10 @@
 #include "Skybox.hpp"
 #include "Water.hpp"
 #include "Camera.hpp"
-//#include "GUIContext.hpp"
 #include "BaseDemoContext.hpp"
 #include "EditorContext.hpp"
 #include "ContextManager.hpp"
 
-//TODO move this context to base demo context
 class DemoCore
 {
 public:
@@ -31,6 +29,7 @@ public:
 
 public:
 	static gl::Program LoadShaderProgramFromFiles(const std::string& vs_name, const std::string& fs_name);
+	static GraphicalObject LoadGraphicalObjectFromFile(const std::string& filename);
 
 public: //TODO These members are only made public temporarily! Make them private asap
 	sf::Font overlayFont;
@@ -58,6 +57,8 @@ public:
 	Camera& GetCamera();
 	Terrain& GetTerrain();
 	float GetMouseSensitivity();
+
+	void AddGraphicalObject(GraphicalObject&& newObject);
 
 	//const DirectionalLight& GetSun() const;
 	//const Camera& GetCamera() const;

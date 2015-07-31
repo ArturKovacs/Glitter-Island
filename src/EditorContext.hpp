@@ -52,6 +52,7 @@ private:
 	ModelSelectionContext modelSelectionContext;
 
 private:
+	void MouseButtonPressed(const sf::Event& event);
 	void KeyPressed(const sf::Event& event);
 	void UpdatePointPosAtCursor();
 };

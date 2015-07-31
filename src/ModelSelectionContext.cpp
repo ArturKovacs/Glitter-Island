@@ -104,6 +104,11 @@ void ModelSelectionContext::DrawOverlayElements()
 	}
 }
 
+std::string ModelSelectionContext::GetSelectedModelFilename() const
+{
+	return modelFileList.at(selectedModelID);
+}
+
 void ModelSelectionContext::UpdateModelFileList()
 {
 	// Find all model files in models directory
