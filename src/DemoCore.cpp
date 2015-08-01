@@ -241,9 +241,10 @@ Mesh* DemoCore::LoadMeshFromFile(const std::string& filename)
 		return (*elementIter).second;
 	}
 
-	std::ifstream file(filename);
+	std::string completeFilename = DemoCore::modelsFolderPath + filename;
+	std::ifstream file(completeFilename);
 	if (!file.is_open()) {
-		throw std::runtime_error((std::string("Can not open file: ") + filename).c_str());
+		throw std::runtime_error((std::string("Can not open file: ") + completeFilename).c_str());
 	}
 
 	OBJMesh objMesh(file);
@@ -291,7 +292,7 @@ GraphicalObject DemoCore::LoadGraphicalObjectFromFile(const std::string& filenam
 	GraphicalObject result;
 
 	{
-		Mesh* pMesh = LoadMeshFromFile(DemoCore::modelsFolderPath + filename);
+		Mesh* pMesh = LoadMeshFromFile(filename);
 		//mesh.LoadFromFile(DemoCore::modelsFolderPath + filename);
 
 		result.SetMesh(pMesh);
