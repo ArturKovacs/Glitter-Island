@@ -4,82 +4,6 @@
 #include <string>
 #include <sstream>
 
-Mesh::Mesh() : primitiveType(gl::enums::PrimitiveType::Points)
-{
-	ForEachAttribute([&](AttributeCategory current){
-		vertexAttributes.insert(std::make_pair(current, VertexAttributeContainer(std::move(gl::Buffer()), GetAttributeCategoryInfo(current).defaultElementDimensions)));
-	});
-}
-
-Mesh::Mesh(Mesh&& r) :
-VAO(std::move(r.VAO)),
-indices(std::move(r.indices)),
-vertexAttributes(std::move(r.vertexAttributes)),
-primitiveType(r.primitiveType)
-{}
-
-Mesh& Mesh::operator=(Mesh&& r)
-{
-	VAO = std::move(r.VAO);
-	indices = std::move(r.indices);
-	vertexAttributes = std::move(r.vertexAttributes);
-	primitiveType = r.primitiveType;
-
-	return *this;
-}
-
-void Mesh::SetIndices(const std::vector<IndexType>& indexArray)
-{
-	VAO.Bind();
-
-	indices.Bind(gl::Buffer::Target::ElementArray);
-	gl::Buffer::Data(gl::Buffer::Target::ElementArray, indexArray);
-}
-
-void Mesh::SetPrimitiveType(gl::enums::PrimitiveType type)
-{
-	primitiveType = type;
-}
-
-void Mesh::SetVertexAttributeElementDimensions(AttributeCategory targetAttribute, const int dimensionCount)
-{
-	vertexAttributes.at(targetAttribute).elementDimension = dimensionCount;
-}
-
-void Mesh::SetVertexAttributeBuffer(AttributeCategory targetAttribute, const gl::BufferData& dataArray)
-{
-	VAO.Bind();
-
-	vertexAttributes.at(targetAttribute).buffer.Bind(gl::Buffer::Target::Array);
-	gl::Buffer::Data(gl::Buffer::Target::Array, dataArray);
-}
-
-gl::enums::PrimitiveType Mesh::GetPrimitiveType() const
-{
-	return primitiveType;
-}
-
-GLsizei Mesh::GetNumOfIndices() const
-{
-	return indices.Size(gl::Buffer::Target::ElementArray).get() / sizeof(IndexType);
-}
-
-void Mesh::AttachVertexAttribute(const AttributeCategory targetAttribute, const gl::Program& shaderProgram, const std::string& nameInShader) const
-{
-	const auto& attributeContainer = vertexAttributes.at(targetAttribute);
-
-	VAO.Bind();
-	attributeContainer.buffer.Bind(gl::Buffer::Target::Array);
-	gl::VertexArrayAttrib attribute(shaderProgram, nameInShader);
-	attribute.Setup<GLfloat>(attributeContainer.elementDimension);
-	attribute.Enable();
-}
-
-void Mesh::BindVAO() const
-{
-	VAO.Bind();
-}
-
 Mesh Mesh::GenerateTriangle(float size)
 {
 	Mesh result;
@@ -159,6 +83,82 @@ Mesh Mesh::GenerateRectangle(float sizeX, float sizeY)
 	return std::move(result);
 }
 
+Mesh::Mesh() : primitiveType(gl::enums::PrimitiveType::Points)
+{
+	ForEachAttribute([&](AttributeCategory current){
+		vertexAttributes.insert(std::make_pair(current, VertexAttributeContainer(std::move(gl::Buffer()), GetAttributeCategoryInfo(current).defaultElementDimensions)));
+	});
+}
+
+Mesh::Mesh(Mesh&& r) :
+VAO(std::move(r.VAO)),
+indices(std::move(r.indices)),
+vertexAttributes(std::move(r.vertexAttributes)),
+primitiveType(r.primitiveType)
+{}
+
+Mesh& Mesh::operator=(Mesh&& r)
+{
+	VAO = std::move(r.VAO);
+	indices = std::move(r.indices);
+	vertexAttributes = std::move(r.vertexAttributes);
+	primitiveType = r.primitiveType;
+
+	return *this;
+}
+
+void Mesh::SetIndices(const std::vector<IndexType>& indexArray)
+{
+	VAO.Bind();
+
+	indices.Bind(gl::Buffer::Target::ElementArray);
+	gl::Buffer::Data(gl::Buffer::Target::ElementArray, indexArray);
+}
+
+void Mesh::SetPrimitiveType(gl::enums::PrimitiveType type)
+{
+	primitiveType = type;
+}
+
+void Mesh::SetVertexAttributeElementDimensions(AttributeCategory targetAttribute, const int dimensionCount)
+{
+	vertexAttributes.at(targetAttribute).elementDimension = dimensionCount;
+}
+
+void Mesh::SetVertexAttributeBuffer(AttributeCategory targetAttribute, const gl::BufferData& dataArray)
+{
+	VAO.Bind();
+
+	vertexAttributes.at(targetAttribute).buffer.Bind(gl::Buffer::Target::Array);
+	gl::Buffer::Data(gl::Buffer::Target::Array, dataArray);
+}
+
+gl::enums::PrimitiveType Mesh::GetPrimitiveType() const
+{
+	return primitiveType;
+}
+
+GLsizei Mesh::GetNumOfIndices() const
+{
+	return indices.Size(gl::Buffer::Target::ElementArray).get() / sizeof(IndexType);
+}
+
+void Mesh::AttachVertexAttribute(const AttributeCategory targetAttribute, const gl::Program& shaderProgram, const std::string& nameInShader) const
+{
+	const auto& attributeContainer = vertexAttributes.at(targetAttribute);
+
+	VAO.Bind();
+	attributeContainer.buffer.Bind(gl::Buffer::Target::Array);
+	gl::VertexArrayAttrib attribute(shaderProgram, nameInShader);
+	attribute.Setup<GLfloat>(attributeContainer.elementDimension);
+	attribute.Enable();
+}
+
+void Mesh::BindVAO() const
+{
+	VAO.Bind();
+}
+
 /*
 template<typename itemType>
 std::vector<itemType> split_str(const std::string& str, char delim)
@@ -211,12 +211,20 @@ std::vector<int> get_attrib_indices_from_vertex(const std::string& str)
 	return result;
 }
 
-OBJMesh::OBJMesh(std::istream& objContent)
+void Mesh::LoadOBJMeshFromFile(const std::string& filename)
 {
 	std::cout << "Loading mesh!" << std::endl;
 
+	std::ifstream objFile(filename);
+	if (!objFile.is_open()) {
+		throw std::runtime_error(std::string("Could not open obj file: ") + filename);
+	}
+
+	std::vector<Mesh::IndexType> obj_indices;
+	std::map<AttributeCategory,  std::vector<gl::Vec3f> > obj_vertexAttributes;
+
 	ForEachAttribute([&](AttributeCategory current){
-		vertexAttributes.insert(std::make_pair(current, std::vector<gl::Vec3f>()));
+		obj_vertexAttributes.insert(std::make_pair(current, std::vector<gl::Vec3f>()));
     });
 
 	std::map<AttributeCategory, std::vector<gl::Vec3f> > attribLists;
@@ -229,16 +237,16 @@ OBJMesh::OBJMesh(std::istream& objContent)
 	std::string read;
 	std::string values_str;
 
-	auto start = objContent.tellg();
-	objContent.seekg(0, std::ios::end);
-	float length = objContent.tellg() - start;
-	objContent.seekg(start);
+	auto start = objFile.tellg();
+	objFile.seekg(0, std::ios::end);
+	float length = objFile.tellg() - start;
+	objFile.seekg(start);
 
 	int displayRes = 10;
 	int displayedProgress = 0;
 
 	auto ReadAndPutAttributeToList = [&](AttributeCategory attrib){
-		std::getline(objContent, values_str);
+		std::getline(objFile, values_str);
 		values_str = values_str.substr(0, values_str.find('#'));
 		auto coordinates = get_values_str<GLfloat>(values_str);
 		gl::Vec3f attribData(0, 0, 0);
@@ -252,10 +260,10 @@ OBJMesh::OBJMesh(std::istream& objContent)
 	};
 
 	auto CopyAttributeFromListToActualData = [&](AttributeCategory attrib, int OBJindex){
-		vertexAttributes.at(attrib).push_back(attribLists.at(attrib).at(OBJindex-1));
+		obj_vertexAttributes.at(attrib).push_back(attribLists.at(attrib).at(OBJindex-1));
 	};
 
-	while (objContent >> read) {
+	while (objFile >> read) {
 		if (read == "v") {
 			ReadAndPutAttributeToList(AttributeCategory::POSITION);
 		}
@@ -266,7 +274,7 @@ OBJMesh::OBJMesh(std::istream& objContent)
 			ReadAndPutAttributeToList(AttributeCategory::NORMAL);
 		}
 		else if (read == "f") {
-			std::getline(objContent, values_str);
+			std::getline(objFile, values_str);
 			values_str = values_str.substr(0, values_str.find('#'));
 			auto faceVertices = get_values_str<std::string>(values_str);
 			if (faceVertices.size() != 3) {
@@ -274,7 +282,7 @@ OBJMesh::OBJMesh(std::istream& objContent)
 			}
 			for (auto& currentVertex : faceVertices) {
 				auto vertexAttribIndices = get_attrib_indices_from_vertex(currentVertex);
-				indices.push_back(currIndex++);
+				obj_indices.push_back(currIndex++);
 				int posListIndex = vertexAttribIndices.at(0);
 				CopyAttributeFromListToActualData(AttributeCategory::POSITION, posListIndex);
 				try {
@@ -291,10 +299,10 @@ OBJMesh::OBJMesh(std::istream& objContent)
 			}
 		}
 		else {
-			objContent.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			objFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		}
 
-		float currDiff = objContent.tellg() - start;
+		float currDiff = objFile.tellg() - start;
 		float currentProgress = (currDiff / length)*displayRes;
 		while (currentProgress - displayedProgress > 0) {
 			std::cout << '-' << displayRes-displayedProgress;
@@ -305,10 +313,10 @@ OBJMesh::OBJMesh(std::istream& objContent)
 
 	std::cout << std::endl;
 
-	if (vertexAttributes.at(AttributeCategory::TEX_COORD).size() > 0) {
+	if (obj_vertexAttributes.at(AttributeCategory::TEX_COORD).size() > 0) {
 		//calculate tangents
-		const auto& actualPosData = vertexAttributes.at(AttributeCategory::POSITION);
-		const auto& actualTexCoordData = vertexAttributes.at(AttributeCategory::TEX_COORD);
+		const auto& actualPosData = obj_vertexAttributes.at(AttributeCategory::POSITION);
+		const auto& actualTexCoordData = obj_vertexAttributes.at(AttributeCategory::TEX_COORD);
 		for (int i = 0; i < actualPosData.size(); i += 3) {
 			const auto& curr = actualPosData.at(i);
 			const auto& next = actualPosData.at(i + 1);
@@ -328,12 +336,32 @@ OBJMesh::OBJMesh(std::istream& objContent)
 			gl::Vec3f tangent = (dV2*edge1 - dV1*edge2)/(dU1*dV2 - dU2*dV1);
 
 			for (int i = 0; i < 3; i++) {
-				vertexAttributes.at(AttributeCategory::TANGENT).push_back(tangent);
+				obj_vertexAttributes.at(AttributeCategory::TANGENT).push_back(tangent);
 			}
 		}
 	}
 
+	SetIndices(obj_indices);
+
+	auto GetOBJVertexAttribute = [&](AttributeCategory target) {
+		return GetFloatVector(obj_vertexAttributes.at(target), GetAttributeCategoryInfo(target).defaultElementDimensions);
+	};
+
+	ForEachAttribute([&](AttributeCategory current){
+		auto attributeBuffer = GetOBJVertexAttribute(current);
+		if (attributeBuffer.size() > 0) {
+			SetVertexAttributeBuffer(current, attributeBuffer);
+		}
+	});
+
+	SetPrimitiveType(gl::PrimitiveType::Triangles);
+
 	std::cout << "Mesh loaded!" << std::endl;
+}
+/*
+OBJMesh::OBJMesh(std::istream& objContent)
+{
+	
 }
 
 std::vector<Mesh::IndexType>& OBJMesh::GetIndices()
@@ -345,3 +373,5 @@ std::vector<GLfloat> OBJMesh::GetVertexAttribute(AttributeCategory target)
 {
 	return GetFloatVector(vertexAttributes.at(target), GetAttributeCategoryInfo(target).defaultElementDimensions);
 }
+
+*/

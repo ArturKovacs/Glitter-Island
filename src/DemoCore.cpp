@@ -241,6 +241,7 @@ Mesh* DemoCore::LoadMeshFromFile(const std::string& filename)
 		return (*elementIter).second;
 	}
 
+	/*
 	std::string completeFilename = DemoCore::modelsFolderPath + filename;
 	std::ifstream file(completeFilename);
 	if (!file.is_open()) {
@@ -261,6 +262,11 @@ Mesh* DemoCore::LoadMeshFromFile(const std::string& filename)
 	});
 
 	pResult->SetPrimitiveType(gl::PrimitiveType::Triangles);
+	*/
+
+	Mesh* pResult = new Mesh;
+
+	pResult->LoadOBJMeshFromFile(DemoCore::modelsFolderPath + filename);
 
 	meshes[filename] = pResult;
 
