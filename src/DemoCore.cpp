@@ -3,6 +3,7 @@
 #include <SFML/Window.hpp>
 #include <SFML/OpenGL.hpp>
 
+#include "StandardMaterial.hpp"
 #include "Utility.hpp"
 
 const std::string DemoCore::shadersFolderPath = "../shaders/";
@@ -43,7 +44,7 @@ running(false),
 contextManager(this),
 baseDemoContext(&contextManager, this),
 pWindow(pWindow),
-mouseSensitivity(0.005)
+mouseSensitivity(0.005f)
 {
 	//assert(pWindow->isActive())
 
@@ -142,7 +143,7 @@ int DemoCore::Start()
 		}
 
 		if (elapsedSec - lastFPSUpdateSec > FPSUpdateDelaySec) {
-			int updatedFPS = std::round(framesSinceLastFPSUpdate / (elapsedSec - lastFPSUpdateSec));
+			int updatedFPS = (int)std::round(framesSinceLastFPSUpdate / (elapsedSec - lastFPSUpdateSec));
 			pWindow->setTitle(sf::String("Glitter-Island <| FPS: ") + std::to_string(updatedFPS) + " current; " + std::to_string(recentMinFPS) + " recent min |>");
 			lastFPSUpdateSec = elapsedSec;
 			framesSinceLastFPSUpdate = 0;
@@ -246,22 +247,42 @@ Mesh* DemoCore::LoadMeshFromFile(const std::string& filename)
 
 	OBJMesh objMesh(file);
 
-	Mesh* newMesh = new Mesh;
+	Mesh* pResult = new Mesh;
 
-	newMesh->SetIndices(objMesh.GetIndices());
+	pResult->SetIndices(objMesh.GetIndices());
 
 	ForEachAttribute([&](AttributeCategory current){
 		auto attributeBuffer = objMesh.GetVertexAttribute(current);
 		if (attributeBuffer.size() > 0) {
-			newMesh->SetVertexAttributeBuffer(current, attributeBuffer);
+			pResult->SetVertexAttributeBuffer(current, attributeBuffer);
 		}
 	});
 
-	newMesh->SetPrimitiveType(gl::PrimitiveType::Triangles);
+	pResult->SetPrimitiveType(gl::PrimitiveType::Triangles);
 
-	meshes[filename] = newMesh;
+	meshes[filename] = pResult;
 
-	return newMesh;
+	return pResult;
+}
+
+Material* DemoCore::LoadStandardMaterialFromFile(const std::string& filename)
+{
+	auto elementIter = materials.find(filename);
+	if (elementIter != materials.end()) {
+		return (*elementIter).second;
+	}
+
+	StandardMaterial *pResult = new StandardMaterial(this);
+
+	std::cout << "Loading material..." << std::endl;
+
+	pResult->LoadFromFile(DemoCore::modelsFolderPath + filename);
+
+	std::cout << "Material loaded!" << std::endl;
+
+	materials[filename] = pResult;
+
+	return pResult;
 }
 
 GraphicalObject DemoCore::LoadGraphicalObjectFromFile(const std::string& filename)
@@ -277,17 +298,14 @@ GraphicalObject DemoCore::LoadGraphicalObjectFromFile(const std::string& filenam
 
 	const std::string materialFilename = filename.substr(0, filename.rfind(".obj")) + ".mtl";
 
-	std::cout << "Loading material..." << std::endl;
-
 	try {
-		result.LoadMaterial(DemoCore::modelsFolderPath + materialFilename);
+		result.SetMaterial(LoadStandardMaterialFromFile(materialFilename));
+		//result.LoadMaterial(DemoCore::modelsFolderPath + materialFilename);
 	}
 	catch (std::runtime_error& ex) {
 		std::cout << "Exception occured while loading material for: " << filename << std::endl;
 		std::cout << "Message: " << ex.what() << std::endl;
 	}
-
-	std::cout << "Loaded graphical object" << std::endl;
 
 	return std::move(result);
 }

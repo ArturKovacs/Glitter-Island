@@ -62,6 +62,7 @@ public:
 	void AddGraphicalObject(GraphicalObject&& newObject);
 
 	Mesh* LoadMeshFromFile(const std::string& filename);
+	Material* LoadStandardMaterialFromFile(const std::string& filename);
 	GraphicalObject LoadGraphicalObjectFromFile(const std::string& filename);
 
 	void SaveAll();
@@ -94,6 +95,7 @@ private: // misc
 
 private: //resources
 	std::map<std::string, Mesh*> meshes;
+	std::map<std::string, Material*> materials;
 
 private:
 	void ClearFramebufferStack();

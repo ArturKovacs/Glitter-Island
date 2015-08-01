@@ -2,10 +2,7 @@
 
 #include "all_gl_headers.hpp"
 #include "Mesh.hpp"
-
-//enum class UniformCategory { MVP_MATRIX, MODEL_TRANSPOSED_INVERSE_MATRIX, TEXTURE_DIFFUSE, TEXTURE_NORMAL };
-
-enum class TextureType { COLOR, DATA };
+#include "Material.hpp"
 
 class DemoCore;
 
@@ -14,43 +11,23 @@ class GraphicalObject
 public:
 	GraphicalObject();
 
-	GraphicalObject(const GraphicalObject&) = delete;
-	GraphicalObject& operator=(const GraphicalObject&) = delete;
-
-	GraphicalObject(GraphicalObject&&);
-	GraphicalObject& operator=(GraphicalObject&&);
-
 	void SetMesh(Mesh* newMesh);
 	Mesh* GetMesh();
+
+	void SetMaterial(Material* newMaterial);
+	Material* GetMaterial();
 
 	void Draw(DemoCore& core);
 
 	void SetTransform(const gl::Mat4f& transform);
 	gl::Mat4f GetTransform() const;
 
-
-	//TODO remove this function, create separate Material class.
-	void LoadMaterial(const std::string& filename);
-
 private:
-	//ADD TO MOVE CONSTRUTOR, AND MOVE ASSIGNMENT OPERATOR
-
 	Mesh* pMesh;
-
-	gl::Texture albedoTexture;
-	gl::Texture normalMap;
-	gl::Texture specularTexture;
-	gl::Texture roughnessTexture;
-
-	gl::Uniform<gl::Vec3f> sh_lightDir;
-	gl::Uniform<gl::Mat4f> sh_MVP;
-	gl::Uniform<gl::Mat4f> sh_MODELVIEW;
-	gl::Uniform<gl::Mat4f> sh_modelTransposedInverse;
-
-	gl::Program shaderProgram;
+	Material* pMaterial;
 
 	gl::Mat4f modelTransform;
 
 private:
-	static void LoadTexture(gl::Texture& target, const std::string& filename, TextureType type);
+	//static void LoadTexture(gl::Texture& target, const std::string& filename, TextureType type);
 };

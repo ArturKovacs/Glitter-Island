@@ -8,10 +8,24 @@ BaseDemoContext.cpp
 EditorContext.cpp
 GUIContext.cpp
 ModelSelectionContext.cpp
+ContextManager.cpp
 BaseDemoContext.hpp
 EditorContext.hpp
 GUIContext.hpp
-ModelSelectionContext.hpp)
+ModelSelectionContext.hpp
+ContextManager.hpp)
+
+source_group(GraphicalObject FILES
+AttributeCategory.cpp
+GraphicalObject.cpp
+Material.cpp
+Mesh.cpp
+StandardMaterial.cpp
+AttributeCategory.hpp
+GraphicalObject.hpp
+Material.hpp
+Mesh.hpp
+StandardMaterial.hpp)
 
 add_library(sfml-graphics UNKNOWN IMPORTED)
 add_library(sfml-window UNKNOWN IMPORTED)
