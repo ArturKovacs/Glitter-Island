@@ -53,7 +53,7 @@ int main()
 		std::cout << err.Log() << std::endl;
 		CustomPause();
 	}
-	catch (std::runtime_error& ex) {
+	catch (std::exception& ex) {
 		std::cout << std::endl << "Exception: " << std::endl;
 		std::cout << ex.what() << std::endl;
 		CustomPause();

@@ -28,29 +28,6 @@ Mesh& Mesh::operator=(Mesh&& r)
 	return *this;
 }
 
-/*
-void Mesh::LoadFromFile(const std::string& filename)
-{
-	std::ifstream file(filename);
-	if (!file.is_open()) {
-		throw std::runtime_error((std::string("Can not open file: ") + filename).c_str());
-	}
-
-	OBJMesh objMesh(file);
-
-	SetIndices(objMesh.GetIndices());
-
-	ForEachAttribute([&](AttributeCategory current){
-		auto attributeBuffer = objMesh.GetVertexAttribute(current);
-		if (attributeBuffer.size() > 0) {
-			SetVertexAttributeBuffer(current, attributeBuffer);
-		}
-	});
-
-	SetPrimitiveType(gl::PrimitiveType::Triangles);
-}
-*/
-
 void Mesh::SetIndices(const std::vector<IndexType>& indexArray)
 {
 	VAO.Bind();
@@ -223,6 +200,9 @@ std::vector<int> get_attrib_indices_from_vertex(const std::string& str)
 		if (part != "") {
 			std::stringstream part_ss(part);
 			part_ss >> attribIndex;
+
+			//Objs sometimes contain negative indices. Nonsense!
+			attribIndex = std::abs(attribIndex);
 		}
 
 		result.push_back(attribIndex);
@@ -259,6 +239,7 @@ OBJMesh::OBJMesh(std::istream& objContent)
 
 	auto ReadAndPutAttributeToList = [&](AttributeCategory attrib){
 		std::getline(objContent, values_str);
+		values_str = values_str.substr(0, values_str.find('#'));
 		auto coordinates = get_values_str<GLfloat>(values_str);
 		gl::Vec3f attribData(0, 0, 0);
 
@@ -286,6 +267,7 @@ OBJMesh::OBJMesh(std::istream& objContent)
 		}
 		else if (read == "f") {
 			std::getline(objContent, values_str);
+			values_str = values_str.substr(0, values_str.find('#'));
 			auto faceVertices = get_values_str<std::string>(values_str);
 			if (faceVertices.size() != 3) {
 				throw std::runtime_error("Error loading obj file!\nReason: model has at least one face that is not a triangle.\nOnly triangle meshes are supported!");
@@ -312,9 +294,9 @@ OBJMesh::OBJMesh(std::istream& objContent)
 			objContent.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		}
 
-		float currPos = objContent.tellg();
-		float currentProgress = (currPos / length)*displayRes;
-		while (currentProgress - displayedProgress > 1) {
+		float currDiff = objContent.tellg() - start;
+		float currentProgress = (currDiff / length)*displayRes;
+		while (currentProgress - displayedProgress > 0) {
 			std::cout << '-' << displayRes-displayedProgress;
 			std::cout.flush();
 			displayedProgress++;

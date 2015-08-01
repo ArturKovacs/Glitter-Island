@@ -2,6 +2,7 @@
 
 #include <SFML/Window.hpp>
 #include <SFML/OpenGL.hpp>
+#include <sstream>
 
 #include "StandardMaterial.hpp"
 #include "Utility.hpp"

@@ -33,7 +33,7 @@ namespace util
 			throw std::runtime_error((std::string("Error occured while reading file: ") + filename).c_str());
 		}
 
-		return result;
+		return std::move(result);
 	}
 
 	std::vector<std::string> GetFileNamesInDirectory(const std::string& dirPath)
