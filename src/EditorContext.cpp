@@ -228,8 +228,10 @@ void EditorContext::MouseButtonPressed(const sf::Event& event)
 	if (event.mouseButton.button == sf::Mouse::Button::Left) {
 
 		if (selectedTool == EditorTool::PLACE_MODEL) {
+			static float TMP_rot = 0;
+			TMP_rot += (double(std::rand())/RAND_MAX)*gl::math::Pi() + gl::math::Pi()*0.5;
 			GraphicalObject loadedObject = pDemoCore->LoadGraphicalObjectFromFile(modelSelectionContext.GetSelectedModelFilename());
-			loadedObject.SetTransform(gl::ModelMatrixf::Translation(0, 3, 0) * gl::ModelMatrixf::Translation(pointPosAtCursor));
+			loadedObject.SetTransform(gl::ModelMatrixf::Translation(0, -0.1, 0) * gl::ModelMatrixf::Translation(pointPosAtCursor) * gl::ModelMatrixf::RotationY(gl::Radians<float>(TMP_rot)));
 
 			pDemoCore->AddGraphicalObject(std::move(loadedObject));
 		}

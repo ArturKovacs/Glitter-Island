@@ -318,11 +318,10 @@ void Mesh::LoadFromOBJFile(DemoCore* pCore, const std::string& filename)
 
 	for (auto& currSrc : obj_submeshes) {
 		OBJSubmesh& currOBJSubmesh = currSrc.second;
-		const MaterialName &currMaterialName = currSrc.first;
+		const MaterialName& currMaterialName = currSrc.first;
 
 		Submesh currDst;
 
-		//currDst.SetMaterialName(currSrc.first);
 		currDst.SetMaterial(pCore->LoadStandardMaterialFromFile(mtllibFilename, currMaterialName));
 		currDst.SetIndices(currOBJSubmesh.indices);
 

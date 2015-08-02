@@ -33,6 +33,7 @@ StandardMaterial::~StandardMaterial()
 {}
 
 StandardMaterial::StandardMaterial(StandardMaterial&& r) :
+pCore(r.pCore),
 albedoTexture(std::move(r.albedoTexture)),
 normalMap(std::move(r.normalMap)),
 specularTexture(std::move(r.specularTexture)),
@@ -46,6 +47,7 @@ shaderProgram(std::move(r.shaderProgram))
 
 StandardMaterial& StandardMaterial::operator=(StandardMaterial&& r)
 {
+	pCore = r.pCore;
 	albedoTexture = std::move(r.albedoTexture);
 	normalMap = std::move(r.normalMap);
 	specularTexture = std::move(r.specularTexture);
@@ -121,12 +123,12 @@ void StandardMaterial::LoadTexture(gl::Texture& target, const sf::Image& img, Te
 	target.Bind(gl::Texture::Target::_2D);
 	gl::Texture::MinFilter(gl::Texture::Target::_2D, gl::TextureMinFilter::Linear);
 	gl::Texture::MagFilter(gl::Texture::Target::_2D, gl::TextureMagFilter::Linear);
-	gl::Texture::WrapS(gl::Texture::Target::_2D, gl::TextureWrap::ClampToEdge);
-	gl::Texture::WrapT(gl::Texture::Target::_2D, gl::TextureWrap::ClampToEdge);
+	gl::Texture::WrapS(gl::Texture::Target::_2D, gl::TextureWrap::Repeat);
+	gl::Texture::WrapT(gl::Texture::Target::_2D, gl::TextureWrap::Repeat);
 
 	gl::Texture::Image2D(gl::Texture::Target::_2D,
 		0,
-		type == TextureType::COLOR ? gl::enums::PixelDataInternalFormat::SRGB8 : gl::enums::PixelDataInternalFormat::RGB,
+		type == TextureType::COLOR ? gl::enums::PixelDataInternalFormat::SRGB8Alpha8 : gl::enums::PixelDataInternalFormat::RGBA,
 		img.getSize().x,
 		img.getSize().y,
 		0,

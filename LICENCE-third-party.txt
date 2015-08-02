@@ -36,3 +36,22 @@ Link to licence: http://scripts.sil.org/OFL
 Licence is also available in a txt file located in the project.
 
 --------------------------
+
+Palmtree model:
+Created by: Acharya D Hargreaves
+Licence: 
+It is not clear what is the exact licence that applies.
+But the website provided the following terms:
+"Copyright (c) terms of use for
+Palm trees textured botanic, (.3ds) 3D Studio Max	
+Artist-3d.com Free Noncommercial 3D Model Library
+You may use this model on you website for recommendation
+or education purpose only by placing one of the mandatory reference links below.
+
+http://artist-3d.com/free_3d_models/dnm/model_disp.php?uid=3678"
+
+And here's another link that was provided:
+http://interartcenter.net/free-clip-art/copyrights.html
+
+
+--------------------------

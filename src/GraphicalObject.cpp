@@ -16,26 +16,18 @@ Mesh* GraphicalObject::GetMesh()
 	return pMesh;
 }
 
-/*
-void GraphicalObject::SetMaterial(Material* newMaterial)
-{
-	pMaterial = newMaterial;
-}
-
-Material* GraphicalObject::GetMaterial()
-{
-	return pMaterial;
-}
-*/
-
 void GraphicalObject::Draw(DemoCore& core)
 {
-	if (/*pMaterial == nullptr ||*/ pMesh == nullptr) {
+	if (pMesh == nullptr) {
 		return;
 	}
 
 	auto& glContext = core.GetGLContext();
 	
+	glContext.Disable(gl::Capability::CullFace);
+	glContext.Enable(gl::Capability::Blend);
+	gl::Context::BlendFunc(gl::enums::BlendFunction::SrcAlpha, gl::enums::BlendFunction::OneMinusSrcAlpha);
+
 	for (auto& curr : pMesh->GetSubmeshes()) {
 		Material* pMaterial = curr.GetMaterial();
 		if (pMaterial != nullptr) {
@@ -44,6 +36,9 @@ void GraphicalObject::Draw(DemoCore& core)
 			glContext.DrawElements(curr.GetPrimitiveType(), curr.GetNumOfIndices(), curr.indexTypeEnum);
 		}
 	}
+
+	glContext.Disable(gl::Capability::Blend);
+	glContext.Enable(gl::Capability::CullFace);
 }
 
 void GraphicalObject::SetTransform(const gl::Mat4f& transform)
