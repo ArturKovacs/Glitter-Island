@@ -3,6 +3,10 @@
 #include <limits>
 #include <string>
 #include <sstream>
+#include <functional>
+#include <cctype>
+
+#include "DemoCore.hpp"
 
 Mesh::Mesh(){}
 
@@ -113,21 +117,11 @@ const std::vector<Mesh::Submesh>& Mesh::GetSubmeshes() const
 }
 
 /*
-template<typename itemType>
-std::vector<itemType> split_str(const std::string& str, char delim)
+const std::vector<std::string>& Mesh::GetMtlLibFilenames() const
 {
-std::stringstream ss(str);
-std::vector<itemType> result;
-std::string part;
-while (std::getline(ss, part, delim)) {
-std::stringstream part_ss(part);
-itemType tmpItem;
-part_ss >> tmpItem;
-result.push_back(std::move(tmpItem));
+	return mtllibFilenames;
 }
-
-return result;
-}*/
+*/
 
 template<typename itemType>
 std::vector<itemType> get_values_str(const std::string& str)
@@ -177,7 +171,7 @@ struct OBJSubmesh
 	std::map<AttributeCategory,  std::vector<gl::Vec3f> > vertexAttributes;
 };
 
-void Mesh::LoadOBJMeshFromFile(const std::string& filename)
+void Mesh::LoadFromOBJFile(DemoCore* pCore, const std::string& filename)
 {
 	std::cout << "Loading mesh!" << std::endl;
 
@@ -191,6 +185,8 @@ void Mesh::LoadOBJMeshFromFile(const std::string& filename)
 
 	const MaterialName undefinedMtlName = "?";
 	MaterialName currMtlName = undefinedMtlName;
+
+	std::string mtllibFilename;
 
 	std::map<AttributeCategory, std::vector<gl::Vec3f> > attribLists;
 	attribLists.insert(std::make_pair(AttributeCategory::POSITION, std::vector<gl::Vec3f>()));
@@ -267,6 +263,13 @@ void Mesh::LoadOBJMeshFromFile(const std::string& filename)
 		else if (read == "usemtl") {
 			objFile >> currMtlName;
 		}
+		else if (read == "mtllib") {
+			std::getline(objFile, values_str);
+			mtllibFilename = values_str;
+			std::string& str = mtllibFilename;
+
+			str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](int c){return std::isspace(c) == false;}));
+		}
 		else {
 			objFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		}
@@ -315,10 +318,12 @@ void Mesh::LoadOBJMeshFromFile(const std::string& filename)
 
 	for (auto& currSrc : obj_submeshes) {
 		OBJSubmesh& currOBJSubmesh = currSrc.second;
+		const MaterialName &currMaterialName = currSrc.first;
 
 		Submesh currDst;
 
-		currDst.SetMaterialName(currSrc.first);
+		//currDst.SetMaterialName(currSrc.first);
+		currDst.SetMaterial(pCore->LoadStandardMaterialFromFile(mtllibFilename, currMaterialName));
 		currDst.SetIndices(currOBJSubmesh.indices);
 
 		auto GetOBJVertexAttribute = [&](AttributeCategory target) {
@@ -347,7 +352,7 @@ void Mesh::LoadOBJMeshFromFile(const std::string& filename)
 //
 ////////////////////////////////////////////////
 
-Mesh::Submesh::Submesh() : primitiveType(gl::enums::PrimitiveType::Points)
+Mesh::Submesh::Submesh() : pMaterial(nullptr), primitiveType(gl::enums::PrimitiveType::Points)
 {
 	ForEachAttribute([&](AttributeCategory current){
 		vertexAttributes.insert(std::make_pair(current, VertexAttributeContainer(std::move(gl::Buffer()), GetAttributeCategoryInfo(current).defaultElementDimensions)));
@@ -355,6 +360,7 @@ Mesh::Submesh::Submesh() : primitiveType(gl::enums::PrimitiveType::Points)
 }
 
 Mesh::Submesh::Submesh(Submesh&& r) :
+pMaterial(r.pMaterial),
 VAO(std::move(r.VAO)),
 indices(std::move(r.indices)),
 vertexAttributes(std::move(r.vertexAttributes)),
@@ -363,6 +369,7 @@ primitiveType(r.primitiveType)
 
 Mesh::Submesh& Mesh::Submesh::operator=(Submesh&& r)
 {
+	pMaterial = r.pMaterial;
 	VAO = std::move(r.VAO);
 	indices = std::move(r.indices);
 	vertexAttributes = std::move(r.vertexAttributes);
@@ -397,14 +404,14 @@ void Mesh::Submesh::SetVertexAttributeBuffer(AttributeCategory targetAttribute, 
 	gl::Buffer::Data(gl::Buffer::Target::Array, dataArray);
 }
 
-void Mesh::Submesh::SetMaterialName(std::string name)
+void Mesh::Submesh::SetMaterial(Material* newMaterial)
 {
-	materialName = name;
+	pMaterial = newMaterial;
 }
 
-std::string Mesh::Submesh::GetMaterialName(std::string name) const
+Material* Mesh::Submesh::GetMaterial()
 {
-	return materialName;
+	return pMaterial;
 }
 
 gl::enums::PrimitiveType Mesh::Submesh::GetPrimitiveType() const

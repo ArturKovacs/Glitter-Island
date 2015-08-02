@@ -1,5 +1,7 @@
 #include <iostream>
 #include <string>
+#include <cctype>
+#include <functional>
 
 #include "DemoCore.hpp"
 #include "Utility.hpp"

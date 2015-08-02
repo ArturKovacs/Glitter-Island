@@ -21,6 +21,12 @@ StandardMaterial::StandardMaterial(DemoCore* pDemoCore) : pCore(pDemoCore)
 	catch (gl::Error& err) {
 		std::cout << err.what() << std::endl;
 	}
+
+	std::vector<sf::Uint8> pixelData = { 128, 128, 255, 255 };
+	sf::Image img;
+	img.create(1, 1, pixelData.data());
+
+	LoadTexture(normalMap, img, TextureType::DATA);
 }
 
 StandardMaterial::~StandardMaterial()
@@ -107,6 +113,11 @@ void StandardMaterial::LoadTexture(gl::Texture& target, const std::string& filen
 
 	img.flipVertically();
 
+	LoadTexture(target, img, type);
+}
+
+void StandardMaterial::LoadTexture(gl::Texture& target, const sf::Image& img, TextureType type)
+{
 	target.Bind(gl::Texture::Target::_2D);
 	gl::Texture::MinFilter(gl::Texture::Target::_2D, gl::TextureMinFilter::Linear);
 	gl::Texture::MagFilter(gl::Texture::Target::_2D, gl::TextureMagFilter::Linear);
@@ -124,7 +135,7 @@ void StandardMaterial::LoadTexture(gl::Texture& target, const std::string& filen
 		img.getPixelsPtr());
 }
 
-void StandardMaterial::LoadFromFile(const std::string& filename)
+void StandardMaterial::LoadFromMTLFile(const std::string& filename, const std::string& materialName)
 {
 	std::ifstream file(filename);
 
@@ -133,9 +144,30 @@ void StandardMaterial::LoadFromFile(const std::string& filename)
 	}
 
 	std::string read;
+	std::string currMaterial;
 	std::string texFilename;
 
-	while (file >> read) {
+	//Skip to requested material
+	bool found = false;
+	while (file >> read && !found) {
+		if (read == "newmtl") {
+			file >> currMaterial;
+			//std::getline(file, currMaterial);
+			if (currMaterial == materialName) {
+				found = true;
+			}
+		}
+		else {
+			file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		}
+	}
+
+	if (!found) {
+		throw std::runtime_error(std::string("Could not find material \"") + materialName + "\" in file: " + filename);
+	}
+
+	bool readingTargetMaterial = true;
+	while (file >> read && readingTargetMaterial) {
 		if (read == "map_Kd") {
 			file >> texFilename;
 
@@ -155,7 +187,10 @@ void StandardMaterial::LoadFromFile(const std::string& filename)
 		else if (read == "map_Bump" || read == "map_bump" || read == "bump") {
 			file >> texFilename;
 
-			LoadTexture(normalMap, DemoCore::imgFolderPath + texFilename, TextureType::COLOR);
+			LoadTexture(normalMap, DemoCore::imgFolderPath + texFilename, TextureType::DATA);
+		}
+		else if (read == "newmtl") {
+			readingTargetMaterial = false;
 		}
 		else {
 			file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');

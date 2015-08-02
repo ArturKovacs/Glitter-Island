@@ -243,16 +243,18 @@ Mesh* DemoCore::LoadMeshFromFile(const std::string& filename)
 
 	Mesh* pResult = new Mesh;
 
-	pResult->LoadOBJMeshFromFile(DemoCore::modelsFolderPath + filename);
+	pResult->LoadFromOBJFile(this, DemoCore::modelsFolderPath + filename);
 
 	meshes[filename] = pResult;
 
 	return pResult;
 }
 
-Material* DemoCore::LoadStandardMaterialFromFile(const std::string& filename)
+Material* DemoCore::LoadStandardMaterialFromFile(const std::string& filename, const std::string& materialName)
 {
-	auto elementIter = materials.find(filename);
+	const std::string materialKey = filename + "?" + materialName;
+
+	auto elementIter = materials.find(materialKey);
 	if (elementIter != materials.end()) {
 		return (*elementIter).second;
 	}
@@ -261,7 +263,7 @@ Material* DemoCore::LoadStandardMaterialFromFile(const std::string& filename)
 
 	std::cout << "Loading material..." << std::endl;
 
-	pResult->LoadFromFile(DemoCore::modelsFolderPath + filename);
+	pResult->LoadFromMTLFile(DemoCore::modelsFolderPath + filename, materialName);
 
 	std::cout << "Material loaded!" << std::endl;
 
@@ -276,11 +278,11 @@ GraphicalObject DemoCore::LoadGraphicalObjectFromFile(const std::string& filenam
 
 	{
 		Mesh* pMesh = LoadMeshFromFile(filename);
-		//mesh.LoadFromFile(DemoCore::modelsFolderPath + filename);
 
 		result.SetMesh(pMesh);
 	}
 
+	/*
 	const std::string materialFilename = filename.substr(0, filename.rfind(".obj")) + ".mtl";
 
 	try {
@@ -290,7 +292,7 @@ GraphicalObject DemoCore::LoadGraphicalObjectFromFile(const std::string& filenam
 	catch (std::runtime_error& ex) {
 		std::cout << "Exception occured while loading material for: " << filename << std::endl;
 		std::cout << "Message: " << ex.what() << std::endl;
-	}
+	}*/
 
 	return std::move(result);
 }

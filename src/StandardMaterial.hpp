@@ -9,7 +9,7 @@ class StandardMaterial;
 
 class StandardMaterial : public Material
 {
-	friend Material* DemoCore::LoadStandardMaterialFromFile(const std::string& filename);
+	friend Material* DemoCore::LoadStandardMaterialFromFile(const std::string& filename, const std::string& materialName);
 
 public:
 	StandardMaterial(DemoCore* pDemoCore);
@@ -41,8 +41,9 @@ private:
 private:
 	enum class TextureType { COLOR, DATA };
 	static void LoadTexture(gl::Texture& target, const std::string& filename, TextureType type);
+	static void LoadTexture(gl::Texture& target, const sf::Image& img, TextureType type);
 
 private:
-	void LoadFromFile(const std::string& filename);
+	void LoadFromMTLFile(const std::string& filename, const std::string& materialName);
 };
 

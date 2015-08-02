@@ -3,6 +3,9 @@
 #include "all_gl_headers.hpp"
 #include "AttributeCategory.hpp"
 
+class Material;
+class DemoCore;
+
 class Mesh
 {
 	// Can not make only the mesh loader function friend,
@@ -30,11 +33,14 @@ public:
 	std::vector<Submesh>& GetSubmeshes();
 	const std::vector<Submesh>& GetSubmeshes() const;
 
-private:
-	std::vector<Submesh> submeshes;
+	//const std::vector<std::string>& GetMtlLibFilenames() const;
 
 private:
-	void LoadOBJMeshFromFile(const std::string& filename);
+	std::vector<Submesh> submeshes;
+	//std::vector<std::string> mtllibFilenames;
+
+private:
+	void LoadFromOBJFile(DemoCore* pCore, const std::string& filename);
 
 	template<typename elementType>
 	static std::vector<GLfloat> GetFloatVector(const std::vector<elementType>& input, int inputDimensions)
@@ -77,9 +83,9 @@ public:
 	void SetPrimitiveType(gl::enums::PrimitiveType type);
 	void SetVertexAttributeElementDimensions(AttributeCategory targetAttribute, const int dimensionCount);
 	void SetVertexAttributeBuffer(AttributeCategory targetAttribute, const gl::BufferData& dataArray);
-	void SetMaterialName(std::string name);
+	void SetMaterial(Material* newMaterial);
+	Material* GetMaterial();
 
-	std::string GetMaterialName(std::string name) const;
 	gl::enums::PrimitiveType GetPrimitiveType() const;
 	GLsizei GetNumOfIndices() const;
 
@@ -100,7 +106,8 @@ private:
 	};
 
 private:
-	std::string materialName;
+	//std::string materialName;
+	Material* pMaterial;
 
 	gl::VertexArray VAO;
 	gl::Buffer indices;

@@ -14,8 +14,8 @@ public:
 	void SetMesh(Mesh* newMesh);
 	Mesh* GetMesh();
 
-	void SetMaterial(Material* newMaterial);
-	Material* GetMaterial();
+	//void SetMaterial(Material* newMaterial);
+	//Material* GetMaterial();
 
 	void Draw(DemoCore& core);
 
@@ -24,7 +24,7 @@ public:
 
 private:
 	Mesh* pMesh;
-	Material* pMaterial;
+	//Material* pMaterial;
 
 	gl::Mat4f modelTransform;
 

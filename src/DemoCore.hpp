@@ -62,7 +62,7 @@ public:
 	void AddGraphicalObject(GraphicalObject&& newObject);
 
 	Mesh* LoadMeshFromFile(const std::string& filename);
-	Material* LoadStandardMaterialFromFile(const std::string& filename);
+	Material* LoadStandardMaterialFromFile(const std::string& filename, const std::string& materialName);
 	GraphicalObject LoadGraphicalObjectFromFile(const std::string& filename);
 
 	void SaveAll();
