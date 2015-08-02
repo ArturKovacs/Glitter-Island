@@ -25,7 +25,7 @@ public:
 	void SaveMaterialMap() const;
 
 private:
-	Mesh graphicalModel;
+	Mesh terrainModel;
 	Mesh seabottom;
 
 	float terrainScale;
@@ -58,6 +58,6 @@ private:
 	static void CalculatePositionsAndTexCoords(std::vector<gl::Vec3f>* positions, std::vector<gl::Vec2f>* texCoords, const sf::Image& image, const float scale, const float heightMultiplyer);
 	static void CalculateNormals(std::vector<gl::Vec3f>* normals, const sf::Image& image, const std::vector<gl::Vec3f>& positions);
 
-	static void SetUpIndices(std::vector<Mesh::IndexType>* indices, const int imgWidth, const int imgHeight);
+	static void SetUpIndices(std::vector<Mesh::Submesh::IndexType>* indices, const int imgWidth, const int imgHeight);
 };
 

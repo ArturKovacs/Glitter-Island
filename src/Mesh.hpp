@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "all_gl_headers.hpp"
 #include "AttributeCategory.hpp"
 
@@ -12,8 +11,7 @@ class Mesh
 	friend class DemoCore;
 
 public:
-	using IndexType = GLuint;
-	static const gl::enums::DataType indexTypeEnum = gl::enums::DataType::UnsignedInt;
+	class Submesh;
 
 public:
 	static Mesh GenerateTriangle(float size);
@@ -29,37 +27,11 @@ public:
 	Mesh(Mesh&&);
 	Mesh& operator=(Mesh&&);
 
-	void SetIndices(const std::vector<IndexType>& indexArray);
-	void SetPrimitiveType(gl::enums::PrimitiveType type);
-	void SetVertexAttributeElementDimensions(AttributeCategory targetAttribute, const int dimensionCount);
-	void SetVertexAttributeBuffer(AttributeCategory targetAttribute, const gl::BufferData& dataArray);
-
-	gl::enums::PrimitiveType GetPrimitiveType() const;
-	GLsizei GetNumOfIndices() const;
-
-	void AttachVertexAttribute(const AttributeCategory targetAttribute, const gl::Program& shaderProgram, const std::string& nameInShader) const;
-
-	void BindVAO() const;
+	std::vector<Submesh>& GetSubmeshes();
+	const std::vector<Submesh>& GetSubmeshes() const;
 
 private:
-	struct VertexAttributeContainer
-	{
-		gl::Buffer buffer;
-		int elementDimension;
-
-		VertexAttributeContainer(gl::Buffer&& buffer, const int elementDimension) : buffer(std::move(buffer)), elementDimension(elementDimension) {}
-		VertexAttributeContainer(const VertexAttributeContainer&) = delete;
-		void operator=(const VertexAttributeContainer&) = delete;
-		VertexAttributeContainer(VertexAttributeContainer&& r) : buffer(std::move(r.buffer)), elementDimension(r.elementDimension){}
-	};
-
-private:
-	gl::VertexArray VAO;
-	gl::Buffer indices;
-
-	std::map<AttributeCategory, VertexAttributeContainer> vertexAttributes;
-
-	gl::enums::PrimitiveType primitiveType;
+	std::vector<Submesh> submeshes;
 
 private:
 	void LoadOBJMeshFromFile(const std::string& filename);
@@ -84,4 +56,56 @@ private:
 
 		return result;
 	}
+};
+
+class Mesh::Submesh
+{
+public:
+	using IndexType = GLuint;
+	static const gl::enums::DataType indexTypeEnum = gl::enums::DataType::UnsignedInt;
+
+public:
+	Submesh();
+
+	Submesh(const Submesh&) = delete;
+	Submesh& operator=(const Submesh&) = delete;
+
+	Submesh(Submesh&&);
+	Submesh& operator=(Submesh&&);
+
+	void SetIndices(const std::vector<IndexType>& indexArray);
+	void SetPrimitiveType(gl::enums::PrimitiveType type);
+	void SetVertexAttributeElementDimensions(AttributeCategory targetAttribute, const int dimensionCount);
+	void SetVertexAttributeBuffer(AttributeCategory targetAttribute, const gl::BufferData& dataArray);
+	void SetMaterialName(std::string name);
+
+	std::string GetMaterialName(std::string name) const;
+	gl::enums::PrimitiveType GetPrimitiveType() const;
+	GLsizei GetNumOfIndices() const;
+
+	void AttachVertexAttribute(const AttributeCategory targetAttribute, const gl::Program& shaderProgram, const std::string& nameInShader) const;
+
+	void BindVAO() const;
+
+private:
+	struct VertexAttributeContainer
+	{
+		gl::Buffer buffer;
+		int elementDimension;
+
+		VertexAttributeContainer(gl::Buffer&& buffer, const int elementDimension) : buffer(std::move(buffer)), elementDimension(elementDimension) {}
+		VertexAttributeContainer(const VertexAttributeContainer&) = delete;
+		void operator=(const VertexAttributeContainer&) = delete;
+		VertexAttributeContainer(VertexAttributeContainer&& r) : buffer(std::move(r.buffer)), elementDimension(r.elementDimension){}
+	};
+
+private:
+	std::string materialName;
+
+	gl::VertexArray VAO;
+	gl::Buffer indices;
+
+	std::map<AttributeCategory, VertexAttributeContainer> vertexAttributes;
+
+	gl::enums::PrimitiveType primitiveType;
 };

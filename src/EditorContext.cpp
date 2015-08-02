@@ -29,6 +29,8 @@ EditorContext::EditorToolType EditorContext::GetToolType(EditorContext::EditorTo
 		assert(false);
 		break;
 	}
+
+	return EditorToolType::NO_TOOL;
 }
 
 EditorContext::EditorToolInfo EditorContext::GetToolInfo(EditorContext::EditorTool tool)

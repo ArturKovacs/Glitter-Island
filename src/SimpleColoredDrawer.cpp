@@ -14,11 +14,14 @@ SimpleColoredDrawer::SimpleColoredDrawer()
 void SimpleColoredDrawer::Draw(gl::Context& glContext, const Mesh& mesh, const gl::Mat4f& MVP, const gl::Vec4f& color)
 {
 	shaderProgram.Use();
-	mesh.AttachVertexAttribute(AttributeCategory::POSITION, shaderProgram, "vertexPos");
 
-	sh_MVP.Set(MVP);
-	sh_color.Set(color);
+	for (auto& curr : mesh.GetSubmeshes()) {
+		curr.AttachVertexAttribute(AttributeCategory::POSITION, shaderProgram, "vertexPos");
 
-	mesh.BindVAO();
-	glContext.DrawElements(mesh.GetPrimitiveType(), mesh.GetNumOfIndices(), mesh.indexTypeEnum);
+		sh_MVP.Set(MVP);
+		sh_color.Set(color);
+
+		curr.BindVAO();
+		glContext.DrawElements(curr.GetPrimitiveType(), curr.GetNumOfIndices(), curr.indexTypeEnum);
+	}
 }

@@ -69,62 +69,67 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float 
 	const int trianglesInAQuad = 2;
 	const int triangleVertexCount = 3;
 
-	std::vector<Mesh::IndexType> indices(pixelCountWithAssociatedQuad * trianglesInAQuad * triangleVertexCount);
+	std::vector<Mesh::Submesh::IndexType> indices(pixelCountWithAssociatedQuad * trianglesInAQuad * triangleVertexCount);
 	SetUpIndices(&indices, imgWidth, imgHeight);
 
 	shaderProgram.Use();
 
-	graphicalModel.SetVertexAttributeBuffer(AttributeCategory::POSITION, positions);
-	graphicalModel.SetVertexAttributeBuffer(AttributeCategory::NORMAL, normals);
-	graphicalModel.SetVertexAttributeBuffer(AttributeCategory::TEX_COORD, texCoords);
+	Mesh::Submesh submsh;
 
-	graphicalModel.SetIndices(indices);
+	submsh.SetVertexAttributeBuffer(AttributeCategory::POSITION, positions);
+	submsh.SetVertexAttributeBuffer(AttributeCategory::NORMAL, normals);
+	submsh.SetVertexAttributeBuffer(AttributeCategory::TEX_COORD, texCoords);
+
+	submsh.SetIndices(indices);
 
 	try {
-		graphicalModel.AttachVertexAttribute(AttributeCategory::POSITION, shaderProgram, "vertexPos");
-		graphicalModel.AttachVertexAttribute(AttributeCategory::NORMAL, shaderProgram, "vertexNormal");
-		graphicalModel.AttachVertexAttribute(AttributeCategory::TEX_COORD, shaderProgram, "vertexTexCoord");
+		submsh.AttachVertexAttribute(AttributeCategory::POSITION, shaderProgram, "vertexPos");
+		submsh.AttachVertexAttribute(AttributeCategory::NORMAL, shaderProgram, "vertexNormal");
+		submsh.AttachVertexAttribute(AttributeCategory::TEX_COORD, shaderProgram, "vertexTexCoord");
 	}
 	catch (gl::Error& err) {
 		std::cout << err.what() << std::endl;
 	}
 
-	graphicalModel.SetPrimitiveType(gl::enums::PrimitiveType::Triangles);
+	submsh.SetPrimitiveType(gl::enums::PrimitiveType::Triangles);
+
+	terrainModel.GetSubmeshes().push_back(std::move(submsh));
 
 	const float seaBottomScale = scale*10;
-
 	std::vector<GLfloat> seaBottomVertPos = {
 		-seaBottomScale, -seaBottomScale, -0.1f,
 		+seaBottomScale, -seaBottomScale, -0.1f,
 		+seaBottomScale, +seaBottomScale, -0.1f,
 		-seaBottomScale, +seaBottomScale, -0.1f
 	};
-
 	std::vector<GLfloat> seaBottomVertNormal = {
 		0, 0, 1.f,
 		0, 0, 1.f,
 		0, 0, 1.f,
 		0, 0, 1.f
 	};
-
-	std::vector<Mesh::IndexType> seaBottomIndices = {
+	std::vector<Mesh::Submesh::IndexType> seaBottomIndices = {
 		0, 1, 2, 3
 	};
 
-	seabottom.SetVertexAttributeBuffer(AttributeCategory::POSITION, seaBottomVertPos);
-	seabottom.SetVertexAttributeBuffer(AttributeCategory::NORMAL, seaBottomVertNormal);
+	Mesh::Submesh seabottom_submsh;
 
-	seabottom.SetIndices(seaBottomIndices);
+	seabottom_submsh.SetVertexAttributeBuffer(AttributeCategory::POSITION, seaBottomVertPos);
+	seabottom_submsh.SetVertexAttributeBuffer(AttributeCategory::NORMAL, seaBottomVertNormal);
+
+	seabottom_submsh.SetIndices(seaBottomIndices);
 
 	try {
-		seabottom.AttachVertexAttribute(AttributeCategory::POSITION, shaderProgram, "vertexPos");
-		seabottom.AttachVertexAttribute(AttributeCategory::NORMAL, shaderProgram, "vertexNormal");
+		seabottom_submsh.AttachVertexAttribute(AttributeCategory::POSITION, shaderProgram, "vertexPos");
+		seabottom_submsh.AttachVertexAttribute(AttributeCategory::NORMAL, shaderProgram, "vertexNormal");
 	}
 	catch (gl::Error& err) {
 		std::cout << err.what() << std::endl;
 	}
 
-	seabottom.SetPrimitiveType(gl::enums::PrimitiveType::TriangleFan);
+	seabottom_submsh.SetPrimitiveType(gl::enums::PrimitiveType::TriangleFan);
+
+	seabottom.GetSubmeshes().push_back(std::move(seabottom_submsh));
 }
 
 static gl::Mat4f SajatTransposeMertNemMukodikAzOglPlusOsTODO(const gl::Mat4f& input)
@@ -158,11 +163,13 @@ void Terrain::Draw(DemoCore& core)
 	sh_modelTransposedInverse.Set(SajatTransposeMertNemMukodikAzOglPlusOsTODO(gl::Inverse(modelTransform)));
 	//sh_modelTransposedInverse.Set(gl::Transposed(gl::Inverse(modelTransform)));
 
-	graphicalModel.BindVAO();
-	core.GetGLContext().DrawElements(graphicalModel.GetPrimitiveType(), graphicalModel.GetNumOfIndices(), graphicalModel.indexTypeEnum);
+	Mesh::Submesh& terrain_submsh = terrainModel.GetSubmeshes().at(0);
+	terrain_submsh.BindVAO();
+	core.GetGLContext().DrawElements(terrain_submsh.GetPrimitiveType(), terrain_submsh.GetNumOfIndices(), terrain_submsh.indexTypeEnum);
 
-	seabottom.BindVAO();
-	core.GetGLContext().DrawElements(seabottom.GetPrimitiveType(), seabottom.GetNumOfIndices(), seabottom.indexTypeEnum);
+	Mesh::Submesh& seabottom_submsh = seabottom.GetSubmeshes().at(0);
+	seabottom_submsh.BindVAO();
+	core.GetGLContext().DrawElements(seabottom_submsh.GetPrimitiveType(), seabottom_submsh.GetNumOfIndices(), seabottom_submsh.indexTypeEnum);
 }
 
 void Terrain::SetTransform(const gl::Mat4f& transform)
@@ -373,7 +380,7 @@ void Terrain::CalculateNormals(std::vector<gl::Vec3f>* normals, const sf::Image&
 	}
 }
 
-void Terrain::SetUpIndices(std::vector<Mesh::IndexType>* indices, const int imgWidth, const int imgHeight)
+void Terrain::SetUpIndices(std::vector<Mesh::Submesh::IndexType>* indices, const int imgWidth, const int imgHeight)
 {
 	int indicesArrayIndex = 0;
 

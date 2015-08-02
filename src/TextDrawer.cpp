@@ -29,16 +29,17 @@ TextDrawer::TextDrawer()
 		std::cout << err.what() << std::endl;
 	}
 
+	Mesh::Submesh submsh;
 	const std::vector<gl::Vec2f> pos = {
 		gl::Vec2f(0., 0.),
 		gl::Vec2f(0., 1.),
 		gl::Vec2f(1., 1.),
 		gl::Vec2f(1., 0.)
 	};
-	quadMesh.SetVertexAttributeBuffer(AttributeCategory::POSITION, pos);
-	quadMesh.SetVertexAttributeElementDimensions(AttributeCategory::POSITION, 2);
-	quadMesh.AttachVertexAttribute(AttributeCategory::POSITION, characterShader, "vertexPos");
-	quadMesh.AttachVertexAttribute(AttributeCategory::POSITION, backgroundShader, "vertexPos");
+	submsh.SetVertexAttributeBuffer(AttributeCategory::POSITION, pos);
+	submsh.SetVertexAttributeElementDimensions(AttributeCategory::POSITION, 2);
+	submsh.AttachVertexAttribute(AttributeCategory::POSITION, characterShader, "vertexPos");
+	submsh.AttachVertexAttribute(AttributeCategory::POSITION, backgroundShader, "vertexPos");
 
 	const std::vector<gl::Vec2f> texCoord = {
 		gl::Vec2f(0., 1.),
@@ -46,15 +47,17 @@ TextDrawer::TextDrawer()
 		gl::Vec2f(1., 0.),
 		gl::Vec2f(1., 1.)
 	};
-	quadMesh.SetVertexAttributeBuffer(AttributeCategory::TEX_COORD, texCoord);
+	submsh.SetVertexAttributeBuffer(AttributeCategory::TEX_COORD, texCoord);
 	//quadMesh.AttachVertexAttribute(AttributeCategory::TEX_COORD, shaderProgram, "vertexTexCoord");
 
-	const std::vector<Mesh::IndexType> indices = {
+	const std::vector<Mesh::Submesh::IndexType> indices = {
 		0, 1, 2, 3
 	};
 
-	quadMesh.SetIndices(indices);
-	quadMesh.SetPrimitiveType(gl::enums::PrimitiveType::TriangleFan);
+	submsh.SetIndices(indices);
+	submsh.SetPrimitiveType(gl::enums::PrimitiveType::TriangleFan);
+
+	quadMesh.GetSubmeshes().push_back(std::move(submsh));
 }
 
 void TextDrawer::SetScreenResolution(gl::Vec2i res)
@@ -73,7 +76,8 @@ void TextDrawer::Draw(gl::Context& glContext, const sf::Text& text)
 	unsigned int characterSize = text.getCharacterSize();
 	const sf::Texture& fontTexture = font.getTexture(characterSize);
 
-	quadMesh.BindVAO();
+	Mesh::Submesh& quad_submsh = quadMesh.GetSubmeshes().at(0);
+	quad_submsh.BindVAO();
 	characterShader.Use();
 
 	gl::Texture::Active(0);
@@ -118,7 +122,7 @@ void TextDrawer::Draw(gl::Context& glContext, const sf::Text& text)
 			sh_char_texCoordMax.Set(texCoordsMax);
 
 			//glContext.Disable(gl::Capability::CullFace);
-			glContext.DrawElements(quadMesh.GetPrimitiveType(), quadMesh.GetNumOfIndices(), quadMesh.indexTypeEnum);
+			glContext.DrawElements(quad_submsh.GetPrimitiveType(), quad_submsh.GetNumOfIndices(), quad_submsh.indexTypeEnum);
 
 			charOffset.x += glyph.advance;
 		}
@@ -154,8 +158,9 @@ void TextDrawer::DrawBackground(gl::Context& glContext, const sf::Text& text, co
 
 	sh_bg_color.Set(gl::Vec4f(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f));
 
-	quadMesh.BindVAO();
-	glContext.DrawElements(quadMesh.GetPrimitiveType(), quadMesh.GetNumOfIndices(), quadMesh.indexTypeEnum);
+	Mesh::Submesh& quad_submsh = quadMesh.GetSubmeshes().at(0);
+	quad_submsh.BindVAO();
+	glContext.DrawElements(quad_submsh.GetPrimitiveType(), quad_submsh.GetNumOfIndices(), quad_submsh.indexTypeEnum);
 }
 
 void TextDrawer::DrawAsList(gl::Context& glContext, const sf::Text& text, const int highlightedRowID, const sf::Color& highlightedColor)

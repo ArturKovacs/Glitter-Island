@@ -39,11 +39,12 @@ void GraphicalObject::Draw(DemoCore& core)
 	}
 
 	auto& glContext = core.GetGLContext();
-
-	pMaterial->Prepare(pMesh, modelTransform);
-
-	pMesh->BindVAO();
-	glContext.DrawElements(pMesh->GetPrimitiveType(), pMesh->GetNumOfIndices(), pMesh->indexTypeEnum);
+	
+	for (auto& curr : pMesh->GetSubmeshes()) {
+		pMaterial->Prepare(curr, modelTransform);
+		curr.BindVAO();
+		glContext.DrawElements(curr.GetPrimitiveType(), curr.GetNumOfIndices(), curr.indexTypeEnum);
+	}
 }
 
 void GraphicalObject::SetTransform(const gl::Mat4f& transform)

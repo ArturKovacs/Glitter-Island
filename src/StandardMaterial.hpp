@@ -21,7 +21,7 @@ public:
 	StandardMaterial(StandardMaterial&&);
 	StandardMaterial& operator=(StandardMaterial&&);
 
-	void Prepare(Mesh* pMesh, gl::Mat4f& modelTransform) override;
+	void Prepare(Mesh::Submesh& submsh, gl::Mat4f& modelTransform) override;
 
 private:
 	DemoCore* pCore;

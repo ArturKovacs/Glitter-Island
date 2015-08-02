@@ -66,14 +66,14 @@ static gl::Mat4f SajatTransposeMertNemMukodikAzOglPlusOsTODO(const gl::Mat4f& in
 	return result;
 }
 
-void StandardMaterial::Prepare(Mesh* pMesh, gl::Mat4f& modelTransform)
+void StandardMaterial::Prepare(Mesh::Submesh& submsh, gl::Mat4f& modelTransform)
 {
 	//TODO might be too slow to set vertex attributes every time, 
 	//but if multiple meshes are drawn with a single  material it is necessary
-	pMesh->AttachVertexAttribute(AttributeCategory::POSITION, shaderProgram, "vertexPos");
-	pMesh->AttachVertexAttribute(AttributeCategory::NORMAL, shaderProgram, "vertexNormal");
-	pMesh->AttachVertexAttribute(AttributeCategory::TEX_COORD, shaderProgram, "vertexTexCoord");
-	pMesh->AttachVertexAttribute(AttributeCategory::TANGENT, shaderProgram, "vertexTangent");
+	submsh.AttachVertexAttribute(AttributeCategory::POSITION, shaderProgram, "vertexPos");
+	submsh.AttachVertexAttribute(AttributeCategory::NORMAL, shaderProgram, "vertexNormal");
+	submsh.AttachVertexAttribute(AttributeCategory::TEX_COORD, shaderProgram, "vertexTexCoord");
+	submsh.AttachVertexAttribute(AttributeCategory::TANGENT, shaderProgram, "vertexTangent");
 
 	shaderProgram.Use();
 

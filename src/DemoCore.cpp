@@ -241,29 +241,6 @@ Mesh* DemoCore::LoadMeshFromFile(const std::string& filename)
 		return (*elementIter).second;
 	}
 
-	/*
-	std::string completeFilename = DemoCore::modelsFolderPath + filename;
-	std::ifstream file(completeFilename);
-	if (!file.is_open()) {
-		throw std::runtime_error((std::string("Can not open file: ") + completeFilename).c_str());
-	}
-
-	OBJMesh objMesh(file);
-
-	Mesh* pResult = new Mesh;
-
-	pResult->SetIndices(objMesh.GetIndices());
-
-	ForEachAttribute([&](AttributeCategory current){
-		auto attributeBuffer = objMesh.GetVertexAttribute(current);
-		if (attributeBuffer.size() > 0) {
-			pResult->SetVertexAttributeBuffer(current, attributeBuffer);
-		}
-	});
-
-	pResult->SetPrimitiveType(gl::PrimitiveType::Triangles);
-	*/
-
 	Mesh* pResult = new Mesh;
 
 	pResult->LoadOBJMeshFromFile(DemoCore::modelsFolderPath + filename);
