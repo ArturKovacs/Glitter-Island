@@ -22,17 +22,20 @@ void ModelSelectionContext::HandleWindowEvent(const sf::Event& event)
 {
 	if (event.type == sf::Event::KeyPressed) {
 		switch (event.key.code) {
+
+		case sf::Keyboard::R:
 		case sf::Keyboard::Up:
 			howeredModelID--;
-			howeredModelID = std::max(howeredModelID, 0);
+			howeredModelID = howeredModelID < 0 ? modelFileList.size()-1 : howeredModelID;
 			break;
 
+		case sf::Keyboard::F:
 		case sf::Keyboard::Down:
 			howeredModelID++;
-			howeredModelID = std::min<int>(howeredModelID, modelFileList.size()-1);
+			howeredModelID = howeredModelID > modelFileList.size()-1 ? 0 : howeredModelID;
 			break;
 
-		case sf::Keyboard::Return:
+		case sf::Keyboard::Space:
 			selectedModelID = howeredModelID;
 
 			//Chech if we are on top, just for safety
@@ -41,7 +44,6 @@ void ModelSelectionContext::HandleWindowEvent(const sf::Event& event)
 			}
 			break;
 
-		case sf::Keyboard::Num6:
 		case sf::Keyboard::Escape:
 			if (pContextManager->GetTopContext() == this) {
 				pContextManager->PopContext();

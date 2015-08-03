@@ -181,7 +181,7 @@ void BaseDemoContext::KeyPressed(sf::Event::KeyEvent key)
 		//running = false;
 		pDemoCore->Stop();
 		break;
-	case sf::Keyboard::Space:
+	case sf::Keyboard::Q:
 		isTrackingMouse = !isTrackingMouse;
 		pDemoCore->GetWindow()->setMouseCursorVisible(!isTrackingMouse);
 		if (isTrackingMouse) {

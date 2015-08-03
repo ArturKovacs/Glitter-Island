@@ -263,10 +263,7 @@ void EditorContext::KeyPressed(const sf::Event& event)
 		break;
 	case sf::Keyboard::Num6:
 		selectedTool = EditorTool::PLACE_MODEL;
-		//showModelSelection = true;
-		//howeredModelID = selectedModelID;
-		pContextManager->PushContext(&modelSelectionContext);
-		//UpdateModelFileList();
+		//pContextManager->PushContext(&modelSelectionContext);
 		break;
 	case sf::Keyboard::Add:
 		brushRadius += 4.0f;
@@ -274,6 +271,15 @@ void EditorContext::KeyPressed(const sf::Event& event)
 	case sf::Keyboard::Subtract:
 		brushRadius -= 4.0f;
 		brushRadius = std::max(brushRadius, 0.5f);
+		break;
+	case sf::Keyboard::R:
+		selectedTool = static_cast<EditorTool>(static_cast<int>(selectedTool) - 1);
+		selectedTool = selectedTool == EditorTool::_FIRST ? static_cast<EditorTool>(static_cast<int>(EditorTool::_LAST) - 1) : selectedTool;
+		break;
+
+	case sf::Keyboard::F:
+		selectedTool = static_cast<EditorTool>(static_cast<int>(selectedTool) + 1);
+		selectedTool = selectedTool == EditorTool::_LAST ? static_cast<EditorTool>(static_cast<int>(EditorTool::_FIRST) + 1) : selectedTool;
 		break;
 
 	case sf::Keyboard::M:
@@ -283,6 +289,12 @@ void EditorContext::KeyPressed(const sf::Event& event)
 	case sf::Keyboard::E:
 		if (pContextManager->GetTopContext() == this) {
 			pContextManager->PopContext();
+		}
+		break;
+
+	case sf::Keyboard::Space:
+		if (selectedTool == EditorTool::PLACE_MODEL) {
+			pContextManager->PushContext(&modelSelectionContext);
 		}
 		break;
 

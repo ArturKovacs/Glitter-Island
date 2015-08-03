@@ -39,25 +39,28 @@ it is recommended to update your display driver.
 
 Once the program is running the user can observe the island. 
 For movement, use [WASD keys](https://en.wikipedia.org/wiki/Arrow_keys#WASD_keys). 
-Hold down SHIFT to fly faster. For looking, press space to capture mouse so that mouse movement 
-controlls view direction. Press space again to release mouse. 
+Hold down SHIFT to fly faster. For looking, press Q to capture mouse so that mouse movement 
+controlls view direction. Press Q again to release mouse. 
 
 Table of available controlls:
 
-| Key / Input | Effect                                     | Mode   |
-|-------------|--------------------------------------------|--------|
-| W           | Move forward                               | All    |
-| S           | Move backward                              | All    |
-| A           | Move left                                  | All    |
-| D           | Move right                                 | All    |
-| SHIFT       | Move faster                                | All    |
-| CTRL        | Move ultra fast                            | All    |
-| SPACE       | Capture/Release mouse                      | All    |
-| H           | Toggle wireframe display                   | All    |
-| E           | Toggle "Editor mode"                       | All    |
-| 0-9         | Tool selection                             | Editor |
-| Scroll down | Increase brush radius                      | Editor |
-| Scroll up   | Decrease brush radius                      | Editor |
-| +           | Increase brush radius by a greater amount  | Editor |
-| -           | Decrease brush radius by a greater amount  | Editor |
-| M           | Save all changes                           | Editor |
+| Key / Input | Effect                                | Mode                    |
+|-------------|---------------------------------------|-------------------------|
+| W           | Move forward                          | All                     |
+| S           | Move backward                         | All                     |
+| A           | Move left                             | All                     |
+| D           | Move right                            | All                     |
+| SHIFT       | Move faster                           | All                     |
+| CTRL        | Move ultra fast                       | All                     |
+| Q           | Capture/Release mouse                 | All                     |
+| E           | Toggle "Editor mode"                  | All                     |
+| H           | Toggle wireframe display              | All                     |
+| 0-9         | Tool selection                        | Editor                  |
+| R           | Move selection up                     | Editor, Model selection |
+| F           | Move selection down                   | Editor, Model selection |
+| SPACE       | Apply selection                       | Editor, Model selection |
+| Scroll down | Increase brush radius                 | Editor                  |
+| Scroll up   | Decrease brush radius                 | Editor                  |
+| +           | Inc brush radius by a greater amount  | Editor                  |
+| -           | Dec brush radius by a greater amount  | Editor                  |
+| M           | Save all changes                      | Editor                  |
