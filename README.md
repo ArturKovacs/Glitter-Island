@@ -39,8 +39,9 @@ it is recommended to update your display driver.
 
 Once the program is running the user can observe the island. 
 For movement, use [WASD keys](https://en.wikipedia.org/wiki/Arrow_keys#WASD_keys). 
-Hold down SHIFT to fly faster. For looking, press Q to capture mouse so that mouse movement 
-controlls view direction. Press Q again to release mouse. 
+Hold down SHIFT to fly faster. For looking, press Z to capture mouse so that mouse movement 
+controlls view direction. Press Z again to release mouse. An other option is to hold down 
+the right mouse button while moving the mouse.
 
 Table of available controlls:
 
@@ -52,13 +53,15 @@ Table of available controlls:
 | D           | Move right                            | All                     |
 | SHIFT       | Move faster                           | All                     |
 | CTRL        | Move ultra fast                       | All                     |
-| Q           | Capture/Release mouse                 | All                     |
+| Z           | Capture/Release mouse                 | All                     |
+| Right click | Capture mouse                         | All                     |
 | E           | Toggle "Editor mode"                  | All                     |
 | H           | Toggle wireframe display              | All                     |
 | 0-9         | Tool selection                        | Editor                  |
 | R           | Move selection up                     | Editor, Model selection |
 | F           | Move selection down                   | Editor, Model selection |
-| SPACE       | Apply selection                       | Editor, Model selection |
+| SPACE       | Choose selected                       | Editor, Model selection |
+| Left click  | Apply selection                       | Editor, Model selection |
 | Scroll down | Increase brush radius                 | Editor                  |
 | Scroll up   | Decrease brush radius                 | Editor                  |
 | +           | Inc brush radius by a greater amount  | Editor                  |

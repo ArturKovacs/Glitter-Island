@@ -56,11 +56,27 @@ BaseDemoContext::~BaseDemoContext()
 
 void BaseDemoContext::HandleWindowEvent(const sf::Event& event)
 {
+	const int screenHeight = pDemoCore->GetCamera().GetScreenHeight();
+	const int screenWidth = pDemoCore->GetCamera().GetScreenWidth();
+
 	if (event.type == sf::Event::KeyPressed) {
 		KeyPressed(event.key);
 	}
 	else if (event.type == sf::Event::KeyReleased) {
 		KeyReleased(event.key);
+	}
+	else if (event.type == sf::Event::MouseButtonPressed) {
+		if (event.mouseButton.button == sf::Mouse::Button::Right) {
+			isTrackingMouse = true;
+			pDemoCore->GetWindow()->setMouseCursorVisible(!isTrackingMouse);
+			sf::Mouse::setPosition(sf::Vector2i(screenWidth / 2, screenHeight / 2), *pDemoCore->GetWindow());
+		}
+	}
+	else if (event.type == sf::Event::MouseButtonReleased) {
+		if (event.mouseButton.button == sf::Mouse::Button::Right) {
+			isTrackingMouse = false;
+			pDemoCore->GetWindow()->setMouseCursorVisible(!isTrackingMouse);
+		}
 	}
 }
 
@@ -172,15 +188,15 @@ Terrain& BaseDemoContext::GetTerrain()
 
 void BaseDemoContext::KeyPressed(sf::Event::KeyEvent key)
 {
-	int screenWidth = pDemoCore->GetCamera().GetScreenWidth();
-	int screenHeight = pDemoCore->GetCamera().GetScreenHeight();
+	const int screenHeight = pDemoCore->GetCamera().GetScreenHeight();
+	const int screenWidth = pDemoCore->GetCamera().GetScreenWidth();
 
 	switch (key.code) {
 	case sf::Keyboard::Escape:
 		//running = false;
 		pDemoCore->Stop();
 		break;
-	case sf::Keyboard::Q:
+	case sf::Keyboard::Z:
 		isTrackingMouse = !isTrackingMouse;
 		pDemoCore->GetWindow()->setMouseCursorVisible(!isTrackingMouse);
 		if (isTrackingMouse) {
