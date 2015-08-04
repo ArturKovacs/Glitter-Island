@@ -252,6 +252,9 @@ void EditorContext::MouseButtonPressed(const sf::Event& event)
 			pDemoCore->AddGraphicalObject(std::move(loadedObject));
 		}
 	}
+	else {
+		pContextManager->PassEvent(this, event);
+	}
 }
 
 void EditorContext::KeyPressed(const sf::Event& event)
