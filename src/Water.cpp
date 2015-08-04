@@ -73,10 +73,7 @@ void Water::Draw(DemoCore& core)
 
 	VAO.Bind();
 
-	gl.Enable(gl::Capability::Blend);
-	gl.BlendFunc(gl::enums::BlendFunction::SrcAlpha, gl::enums::BlendFunction::OneMinusSrcAlpha);
-
-	gl.DrawElements(gl::PrimitiveType::TriangleFan, indices.Size(gl::Buffer::Target::ElementArray).get() / sizeof(GLushort), gl::DataType::UnsignedShort);
-
+	gl.Disable(gl::Capability::CullFace);
 	gl.Disable(gl::Capability::Blend);
+	gl.DrawElements(gl::PrimitiveType::TriangleFan, indices.Size(gl::Buffer::Target::ElementArray).get() / sizeof(GLushort), gl::DataType::UnsignedShort);
 }

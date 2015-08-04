@@ -77,12 +77,19 @@ mouseSensitivity(0.005f)
 	/////////////////
 	//Init more variables
 
+	//H rot: 4.10499
+	//V rot: -0.275
+	//X: -27.2224
+	//Y: 21.0493
+	//Z: 17.4667
+
 	cam.SetFovY(gl::Degrees(70));
 	cam.SetScreenWidth(screenWidth);
 	cam.SetScreenHeight(screenHeight);
-	cam.SetPosition(gl::Vec3f(0, 5, 10));
+	cam.SetHorizontalRot(gl::Radians(4.10499));
+	cam.SetVerticalRot(gl::Radians(-0.275));
+	cam.SetPosition(gl::Vec3f(-27.2224, 21.0493, 17.4667));
 
-	//activeGUIStack.push_back(this);
 	contextManager.PushContext(&baseDemoContext);
 }
 

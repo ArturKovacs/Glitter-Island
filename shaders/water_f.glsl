@@ -23,13 +23,14 @@ float rand(const in float seed){return abs(rand2(seed));}
 
 float smoothNoise(const in vec2 pos, const in vec2 seed)
 {
-	const int randomness = 7;
+	const int randomness = 20;
 	
-	const float freq = 15;
+	const float freq = 50;
+	const float amp = 2;
 	
 	float result = 0;
 	for (int i = 0; i < randomness; i++){
-		result += (pow((cos(pos.x*rand(i*3)*freq + seed.x*rand2(i*3+5))*cos(pos.y*rand(i*3+2)*freq + seed.y*rand2(i*3+6)))*0.5+0.5, 1)*2-1)*(rand(i*3+1)*0.9+0.1);
+		result += (pow((cos(pos.x*rand(i*3)*freq + seed.x*rand2(i*3+5))*cos(pos.y*rand(i*3+2)*freq + seed.y*rand2(i*3+6)))*0.5+0.5, 1)*2-1)*((rand(i*3+1)*0.9+0.1)*amp);
 	}
 
 	result *= 1.f/randomness;
@@ -43,8 +44,6 @@ const float shininess = 200;
 
 void main(void)
 {
-	float objectsDepth = texelFetch(screenDepth, ivec2(gl_FragCoord.xy), 0).x;
-	
 	const float modulationStrength = 0.8;
 	
 	vec3 normal = normalize(vec3(0, 1, 0) + vec3(smoothNoise(posFromVert.xz+vec2(500), vec2(time*4)), smoothNoise(posFromVert.xz+vec2(100), vec2(time*6)), smoothNoise(posFromVert.xz+vec2(200), vec2(time*6)))*modulationStrength);
@@ -53,48 +52,61 @@ void main(void)
 	
 	float specularIntensity = pow(max(dot(normal, halfway), 0), shininess);
 	
-	////////
+	vec2 fragCoordTex = vec2(float(gl_FragCoord.x)/screenWidth, float(gl_FragCoord.y)/screenHeight);
 	
-	vec4 terrainPointPos = (invViewProj * vec4(((float(gl_FragCoord.x)/screenWidth)*2-1),
-											((float(gl_FragCoord.y)/screenHeight)*2-1),
-											(objectsDepth)*2-1,
+	vec4 screenSurfacePos = (invViewProj * vec4(
+											(fragCoordTex.x*2-1),
+											(fragCoordTex.y*2-1),
+											(texelFetch(screenDepth, ivec2(gl_FragCoord.xy), 0).x)*2-1,
 											1));
 	
-	terrainPointPos = terrainPointPos/terrainPointPos.w;
+	screenSurfacePos = screenSurfacePos/screenSurfacePos.w;
 	
-	float terrainDistance = distance(terrainPointPos.xyz, posFromVert);
-	//TODO: this is not the actual water depth
-	float waterDepth = abs(terrainPointPos.y - posFromVert.y);
+	float screenDistInWater = distance(screenSurfacePos.xyz, posFromVert);
+	float screenDistInWaterSqr;
+	{
+		vec3 posDiff = screenSurfacePos.xyz - posFromVert;
+		screenDistInWaterSqr = dot(posDiff, posDiff);
+	}
 	
-	////////
-	
-	vec3 fromCam = normalize(posFromVert - campos);
+	vec3 fromCam = -viewDir;
 	vec3 refractedDir = refract(fromCam, normal, 1/1.36);
-	vec3 fakeHitPos = posFromVert+refractedDir*min(terrainDistance, 1);
+	vec3 fakeHitPos = posFromVert+refractedDir*min(screenDistInWater, 1);
+	//vec3 fakeHitPos = posFromVert+refractedDir;
 	vec4 ClipSpacePos = MVP * vec4(fakeHitPos, 1);
 	vec2 hitPosOnScreen = ((ClipSpacePos/ClipSpacePos.w).xy * 0.5) + vec2(0.5);
-	float hitPosDepth = texture2D(screenDepth, hitPosOnScreen.xy).x;
-	//vec3 refractedColor = texture2D(screen, hitPosOnScreen.xy).rgb;
-	//vec3 refractedColor = texelFetch(screen, ivec2(gl_FragCoord.xy), 0).rgb;
-	//if (hitPosDepth < gl_FragCoord.z) {
-	//	refractedColor *= 0.5;
-	//}
+	float hitPosDepth = texture2D(screenDepth, hitPosOnScreen).x;
 	
 	vec3 refractedColor;
-	if (hitPosDepth > gl_FragCoord.z+0.0005) {
-		refractedColor = texture2D(screen, hitPosOnScreen.xy).rgb;
-	}
-	else {
-		refractedColor = texelFetch(screen, ivec2(gl_FragCoord.xy), 0).rgb;
+	float refractedDepth;
+	if (hitPosDepth < gl_FragCoord.z-0.01) {
+		hitPosOnScreen = fragCoordTex;
 	}
 	
-	vec3 reflectedDir = reflect(fromCam, normal);
-	fakeHitPos = posFromVert+reflectedDir;
-	ClipSpacePos = MVP * vec4(fakeHitPos, 1);
-	hitPosOnScreen = ((ClipSpacePos/ClipSpacePos.w).xy * 0.5) + vec2(0.5);
-	vec3 reflectedColor = texture2D(screen, hitPosOnScreen.xy).rgb;
+	refractedColor = texture2D(screen, hitPosOnScreen).rgb;
+	refractedDepth = texture2D(screenDepth, hitPosOnScreen).x;
 	
-	//const float maxDist = 4.5;
-	//float transformedDist = (-1/(terrainDistance+(1/maxDist)))+maxDist;
-	fragColor = vec4(pow(waterColor, vec3(clamp(terrainDistance*0.4, 0, 25)))*(refractedColor /*+ reflectedColor*/)+(specColor*specularIntensity), clamp(waterDepth*20, 0, 1));
+	////////
+	vec4 refractedSurfacePos = (invViewProj * vec4(
+											(fragCoordTex.x*2-1),
+											(fragCoordTex.y*2-1),
+											(refractedDepth)*2-1,
+											1));
+	
+	refractedSurfacePos = refractedSurfacePos/refractedSurfacePos.w;
+	
+	float distanceInWater = distance(refractedSurfacePos.xyz, posFromVert);
+	//TODO: this is not the actual water depth
+	float waterDepth = max(posFromVert.y - refractedSurfacePos.y, 0);
+	////////
+	
+	//vec3 reflectedDir = reflect(fromCam, normal);
+	//fakeHitPos = posFromVert+reflectedDir;
+	//ClipSpacePos = MVP * vec4(fakeHitPos, 1);
+	//hitPosOnScreen = ((ClipSpacePos/ClipSpacePos.w).xy * 0.5) + vec2(0.5);
+	//vec3 reflectedColor = texture2D(screen, hitPosOnScreen.xy).rgb;
+	
+	//distanceInWater = mix(0, distanceInWater, -(exp(-waterDepth)-1));
+	distanceInWater = mix(0, distanceInWater, clamp(waterDepth, 0, 1)); 
+	fragColor = vec4(pow(waterColor, vec3(clamp(distanceInWater*0.4, 0, 25)))*(refractedColor /*+ reflectedColor*/)+(specColor*specularIntensity), 1);
 }

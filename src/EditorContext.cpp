@@ -74,7 +74,9 @@ EditorContext::EditorContext(ContextManager* pContextManager, DemoCore* pDemoCor
 GUIContext(pContextManager, pDemoCore),
 modelSelectionContext(pContextManager, pDemoCore),
 selectedTool(EditorTool::NO_TOOL), brushRadius(1)
-{}
+{
+	modelSelectionContext.ForceUpdateModelFileList();
+}
 
 EditorContext::~EditorContext()
 {}
@@ -200,10 +202,10 @@ void EditorContext::DrawOverlayElements()
 
 	//TODO move overlay rendering to Core! Other obejcts should only be able to add overlay elements to core - review this statement!! -
 
-	sf::Text text("-Editor mode-", pDemoCore->overlayFont);
+	sf::Text text("Editor mode", pDemoCore->overlayFont);
 	text.setPosition(sf::Vector2f(30, 25));
 	text.setCharacterSize(18);
-	text.setColor(sf::Color(208, 59, 237, ~sf::Uint8(0)));
+	text.setColor(sf::Color(210, 65, 240, ~sf::Uint8(0)));
 	text.setStyle(sf::Text::Bold);
 	pDemoCore->textDrawer.DrawBackground(glContext, text, sf::Color(50, 50, 50, 150), 5);
 	pDemoCore->textDrawer.Draw(glContext, text);
@@ -221,6 +223,20 @@ void EditorContext::DrawOverlayElements()
 	text.setColor(sf::Color::White);
 	pDemoCore->textDrawer.DrawBackground(glContext, text, sf::Color(100, 100, 100, 150), 5);
 	pDemoCore->textDrawer.DrawAsList(glContext, text, GetToolInfo(selectedTool).id+1, sf::Color::Cyan);
+
+	if (selectedTool == EditorTool::PLACE_MODEL) {
+		str = "Selected model:\n";
+		if (modelSelectionContext.GetModelFileCount() > 0) {
+			str += modelSelectionContext.GetSelectedModelFilename();
+		}
+		else {
+			str += "## NO MODELS FOUND ##";
+		}
+		text.setString(str);
+		text.setPosition(sf::Vector2f(2, 350));
+		pDemoCore->textDrawer.DrawBackground(glContext, text, sf::Color(100, 100, 100, 150), 5);
+		pDemoCore->textDrawer.Draw(glContext, text);
+	}
 }
 
 void EditorContext::MouseButtonPressed(const sf::Event& event)

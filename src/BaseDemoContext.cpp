@@ -120,7 +120,6 @@ void BaseDemoContext::Draw()
 
 	skybox.Draw(*pDemoCore);
 
-	glContext.Disable(gl::Capability::CullFace);
 	water.Draw(*pDemoCore);
 
 	//(TODO) WARNING: Drawing Skybox twice! It's only purpose is to make water fade out.

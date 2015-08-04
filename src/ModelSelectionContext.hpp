@@ -20,6 +20,8 @@ public:
 	void DrawOverlayElements() override;
 
 	std::string GetSelectedModelFilename() const;
+	int GetModelFileCount();
+	void ForceUpdateModelFileList();
 
 private:
 	Mesh screenRectangle;

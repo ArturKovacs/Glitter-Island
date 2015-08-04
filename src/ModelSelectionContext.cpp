@@ -111,6 +111,16 @@ std::string ModelSelectionContext::GetSelectedModelFilename() const
 	return modelFileList.at(selectedModelID);
 }
 
+int ModelSelectionContext::GetModelFileCount()
+{
+	return modelFileList.size();
+}
+
+void ModelSelectionContext::ForceUpdateModelFileList()
+{
+	UpdateModelFileList();
+}
+
 void ModelSelectionContext::UpdateModelFileList()
 {
 	// Find all model files in models directory
