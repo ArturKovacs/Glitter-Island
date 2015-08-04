@@ -53,7 +53,7 @@ const vec3 sandColor = vec3(0.98, 0.98, 0.96);
 
 void main(void)
 {
-	vec2 texPos = texCoordFromVert*60;
+	vec2 texPos = texCoordFromVert*120;
 	vec3 normal = normalize(normalFromVert);
 	vec3 materialValue = texture(materialTexture, texCoordFromVert).rgb;
 	
