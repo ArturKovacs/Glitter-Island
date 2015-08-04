@@ -1,13 +1,31 @@
 
-I would like to thank for all the free content to those who made it.
+====================
+External Software
+====================
 
-======================================
+SFML:
+Licence is located at: extlibs/SFML
+-----------------------
+
+GLEW:
+Licence is located at: extlibs/GLEW
+-----------------------
+
+oglplus:
+Licence is located at: extlibs/oglplus
+-----------------------
+
+====================
+Art Assets
+====================
+
+I would like to give thanks for all the free content to those who made it.
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 
 Skybox:
 Created by: Roel z'n Boel 
 The skybox images are under a Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
 Link to licence: http://creativecommons.org/licenses/by-nc-sa/3.0/
-
 --------------------------
 
 Original Sand texture:
@@ -16,7 +34,6 @@ Released under Creative Commons Attribution 3.0 License.
 Link to licence: http://creativecommons.org/licenses/by/3.0/
 
 A modified version of this texture can be seen in the demo!
-
 --------------------------
 
 Original Grass texture:
@@ -24,7 +41,6 @@ Created by: j-m-s (Julian) (Deviant art ID)
 No licence was given.
 
 A modified version of this texture can be seen in the demo!
-
 --------------------------
 
 Font used in GUI:
@@ -34,7 +50,6 @@ Licence: SIL Open Font License, Version 1.1
 Link to licence: http://scripts.sil.org/OFL
 
 Licence is also available in a txt file located in the project.
-
 --------------------------
 
 Palmtree model:
@@ -52,6 +67,4 @@ http://artist-3d.com/free_3d_models/dnm/model_disp.php?uid=3678"
 
 And here's another link that was provided:
 http://interartcenter.net/free-clip-art/copyrights.html
-
-
 --------------------------
