@@ -4,4 +4,5 @@
 *.exe
 *.ilk
 *.pdb
+*.trace
 _build/
