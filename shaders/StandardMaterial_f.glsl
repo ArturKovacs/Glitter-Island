@@ -7,7 +7,7 @@ uniform sampler2D specularTexture;
 uniform sampler2D roughnessTexture;
 
 in vec2 texCoord_v;
-smooth in vec3 normal_v;
+in vec3 normal_v;
 in vec3 tangent_v;
 
 in vec3 viewerDir_v;
