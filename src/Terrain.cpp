@@ -10,7 +10,7 @@ Terrain::Terrain()
 {
 	terrainScale = 0;
 
-	shaderProgram = DemoCore::LoadShaderProgramFromFiles("terrain_v.glsl", "terrain_f.glsl");
+	shaderProgram = DemoCore::LoadShaderProgramFromFiles("Terrain_v.glsl", "Terrain_f.glsl");
 	shaderProgram.Use();
 
 	try {

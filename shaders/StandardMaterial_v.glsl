@@ -9,7 +9,7 @@ in vec3 vertexNormal;
 in vec2 vertexTexCoord;
 in vec3 vertexTangent;
 
-out vec3 normal_v;
+smooth out vec3 normal_v;
 out vec2 texCoord_v;
 out vec3 tangent_v;
 

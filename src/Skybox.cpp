@@ -5,19 +5,7 @@
 
 Skybox::Skybox()
 {
-	/*
-	gl::VertexShader vs_skydraw;
-	vs_skydraw.Source(LoadFileAsString(DemoCore::shadersFolderPath + "skybox_skydraw_v.glsl"));
-	vs_skydraw.Compile();
-	skydrawShader.AttachShader(vs_skydraw);
-
-	gl::FragmentShader fs_skydraw;
-	fs_skydraw.Source(LoadFileAsString(DemoCore::shadersFolderPath + "skybox_skydraw_f.glsl"));
-	fs_skydraw.Compile();
-	skydrawShader.AttachShader(fs_skydraw);
-
-	skydrawShader.Link();*/
-	skydrawShader = DemoCore::LoadShaderProgramFromFiles("skybox_skydraw_v.glsl", "skybox_skydraw_f.glsl");
+	skydrawShader = DemoCore::LoadShaderProgramFromFiles("Skybox_skydraw_v.glsl", "Skybox_skydraw_f.glsl");
 	skydrawShader.Use();
 
 	sh_ViewProjectionMatrix = gl::Uniform<gl::Mat4f>(skydrawShader, "viewProjectionMatrix");
@@ -57,7 +45,7 @@ Skybox::Skybox()
 	gl::Buffer::Data(gl::Buffer::Target::ElementArray, indexData);
 
 	///Fadeout shader
-	fadeoutShader = DemoCore::LoadShaderProgramFromFiles("passthrough2_v.glsl", "skybox_fadeout_f.glsl");
+	fadeoutShader = DemoCore::LoadShaderProgramFromFiles("Passthrough2_v.glsl", "Skybox_fadeout_f.glsl");
 	fadeoutShader.Use();
 
 	//gl::UniformSampler(fadeoutShader, "screenColor").Set(0);
@@ -87,7 +75,7 @@ void Skybox::LoadTextureFromFiles(
 	gl::Texture::WrapT(gl::Texture::Target::CubeMap, gl::TextureWrap::ClampToEdge);
 	gl::Texture::WrapR(gl::Texture::Target::CubeMap, gl::TextureWrap::ClampToEdge);
 
-	
+
 	std::map<gl::Texture::Target, std::string> imageContainer = {
 		{gl::Texture::Target::CubeMapNegativeX, negXfileName},
 		{gl::Texture::Target::CubeMapPositiveX, posXfileName},

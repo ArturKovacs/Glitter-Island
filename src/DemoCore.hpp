@@ -19,6 +19,8 @@
 #include "BaseDemoContext.hpp"
 #include "EditorContext.hpp"
 #include "ContextManager.hpp"
+#include "MeshManager.hpp"
+#include "MaterialManager.hpp"
 
 class DemoCore
 {
@@ -94,17 +96,13 @@ private: // misc
 	Camera cam;
 
 private: //resources
-	std::map<std::string, Mesh*> meshes;
-	std::map<std::string, Material*> materials;
+	MeshManager meshManager;
+	MaterialManager materialManager;
 
 private:
 	void ClearFramebufferStack();
 
 	void CoreDraw();
-
-	//void ContextManagerMouseWheelMoved(sf::Event::MouseWheelEvent wheelEvent);
-	//void ContextManagerKeyPressed(sf::Event::KeyEvent key);
-	//void ContextManagerKeyReleased(sf::Event::KeyEvent key);
 
 	void Resize(const int width, const int height);
 };

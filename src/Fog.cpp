@@ -6,12 +6,12 @@
 Fog::Fog()
 {
 	gl::VertexShader vs;
-	vs.Source(util::LoadFileAsString(DemoCore::shadersFolderPath + "fog_v.glsl"));
+	vs.Source(util::LoadFileAsString(DemoCore::shadersFolderPath + "Fog_v.glsl"));
 	vs.Compile();
 	shaderProgram.AttachShader(vs);
 
 	gl::FragmentShader fs;
-	fs.Source(util::LoadFileAsString(DemoCore::shadersFolderPath + "fog_f.glsl"));
+	fs.Source(util::LoadFileAsString(DemoCore::shadersFolderPath + "Fog_f.glsl"));
 	fs.Compile();
 	shaderProgram.AttachShader(fs);
 
@@ -34,7 +34,7 @@ void Fog::Draw(DemoCore& core)
 	screenFB.SetDepthTexName("screenDepth");
 	screenFB.SetVertexPosName("vertexPos");
 	screenFB.SetShaderProgram(&shaderProgram);
-	
+
 	core.GetGLContext().Disable(gl::Capability::DepthTest);
 
 	screenFB.Draw(core);

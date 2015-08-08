@@ -7,7 +7,7 @@ uniform sampler2D specularTexture;
 uniform sampler2D roughnessTexture;
 
 in vec2 texCoord_v;
-in vec3 normal_v;
+smooth in vec3 normal_v;
 in vec3 tangent_v;
 
 in vec3 viewerDir_v;
@@ -26,7 +26,7 @@ void main(void)
 {
 	vec3 normal = normalize(normal_v);
 	vec3 tangent  = normalize(tangent_v);
-	tangent = normalize(tangent - normal * (dot(normal, tangent)));
+	tangent = normalize(tangent - normal * dot(normal, tangent));
 	//vec3 bitangent = cross(normal, tangent);
 	vec3 bitangent = cross(tangent, normal);
 	

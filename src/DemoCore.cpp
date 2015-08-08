@@ -63,7 +63,7 @@ mouseSensitivity(0.005f)
 	framebuffers.push_back(std::move(Framebuffer(screenWidth, screenHeight)));
 	framebuffers.back().Bind(gl::Framebuffer::Target::Draw);
 
-	finalFramebufferCopy = LoadShaderProgramFromFiles("finalFramebufferCopy_v.glsl", "finalFramebufferCopy_f.glsl");
+	finalFramebufferCopy = LoadShaderProgramFromFiles("FinalFramebufferCopy_v.glsl", "FinalFramebufferCopy_f.glsl");
 	finalFramebufferCopy.Use();
 
 	framebufferCopy_ScreenWidth = gl::Uniform<GLint>(finalFramebufferCopy, "screenWidth");
@@ -243,40 +243,12 @@ sf::Window* DemoCore::GetWindow()
 
 Mesh* DemoCore::LoadMeshFromFile(const std::string& filename)
 {
-	auto elementIter = meshes.find(filename);
-	if (elementIter != meshes.end()) {
-		return (*elementIter).second;
-	}
-
-	Mesh* pResult = new Mesh;
-
-	pResult->LoadFromOBJFile(this, DemoCore::modelsFolderPath + filename);
-
-	meshes[filename] = pResult;
-
-	return pResult;
+	return meshManager.LoadMeshFromFile(this, DemoCore::modelsFolderPath + filename);
 }
 
 Material* DemoCore::LoadStandardMaterialFromFile(const std::string& filename, const std::string& materialName)
 {
-	const std::string materialKey = filename + "?" + materialName;
-
-	auto elementIter = materials.find(materialKey);
-	if (elementIter != materials.end()) {
-		return (*elementIter).second;
-	}
-
-	StandardMaterial *pResult = new StandardMaterial(this);
-
-	std::cout << "Loading material..." << std::endl;
-
-	pResult->LoadFromMTLFile(DemoCore::modelsFolderPath + filename, materialName);
-
-	std::cout << "Material loaded!" << std::endl;
-
-	materials[filename] = pResult;
-
-	return pResult;
+	return materialManager.LoadStandardMaterialFromFile(this, DemoCore::modelsFolderPath + filename, materialName);
 }
 
 GraphicalObject DemoCore::LoadGraphicalObjectFromFile(const std::string& filename)
@@ -288,18 +260,6 @@ GraphicalObject DemoCore::LoadGraphicalObjectFromFile(const std::string& filenam
 
 		result.SetMesh(pMesh);
 	}
-
-	/*
-	const std::string materialFilename = filename.substr(0, filename.rfind(".obj")) + ".mtl";
-
-	try {
-		result.SetMaterial(LoadStandardMaterialFromFile(materialFilename));
-		//result.LoadMaterial(DemoCore::modelsFolderPath + materialFilename);
-	}
-	catch (std::runtime_error& ex) {
-		std::cout << "Exception occured while loading material for: " << filename << std::endl;
-		std::cout << "Message: " << ex.what() << std::endl;
-	}*/
 
 	return std::move(result);
 }
@@ -356,45 +316,6 @@ void DemoCore::CoreDraw()
 
 	contextManager.DrawOverlayElements();
 }
-
-/*
-void DemoCore::ContextManagerMouseWheelMoved(sf::Event::MouseWheelEvent wheelEvent)
-{
-	if (activeGUIStack.back()->GetRequireFocus()) {
-		activeGUIStack.back()->MouseWheelMoved(wheelEvent);
-	}
-	else {
-		for (auto current : activeGUIStack) {
-			current->MouseWheelMoved(wheelEvent);
-		}
-	}
-}
-
-void DemoCore::ContextManagerKeyPressed(sf::Event::KeyEvent key)
-{
-	if (activeGUIStack.back()->GetRequireFocus()) {
-		activeGUIStack.back()->KeyPressed(key);
-	}
-	else {
-		//Do not use iterators here, called function might change activeGUI stack (is this an error?)
-		for (int i = 0; i < activeGUIStack.size(); i++) {
-			activeGUIStack[i]->KeyPressed(key);
-		}
-	}
-}
-
-void DemoCore::ContextManagerKeyReleased(sf::Event::KeyEvent key)
-{
-	if (activeGUIStack.back()->GetRequireFocus()) {
-		activeGUIStack.back()->KeyReleased(key);
-	}
-	else {
-		for (int i = 0; i < activeGUIStack.size(); i++) {
-			activeGUIStack[i]->KeyReleased(key);
-		}
-	}
-}
-*/
 
 void DemoCore::Resize(const int width, const int height)
 {

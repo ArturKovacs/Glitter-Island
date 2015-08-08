@@ -8,10 +8,7 @@ class DemoCore;
 
 class Mesh
 {
-	// Can not make only the mesh loader function friend,
-	// because DemoCore can not be included for this file. (would cause circular inclusion)
-	// Using forward declaration instead.
-	friend class DemoCore;
+	friend class MeshManager;
 
 public:
 	class Submesh;
@@ -33,35 +30,8 @@ public:
 	std::vector<Submesh>& GetSubmeshes();
 	const std::vector<Submesh>& GetSubmeshes() const;
 
-	//const std::vector<std::string>& GetMtlLibFilenames() const;
-
 private:
 	std::vector<Submesh> submeshes;
-	//std::vector<std::string> mtllibFilenames;
-
-private:
-	void LoadFromOBJFile(DemoCore* pCore, const std::string& filename);
-
-	template<typename elementType>
-	static std::vector<GLfloat> GetFloatVector(const std::vector<elementType>& input, int inputDimensions)
-	{
-		static_assert(std::is_same<elementType, gl::Vec2f>::value || std::is_same<elementType, gl::Vec3f>::value, "Unsupported type!");
-
-		if (input.size() > 0) {
-			assert(inputDimensions <= input.at(0).Size());
-		}
-
-		std::vector<GLfloat> result(input.size()*inputDimensions);
-
-		int resultIndex = 0;
-		for (const auto& current : input) {
-			for (int i = 0; i < inputDimensions; i++) {
-				result.at(resultIndex++) = current[i];
-			}
-		}
-
-		return result;
-	}
 };
 
 class Mesh::Submesh
@@ -106,7 +76,6 @@ private:
 	};
 
 private:
-	//std::string materialName;
 	Material* pMaterial;
 
 	gl::VertexArray VAO;
