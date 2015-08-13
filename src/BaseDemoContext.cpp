@@ -2,7 +2,7 @@
 
 #include "DemoCore.hpp"
 
-BaseDemoContext::BaseDemoContext(ContextManager* pContextManager, DemoCore* pCore) : 
+BaseDemoContext::BaseDemoContext(ContextManager* pContextManager, DemoCore* pCore) :
 GUIContext(pContextManager, pCore),
 camSpeed(3), fastSpeedMultiplyer(8.5), ultraSpeedMultiplyer(30),
 terrainSize(500), waterLevel(49), terrain(pCore), water(terrainSize * 7),
@@ -102,10 +102,12 @@ void BaseDemoContext::HandleWindowEvent(const sf::Event& event)
 	}
 }
 
-void BaseDemoContext::EnteringContext() 
+void BaseDemoContext::EnteringContext()
 {
 	cam.SetScreenWidth(pCore->GetScreenWidth());
 	cam.SetScreenHeight(pCore->GetScreenHeight());
+	debugCam.SetScreenWidth(pCore->GetScreenWidth());
+	debugCam.SetScreenHeight(pCore->GetScreenHeight());
 	pCore->SetActiveCamera(&cam);
 }
 
@@ -113,7 +115,7 @@ void BaseDemoContext::LeavingContext()
 {
 }
 
-void BaseDemoContext::Update(float deltaSec) 
+void BaseDemoContext::Update(float deltaSec)
 {
 	float currSpeed = GetCurrentSpeed();
 
@@ -151,7 +153,7 @@ static gl::Mat4f MyTranspose(const gl::Mat4f& input)
 	return result;
 }
 
-void BaseDemoContext::Draw() 
+void BaseDemoContext::Draw()
 {
 	gl::Context& glContext = pCore->GetGLContext();
 
@@ -183,7 +185,7 @@ void BaseDemoContext::Draw()
 		lightViewY.x(), lightViewY.y(), lightViewY.z(), 0,
 		lightViewZ.x(), lightViewZ.y(), lightViewZ.z(), 0,
 		             0,              0,              0, 1));
-	
+
 	float prevZFar = cam.GetZNear();
 	const float totalDepth = cam.GetZFar() - cam.GetZNear();
 	for (int cascadeID = 0; cascadeID < lightCascadeCameras.size(); cascadeID++) {
@@ -229,7 +231,7 @@ void BaseDemoContext::Draw()
 		}
 		prevZFar = subCamera.GetZFar();
 	}
-	
+
 	//glContext.ClearColor(1, 1, 1, 1);
 	for (int cascadeID = 0; cascadeID < lightCascadeCameras.size(); cascadeID++) {
 		lightCascadeShadowMapFramebuffers[cascadeID].Bind(gl::enums::FramebufferTarget::Draw);

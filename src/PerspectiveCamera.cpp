@@ -4,11 +4,11 @@ PerspectiveCamera::PerspectiveCamera() :
 horRot(gl::Radians(0)),
 vertRot(gl::Radians(0)),
 pos(0, 0, 0),
-fovy(gl::Degrees(60)), 
+fovy(gl::Degrees(60)),
 zNear(0.5),
 zFar(500),
 screenWidth(0),
-screenHeight(0) 
+screenHeight(0)
 {}
 
 PerspectiveCamera::~PerspectiveCamera()
