@@ -18,9 +18,12 @@ public:
 
 	void Draw();
 
+	void SetEnabled(bool isEnabled);
+
 private:
 	DemoCore* pCore;
 
+	bool enabled;
 	Camera* activeCam;
 	std::vector<Mesh> meshes;
 };

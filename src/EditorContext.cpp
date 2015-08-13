@@ -99,10 +99,14 @@ void EditorContext::HandleWindowEvent(const sf::Event& event)
 }
 
 void EditorContext::EnteringContext()
-{}
+{
+	pCore->GetDebugDrawer().SetEnabled(true);
+}
 
 void EditorContext::LeavingContext()
-{}
+{
+	pCore->GetDebugDrawer().SetEnabled(false);
+}
 
 void EditorContext::Update(float deltaSec)
 {

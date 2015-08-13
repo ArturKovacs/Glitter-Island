@@ -78,6 +78,8 @@ debugDrawer(this)
 	/////////////////
 	//Init more variables
 
+	debugDrawer.SetEnabled(false);
+
 	contextManager.PushContext(&baseDemoContext);
 
 
@@ -388,14 +390,6 @@ void DemoCore::CoreDraw()
 	glContext.Viewport(0, 0, 200, 200);
 	glContext.Enable(gl::Capability::ScissorTest);
 	glContext.Scissor(0, 0, 200, 200);
-	//GetCurrentFramebuffer().SetVertexPosName("vertexPos");
-	//GetCurrentFramebuffer().SetColorTexName("colorTex");
-	//GetCurrentFramebuffer().SetDepthTexName("depthTex");
-	//GetCurrentFramebuffer().SetShaderProgram(&finalFramebufferCopy);
-	//defaultFBO.Bind(gl::Framebuffer::Target::Draw);
-	glContext.Clear().ColorBuffer().DepthBuffer();
-	//GetCurrentFramebuffer().Draw(*this);
-	//TODO draw debug drawer
 	debugDrawer.Draw();
 	glContext.Disable(gl::Capability::ScissorTest);
 	glContext.Viewport(0, 0, screenWidth, screenHeight);

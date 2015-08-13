@@ -1,7 +1,7 @@
 #include "DebugDrawer.hpp"
 #include "DemoCore.hpp"
 
-DebugDrawer::DebugDrawer(DemoCore* pCore) : pCore(pCore), activeCam(nullptr)
+DebugDrawer::DebugDrawer(DemoCore* pCore) : pCore(pCore), enabled(true), activeCam(nullptr)
 {}
 
 void DebugDrawer::SetActiveCam(Camera* cam)
@@ -16,18 +16,29 @@ const Camera* DebugDrawer::GetActiveCam() const
 
 void DebugDrawer::DrawOnce(const Frustum& frustum)
 {
+	if (!enabled) {
+		return;
+	}
+
 	meshes.push_back(Mesh::GenerateFrustum(frustum));
 }
 
 void DebugDrawer::Draw()
 {
-	if (activeCam == nullptr) {
+	if (activeCam == nullptr || !enabled) {
 		return;
 	}
+
+	pCore->GetGLContext().Clear().ColorBuffer().DepthBuffer();
 
 	for (auto& currMesh : meshes) {
 		pCore->simpleColoredDrawer.Draw(pCore->GetGLContext(), currMesh, activeCam->GetViewProjectionTransform(), gl::Vec4f(1));
 	}
 
 	meshes.clear();
+}
+
+void DebugDrawer::SetEnabled(bool isEnabled)
+{
+	enabled = isEnabled;
 }
