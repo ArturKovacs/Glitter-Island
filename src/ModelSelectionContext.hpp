@@ -7,7 +7,7 @@
 class ModelSelectionContext : public GUIContext
 {
 public:
-	ModelSelectionContext(ContextManager* pContextManager, DemoCore* pDemoCore);
+	ModelSelectionContext(ContextManager* pContextManager, DemoCore* pCore);
 	~ModelSelectionContext();
 
 	void HandleWindowEvent(const sf::Event& event) override;

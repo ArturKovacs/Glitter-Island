@@ -3,6 +3,7 @@
 #include "all_gl_headers.hpp"
 #include "Mesh.hpp"
 #include "Material.hpp"
+#include "DepthOnlyMaterial.hpp"
 
 class DemoCore;
 
@@ -15,6 +16,7 @@ public:
 	Mesh* GetMesh();
 
 	void Draw(DemoCore& core);
+	void DrawDepthOnly(DemoCore& core, DepthOnlyMaterial& depthMaterial);
 
 	void SetTransform(const gl::Mat4f& transform);
 	gl::Mat4f GetTransform() const;

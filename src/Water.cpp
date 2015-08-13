@@ -1,7 +1,6 @@
 #include "Water.hpp"
 
 #include "DemoCore.hpp"
-#include <cfloat>
 
 Water::Water(const float waterSize)
 {
@@ -61,13 +60,19 @@ void Water::Draw(DemoCore& core)
 	gl::Texture::Active(1);
 	screenFB.GetDepthTexture().Bind(gl::Texture::Target::_2D);
 
-	sh_screenWidth.Set(core.GetCamera().GetScreenWidth());
-	sh_screenHeight.Set(core.GetCamera().GetScreenHeight());
+	sh_screenWidth.Set(core.GetScreenWidth());
+	sh_screenHeight.Set(core.GetScreenHeight());
 
-	sh_MVP.Set(core.GetCamera().GetViewProjectionTransform());
-	sh_viewProj.Set(core.GetCamera().GetViewProjectionTransform());
+	sh_MVP.Set(core.GetActiveCamera()->GetViewProjectionTransform());
+	sh_viewProj.Set(core.GetActiveCamera()->GetViewProjectionTransform());
 	//sh_invMVP.Set(gl::Inverse(core.GetCamera().GetViewProjectionTransform()));
-	sh_camPos.Set(core.GetCamera().GetPosition());
+
+	PerspectiveCamera* pActivePerspectiveCam = dynamic_cast<PerspectiveCamera*>(core.GetActiveCamera());
+	if (pActivePerspectiveCam == nullptr) {
+		throw std::runtime_error("Active camera was not a PerspectiveCamera when rendering water.");
+	}
+
+	sh_camPos.Set(pActivePerspectiveCam->GetPosition());
 	sh_sunDir.Set(core.GetSun().GetDirectionTowardsSource());
 	sh_time.Set(core.GetElapsedTime().asSeconds());
 

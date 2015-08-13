@@ -1,5 +1,6 @@
 #include "MeshManager.hpp"
 
+#include <cctype>
 #include <sstream>
 #include "DemoCore.hpp"
 

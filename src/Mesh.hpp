@@ -2,6 +2,7 @@
 
 #include "all_gl_headers.hpp"
 #include "AttributeCategory.hpp"
+#include "Camera.hpp"
 
 class Material;
 class DemoCore;
@@ -17,6 +18,7 @@ public:
 	static Mesh GenerateTriangle(float size);
 	static Mesh GenerateCircle(float radius, int resolution);
 	static Mesh GenerateRectangle(float sizeX, float sizeY);
+	static Mesh GenerateFrustum(const Frustum& frustum);
 
 public:
 	Mesh();

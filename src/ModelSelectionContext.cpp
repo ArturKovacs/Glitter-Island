@@ -5,8 +5,8 @@
 #include "ContextManager.hpp"
 
 
-ModelSelectionContext::ModelSelectionContext(ContextManager* pContextManager, DemoCore* pDemoCore) :
-GUIContext(pContextManager, pDemoCore),
+ModelSelectionContext::ModelSelectionContext(ContextManager* pContextManager, DemoCore* pCore) :
+GUIContext(pContextManager, pCore),
 howeredModelID(0), selectedModelID(0)
 {
 	requireFocus = true;
@@ -81,9 +81,9 @@ void ModelSelectionContext::Draw()
 void ModelSelectionContext::DrawOverlayElements()
 {
 	const int columnElementCount = 15;
-	gl::Context& glContext = pDemoCore->GetGLContext();
+	gl::Context& glContext = pCore->GetGLContext();
 
-	pDemoCore->simpleColoredDrawer.Draw(glContext, screenRectangle, gl::Mat4f(), gl::Vec4f(0, 0, 0, 0.75));
+	pCore->simpleColoredDrawer.Draw(glContext, screenRectangle, gl::Mat4f(), gl::Vec4f(0, 0, 0, 0.75));
 
 	if (modelFileList.size() > 0) {
 		std::string visibleList;
@@ -95,14 +95,14 @@ void ModelSelectionContext::DrawOverlayElements()
 		}
 		visibleList.pop_back(); // Remove last line feed
 
-		sf::Text text(visibleList, pDemoCore->overlayFont);
+		sf::Text text(visibleList, pCore->overlayFont);
 		text.setCharacterSize(16);
 		float textWidth = TextDrawer::GetTextWidth(text);
 		text.setColor(sf::Color::Black);
 		text.setOrigin(std::floor(textWidth*0.5), 0);
-		text.setPosition(std::floor(pDemoCore->GetCamera().GetScreenWidth()*0.5), 50);
-		pDemoCore->textDrawer.DrawBackground(glContext, text, sf::Color(230, 230, 230, 255), 5);
-		pDemoCore->textDrawer.DrawAsList(glContext, text, howeredModelID - listFirstElementID, sf::Color(40, 180, 40, 255));
+		text.setPosition(std::floor(pCore->GetScreenWidth()*0.5), 50);
+		pCore->textDrawer.DrawBackground(glContext, text, sf::Color(230, 230, 230, 255), 5);
+		pCore->textDrawer.DrawAsList(glContext, text, howeredModelID - listFirstElementID, sf::Color(40, 180, 40, 255));
 	}
 }
 

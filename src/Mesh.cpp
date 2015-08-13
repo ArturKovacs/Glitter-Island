@@ -95,6 +95,47 @@ Mesh Mesh::GenerateRectangle(float sizeX, float sizeY)
 	return std::move(result);
 }
 
+Mesh Mesh::GenerateFrustum(const Frustum& frustum)
+{
+	Mesh result;
+	Submesh submsh;
+
+	std::vector<gl::Vec3f> vertexPos;
+	vertexPos.reserve(frustum.nearPlane.size() + frustum.farPlane.size());
+	for (auto& currVert : frustum.nearPlane) {
+		vertexPos.push_back(currVert);
+	}
+	for (auto& currVert : frustum.farPlane) {
+		vertexPos.push_back(currVert);
+	}
+
+	submsh.SetVertexAttributeBuffer(AttributeCategory::POSITION, vertexPos);
+	submsh.SetVertexAttributeElementDimensions(AttributeCategory::POSITION, 3);
+
+	std::vector<Submesh::IndexType> indexData = {
+		0, 1,
+		1, 2,
+		2, 3,
+		3, 0,
+
+		4, 5,
+		5, 6,
+		6, 7,
+		7, 4,
+
+		0, 4,
+		1, 5,
+		2, 6,
+		3, 7
+	};
+	submsh.SetIndices(indexData);
+
+	submsh.SetPrimitiveType(gl::enums::PrimitiveType::Lines);
+
+	result.submeshes.push_back(std::move(submsh));
+	return std::move(result);
+}
+
 Mesh::Mesh(Mesh&& r) :
 submeshes(std::move(r.submeshes))
 {}

@@ -9,7 +9,7 @@ class StandardMaterial : public Material
 	friend class MaterialManager;
 
 public:
-	StandardMaterial(DemoCore* pDemoCore);
+	StandardMaterial(DemoCore* pCore);
 	~StandardMaterial();
 
 	StandardMaterial(const StandardMaterial&) = delete;
@@ -18,6 +18,7 @@ public:
 	StandardMaterial(StandardMaterial&&);
 	StandardMaterial& operator=(StandardMaterial&&);
 
+	const gl::Texture* GetTextureContainigAlpha() const override;
 	void Prepare(Mesh::Submesh& submsh, gl::Mat4f& modelTransform) override;
 
 private:

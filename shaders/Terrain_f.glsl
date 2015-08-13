@@ -1,42 +1,22 @@
 #version 330
 
+#define LIGHT_CASCADE_COUNT 4
+
+uniform sampler2D cascadeShadowMaps[LIGHT_CASCADE_COUNT];
+uniform mat4 worldToShadowMap[LIGHT_CASCADE_COUNT];
+uniform float viewSubfrustumFarPlanesTexDepth[LIGHT_CASCADE_COUNT];
+
 uniform sampler2D materialTexture;
 uniform sampler2D sandTexture;
 uniform sampler2D grassTexture;
 uniform vec3 sunDir;
 uniform vec3 sunColor;
 
-in vec3 normalFromVert;
-in vec2 texCoordFromVert;
+in vec3 normal_v;
+in vec2 texCoord_v;
+in vec3 worldPos_v;
 
 out vec4 fragColor;
-
-float rand2(const in float seed){return cos(seed*141421.35623);}
-float rand(const in float seed){return abs(rand2(seed));}
-
-float smoothNoise(const in vec2 pos)
-{
-	const int randomness = 7;
-	
-	const float freq = 25000;
-	
-	float result = 0;
-	for (int i = 0; i < randomness; i++) {
-		result += clamp((((cos(pos.x*rand(i*3)*freq)*cos(pos.y*rand(i*3+2)*freq))*(clamp(rand(i*3+1)*50, 0.5, 1)))*4)+4, 0, 1);
-	}
-
-	result *= 1.f/randomness;
-
-	return result;
-	//return (result*0.5)+0.5;
-}
-
-
-float sandGrainRand(const in vec2 pos)
-{
-	//return pow(rand(rand(pos.x)+rand(pos.y)), 150)*0.5+0.5;
-	return clamp(pow(smoothNoise(pos), 3), 0.6, 1);
-}
 
 float checkerTex(const in vec2 pos)
 {
@@ -49,13 +29,24 @@ float checkerTex(const in vec2 pos)
 	return 1;
 }
 
+float IsInShadow(mat4 worldToShadowMap_curr, sampler2D cascadeShadowMaps_curr)
+{
+	vec4 shadowMapNDCPos = worldToShadowMap_curr * vec4(worldPos_v, 1);
+	shadowMapNDCPos = shadowMapNDCPos / shadowMapNDCPos.w;
+	vec3 shadowMapTexPos = shadowMapNDCPos.xyz*0.5 + vec3(0.5);
+	
+	float shadowMapDepth = texture(cascadeShadowMaps_curr, shadowMapTexPos.xy).x;
+	
+	return int(shadowMapDepth < (shadowMapTexPos.z)-0.0005);
+}
+
 const vec3 sandColor = vec3(0.98, 0.98, 0.96);
 
 void main(void)
 {
-	vec2 texPos = texCoordFromVert*120;
-	vec3 normal = normalize(normalFromVert);
-	vec3 materialValue = texture(materialTexture, texCoordFromVert).rgb;
+	vec2 texPos = texCoord_v*120;
+	vec3 normal = normalize(normal_v);
+	vec3 materialValue = texture(materialTexture, texCoord_v).rgb;
 	
 	vec3 sandTexSample = sandColor * texture(sandTexture, texPos).xyz * materialValue.b;
 	vec3 grassTexSample = texture(grassTexture, texPos).xyz * materialValue.g;
@@ -65,6 +56,40 @@ void main(void)
 	
 	const vec3 ambientColor = vec3(0.04);
 	vec3 diffuseColor = sunColor * max(dot(sunDir, normal), 0);
+	
+	//Select cascade
+	int selectedCascade;
+	for (int i = LIGHT_CASCADE_COUNT-1; i >= 0; i--) {
+		selectedCascade = int(mix(selectedCascade, i, int(gl_FragCoord.z < viewSubfrustumFarPlanesTexDepth[i])));
+	}
+	
+	float isInShadow;
+	
+	switch (selectedCascade){
+	case 0:
+		isInShadow = IsInShadow(worldToShadowMap[0], cascadeShadowMaps[0]);
+		//diffuseColor *= vec3(0.3, .9, 0.3);
+		break;
+	case 1:
+		isInShadow = IsInShadow(worldToShadowMap[1], cascadeShadowMaps[1]);
+		//diffuseColor *= vec3(0.3, 0.4, .9);
+		break;
+	case 2:
+		isInShadow = IsInShadow(worldToShadowMap[2], cascadeShadowMaps[2]);
+		//diffuseColor *= vec3(.9, .9, 0.3);
+		break;
+	case 3:
+		isInShadow = IsInShadow(worldToShadowMap[3], cascadeShadowMaps[3]);
+		//diffuseColor *= vec3(.9, 0.3, 0.3);
+		break;
+	
+	#if (LIGHT_CASCADE_COUNT != 4)
+	ERROR_switch_case_count_does_not_match_light_cascade_count;
+	#endif
+	}
+	
+	
+	diffuseColor = mix(diffuseColor, vec3(0), isInShadow);
 	
 	fragColor = vec4((diffuseColor + ambientColor) * (flatSandSample + sandTexSample + grassTexSample) * checkerTex(texPos), 1.0);
 } 

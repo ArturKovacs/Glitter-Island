@@ -9,7 +9,7 @@ class DemoCore;
 class ContextManager
 {
 public:
-	ContextManager(DemoCore* pDemoCore = nullptr);
+	ContextManager(DemoCore* pCore = nullptr);
 	~ContextManager();
 
 	void Update(float deltaSec);
@@ -24,6 +24,6 @@ public:
 	void PassEvent(GUIContext* sourceContext, const sf::Event& event);
 
 private:
-	//DemoCore* pDemoCore;
+	//DemoCore* pCore;
 	std::vector<GUIContext*> activeGUIStack;
 };

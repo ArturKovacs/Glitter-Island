@@ -2,6 +2,9 @@
 
 #include "DemoCore.hpp"
 
+Framebuffer::Framebuffer() : Framebuffer(1, 1)
+{}
+
 Framebuffer::Framebuffer(const int width, const int height) : 
 colorTexName("colorTex"), depthTexName("depthTex"), vertexPosName("vertexPos"), pShaderProgram(nullptr)
 {

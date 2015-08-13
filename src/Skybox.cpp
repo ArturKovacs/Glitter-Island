@@ -122,8 +122,15 @@ void Skybox::Draw(DemoCore& core)
 	gl::Texture::Active(0);
 	cubeMap.Bind(gl::Texture::Target::CubeMap);
 
-	gl::Mat4f viewOnlyRotation = gl::ModelMatrixf::RotationQ(gl::Inverse(core.GetCamera().GetCameraRotation()));
-	gl::Mat4f projectionMatrix = core.GetCamera().GetProjectionTransform();
+	gl::Mat4f viewOnlyRotation = core.GetActiveCamera()->GetViewTransform();
+	viewOnlyRotation.Set(0, 3, 0);
+	viewOnlyRotation.Set(1, 3, 0);
+	viewOnlyRotation.Set(2, 3, 0);
+	viewOnlyRotation.Set(3, 3, 1);
+	viewOnlyRotation.Set(3, 0, 0);
+	viewOnlyRotation.Set(3, 1, 0);
+	viewOnlyRotation.Set(3, 2, 0);
+	gl::Mat4f projectionMatrix = core.GetActiveCamera()->GetProjectionTransform();
 
 	sh_ViewProjectionMatrix.Set(projectionMatrix * viewOnlyRotation);
 

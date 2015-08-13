@@ -45,7 +45,9 @@ running(false),
 contextManager(this),
 baseDemoContext(&contextManager, this),
 pWindow(pWindow),
-mouseSensitivity(0.005f)
+mouseSensitivity(0.005f),
+pActiveCam(nullptr),
+debugDrawer(this)
 {
 	//assert(pWindow->isActive())
 
@@ -60,8 +62,7 @@ mouseSensitivity(0.005f)
 
 	textDrawer.SetScreenResolution(gl::Vec2i(screenWidth, screenHeight));
 
-	framebuffers.push_back(std::move(Framebuffer(screenWidth, screenHeight)));
-	framebuffers.back().Bind(gl::Framebuffer::Target::Draw);
+	PushFramebuffer();
 
 	finalFramebufferCopy = LoadShaderProgramFromFiles("FinalFramebufferCopy_v.glsl", "FinalFramebufferCopy_f.glsl");
 	finalFramebufferCopy.Use();
@@ -77,20 +78,48 @@ mouseSensitivity(0.005f)
 	/////////////////
 	//Init more variables
 
-	//H rot: 4.10499
-	//V rot: -0.275
-	//X: -27.2224
-	//Y: 21.0493
-	//Z: 17.4667
-
-	cam.SetFovY(gl::Degrees(70));
-	cam.SetScreenWidth(screenWidth);
-	cam.SetScreenHeight(screenHeight);
-	cam.SetHorizontalRot(gl::Radians(4.10499));
-	cam.SetVerticalRot(gl::Radians(-0.275));
-	cam.SetPosition(gl::Vec3f(-27.2224, 21.0493, 17.4667));
-
 	contextManager.PushContext(&baseDemoContext);
+
+
+	//////////////////////////////////////////////////
+	//TEST
+	//////////////////////////////////////////////////
+
+	gl::Mat4f viewTransform = gl::ModelMatrixf::RotationY(gl::Degrees(32.1));
+	RawCamera testCam;
+	testCam.SetViewTransform(viewTransform);
+	testCam.SetProjectionTransform(gl::CamMatrixf::Ortho(-1, 1, -1, 1, 0, 1));
+	Frustum frustum = testCam.GetFrustum();
+
+	std::stringstream ss1;
+	for (auto& currV : frustum.nearPlane) {
+		ss1 << currV.x() << ", ";
+		ss1 << currV.y() << ", ";
+		ss1 << currV.z() << std::endl;
+	}
+	for (auto& currV : frustum.farPlane) {
+		ss1 << currV.x() << ", ";
+		ss1 << currV.y() << ", ";
+		ss1 << currV.z() << std::endl;
+	}
+
+	std::stringstream ss2;
+	testCam.SetViewTransform(gl::Mat4f());
+	frustum = testCam.GetFrustum().Transformed(gl::Inverse(viewTransform));
+	for (auto& currV : frustum.nearPlane) {
+		ss2 << currV.x() << ", ";
+		ss2 << currV.y() << ", ";
+		ss2 << currV.z() << std::endl;
+	}
+	for (auto& currV : frustum.farPlane) {
+		ss2 << currV.x() << ", ";
+		ss2 << currV.y() << ", ";
+		ss2 << currV.z() << std::endl;
+	}
+
+	assert(ss1.str() == ss2.str());
+
+	//////////////////////////////////////////////////
 }
 
 int DemoCore::Start()
@@ -109,6 +138,8 @@ int DemoCore::Start()
 
 	int framesSinceLastFPSUpdate = 0;
 	int recentMinFPS = 5000;
+	float avgFPS = 0;
+	int framecount = 0;
 
 	double lastMinResetSec = 0;
 	double longestMinKeepSec = 7;
@@ -142,6 +173,9 @@ int DemoCore::Start()
 		contextManager.Update(deltaSec);
 		CoreDraw();
 
+		avgFPS = (avgFPS*framecount + currFPS*1) / (framecount + 1);
+		framecount += 1;
+
 		if (elapsedSec - lastMinResetSec > longestMinKeepSec) {
 			recentMinFPS = 5000;
 			lastMinResetSec = elapsedSec;
@@ -152,7 +186,7 @@ int DemoCore::Start()
 
 		if (elapsedSec - lastFPSUpdateSec > FPSUpdateDelaySec) {
 			int updatedFPS = (int)std::round(framesSinceLastFPSUpdate / (elapsedSec - lastFPSUpdateSec));
-			pWindow->setTitle(sf::String("Glitter-Island <| FPS: ") + std::to_string(updatedFPS) + " current; " + std::to_string(recentMinFPS) + " recent min |>");
+			pWindow->setTitle(sf::String("Glitter-Island <| FPS: ") + std::to_string(updatedFPS) + " current; " + std::to_string((int)avgFPS) + " avg; " + std::to_string(recentMinFPS) + " recent min |>");
 			lastFPSUpdateSec = elapsedSec;
 			framesSinceLastFPSUpdate = 0;
 		}
@@ -211,15 +245,40 @@ bool DemoCore::GetWireframeModeEnabled() const
 	return baseDemoContext.GetWireframeModeEnabled();
 }
 
+int DemoCore::GetScreenWidth() const
+{
+	return screenWidth;
+}
+
+int DemoCore::GetScreenHeight() const
+{
+	return screenHeight;
+}
+
+void DemoCore::SetActiveCamera(Camera* cam)
+{
+	pActiveCam = cam;
+}
+
+Camera* DemoCore::GetActiveCamera()
+{
+	return pActiveCam;
+}
+
+DebugDrawer& DemoCore::GetDebugDrawer()
+{
+	return debugDrawer;
+}
+
 DirectionalLight& DemoCore::GetSun()
 {
 	return baseDemoContext.GetSun();
 }
 
-Camera& DemoCore::GetCamera()
-{
-	return cam;
-}
+//Camera& DemoCore::GetCamera()
+//{
+//	return cam;
+//}
 
 Terrain& DemoCore::GetTerrain()
 {
@@ -239,6 +298,26 @@ void DemoCore::AddGraphicalObject(GraphicalObject&& newObject)
 sf::Window* DemoCore::GetWindow()
 {
 	return pWindow;
+}
+
+int DemoCore::GetLightCascadeCount() const
+{
+	return baseDemoContext.GetLightCascadeCount();
+}
+
+const gl::Texture& DemoCore::GetCascadeShadowMap(int cascadeID) const
+{
+	return baseDemoContext.GetCascadeShadowMap(cascadeID);
+}
+
+gl::Mat4f DemoCore::GetCascadeViewProjectionTransform(int cascadeID) const
+{
+	return baseDemoContext.GetCascadeViewProjectionTransform(cascadeID);
+}
+
+float DemoCore::GetViewSubfrustumFarPlaneInTexCoordZ(int subfrustumID) const
+{
+	return baseDemoContext.GetViewSubfrustumFarPlaneInTexCoordZ(subfrustumID);
 }
 
 Mesh* DemoCore::LoadMeshFromFile(const std::string& filename)
@@ -282,20 +361,18 @@ void DemoCore::SaveAll()
 
 void DemoCore::ClearFramebufferStack()
 {
-	while (framebuffers.size() > 1) {
-		framebuffers.pop_back();
-	}
+	framebuffers.resize(1);
 
 	framebuffers.back().Bind(gl::Framebuffer::Target::Draw);
 }
 
 void DemoCore::CoreDraw()
 {
+	glContext.Viewport(0, 0, screenWidth, screenHeight);
 	ClearFramebufferStack();
 	GetCurrentFramebuffer().Bind(gl::Framebuffer::Target::Draw);
 	glContext.Disable(gl::Capability::Blend);
 	glContext.Enable(gl::Capability::DepthTest);
-
 	contextManager.Draw();
 
 	//draw current framebuffer to screen
@@ -306,8 +383,22 @@ void DemoCore::CoreDraw()
 
 	defaultFBO.Bind(gl::Framebuffer::Target::Draw);
 	glContext.Clear().ColorBuffer().DepthBuffer();
-
 	GetCurrentFramebuffer().Draw(*this);
+
+	glContext.Viewport(0, 0, 200, 200);
+	glContext.Enable(gl::Capability::ScissorTest);
+	glContext.Scissor(0, 0, 200, 200);
+	//GetCurrentFramebuffer().SetVertexPosName("vertexPos");
+	//GetCurrentFramebuffer().SetColorTexName("colorTex");
+	//GetCurrentFramebuffer().SetDepthTexName("depthTex");
+	//GetCurrentFramebuffer().SetShaderProgram(&finalFramebufferCopy);
+	//defaultFBO.Bind(gl::Framebuffer::Target::Draw);
+	glContext.Clear().ColorBuffer().DepthBuffer();
+	//GetCurrentFramebuffer().Draw(*this);
+	//TODO draw debug drawer
+	debugDrawer.Draw();
+	glContext.Disable(gl::Capability::ScissorTest);
+	glContext.Viewport(0, 0, screenWidth, screenHeight);
 
 	glContext.PolygonMode(gl::enums::Face::FrontAndBack, gl::PolygonMode::Fill);
 	glContext.Disable(gl::Capability::DepthTest);
@@ -322,9 +413,6 @@ void DemoCore::Resize(const int width, const int height)
 	screenWidth = width;
 	screenHeight = height;
 	GetGLContext().Viewport(0, 0, screenWidth, screenHeight);
-
-	cam.SetScreenWidth(screenWidth);
-	cam.SetScreenHeight(screenHeight);
 
 	textDrawer.SetScreenResolution(gl::Vec2i(screenWidth, screenHeight));
 

@@ -1,6 +1,6 @@
 #include "ContextManager.hpp"
 
-ContextManager::ContextManager(DemoCore* pDemoCore)
+ContextManager::ContextManager(DemoCore* pCore)
 {
 }
 

@@ -2,7 +2,7 @@
 
 #include "DemoCore.hpp"
 
-StandardMaterial::StandardMaterial(DemoCore* pDemoCore) : pCore(pDemoCore)
+StandardMaterial::StandardMaterial(DemoCore* pCore) : pCore(pCore)
 {
 	//TODO shader loading might be better to be done by DemoCore too.
 	shaderProgram = DemoCore::LoadShaderProgramFromFiles("StandardMaterial_v.glsl", "StandardMaterial_f.glsl");
@@ -55,7 +55,12 @@ StandardMaterial& StandardMaterial::operator=(StandardMaterial&& r)
 	return *this;
 }
 
-static gl::Mat4f SajatTransposeMertNemMukodikAzOglPlusOsTODO(const gl::Mat4f& input)
+const gl::Texture* StandardMaterial::GetTextureContainigAlpha() const
+{
+	return &albedoTexture;
+}
+
+static gl::Mat4f MyTranspose(const gl::Mat4f& input)
 {
 	gl::Mat4f result;
 
@@ -79,15 +84,9 @@ void StandardMaterial::Prepare(Mesh::Submesh& submsh, gl::Mat4f& modelTransform)
 
 	shaderProgram.Use();
 
-	if (sh_MVP.IsActive()) {
-		sh_MVP.Set(pCore->GetCamera().GetViewProjectionTransform() * modelTransform);
-	}
-	if (sh_modelTransposedInverse.IsActive()) {
-		sh_modelTransposedInverse.Set(SajatTransposeMertNemMukodikAzOglPlusOsTODO(gl::Inverse(modelTransform)));
-	}
-	if (sh_lightDir.IsActive()) {
-		sh_lightDir.Set(pCore->GetSun().GetDirectionTowardsSource());
-	}
+	sh_MVP.Set(pCore->GetActiveCamera()->GetViewProjectionTransform() * modelTransform);
+	sh_modelTransposedInverse.Set(MyTranspose(gl::Inverse(modelTransform)));
+	sh_lightDir.Set(pCore->GetSun().GetDirectionTowardsSource());
 
 	gl::Texture::Active(0);
 	albedoTexture.Bind(gl::Texture::Target::_2D);

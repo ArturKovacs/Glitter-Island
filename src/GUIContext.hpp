@@ -9,7 +9,7 @@ class DemoCore;
 class GUIContext
 {
 public:
-	GUIContext(ContextManager* pContextManager, DemoCore* pDemoCore);
+	GUIContext(ContextManager* pContextManager, DemoCore* pCore);
 	virtual ~GUIContext();
 
 	virtual void EnteringContext() = 0;
@@ -26,6 +26,6 @@ public:
 
 protected:
 	ContextManager* pContextManager;
-	DemoCore* pDemoCore;
+	DemoCore* pCore;
 	bool requireFocus;
 };

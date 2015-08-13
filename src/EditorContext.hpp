@@ -30,7 +30,7 @@ public:
 	}
 
 public:
-	EditorContext(ContextManager* pContextManager, DemoCore* pDemoCore);
+	EditorContext(ContextManager* pContextManager, DemoCore* pCore);
 	~EditorContext();
 
 	void HandleWindowEvent(const sf::Event& event) override;

@@ -70,9 +70,9 @@ EditorContext::EditorToolInfo EditorContext::GetToolInfo(EditorContext::EditorTo
 	return result;
 }
 
-EditorContext::EditorContext(ContextManager* pContextManager, DemoCore* pDemoCore) :
-GUIContext(pContextManager, pDemoCore),
-modelSelectionContext(pContextManager, pDemoCore),
+EditorContext::EditorContext(ContextManager* pContextManager, DemoCore* pCore) :
+GUIContext(pContextManager, pCore),
+modelSelectionContext(pContextManager, pCore),
 selectedTool(EditorTool::NO_TOOL), brushRadius(1)
 {
 	modelSelectionContext.ForceUpdateModelFileList();
@@ -112,8 +112,8 @@ void EditorContext::Update(float deltaSec)
 
 		switch (GetToolType(selectedTool)) {
 		case EditorToolType::PAINT: {
-			gl::Vec2i cursorPosOnMaterialMap = pDemoCore->GetTerrain().GetMaterialMapPos(pointPosAtCursor);
-			sf::Image& materialMap = pDemoCore->GetTerrain().GetMaterialMap();
+			gl::Vec2i cursorPosOnMaterialMap = pCore->GetTerrain().GetMaterialMapPos(pointPosAtCursor);
+			sf::Image& materialMap = pCore->GetTerrain().GetMaterialMap();
 			sf::Color selectedMaterialColor;
 			if (selectedTool == EditorTool::PAINT_FLAT_SAND) {
 				selectedMaterialColor = sf::Color(0, 0, 0, 255);
@@ -155,7 +155,7 @@ void EditorContext::Update(float deltaSec)
 				}
 			}
 
-			pDemoCore->GetTerrain().DownloadMaterialMapToGPU();
+			pCore->GetTerrain().DownloadMaterialMapToGPU();
 			break;
 		}
 		case EditorToolType::SPAWN: {
@@ -176,21 +176,21 @@ void EditorContext::Update(float deltaSec)
 
 void EditorContext::Draw()
 {
-	gl::Context& glContext = pDemoCore->GetGLContext();
+	gl::Context& glContext = pCore->GetGLContext();
 
 	EditorToolType selectedToolType = GetToolType(selectedTool);
 	if (selectedToolType == EditorToolType::PAINT) {
-		float meshScale = pDemoCore->GetTerrain().GetMaterialMapPixelSizeInWorldScale() * brushRadius;
+		float meshScale = pCore->GetTerrain().GetMaterialMapPixelSizeInWorldScale() * brushRadius;
 		using ModelMatf = gl::ModelMatrixf;
 		gl::Mat4f MVP =
-			pDemoCore->GetCamera().GetViewProjectionTransform() *
+			pCore->GetActiveCamera()->GetViewProjectionTransform() *
 			ModelMatf::Translation(pointPosAtCursor.xyz()) *
 			ModelMatf::Scale(meshScale, meshScale, meshScale) *
 			ModelMatf::RotationX(gl::Radians<float>(gl::math::Pi()*0.5));
 
 		glContext.Disable(gl::Capability::DepthTest);
 		glContext.LineWidth(2);
-		pDemoCore->simpleColoredDrawer.Draw(glContext, pDemoCore->circle, MVP, gl::Vec4f(1, 0.1, 0.5, 1));
+		pCore->simpleColoredDrawer.Draw(glContext, pCore->circle, MVP, gl::Vec4f(1, 0.1, 0.5, 1));
 		glContext.LineWidth(1);
 		glContext.Enable(gl::Capability::DepthTest);
 	}
@@ -198,17 +198,17 @@ void EditorContext::Draw()
 
 void EditorContext::DrawOverlayElements()
 {
-	gl::Context& glContext = pDemoCore->GetGLContext();
+	gl::Context& glContext = pCore->GetGLContext();
 
 	//TODO move overlay rendering to Core! Other obejcts should only be able to add overlay elements to core - review this statement!! -
 
-	sf::Text text("Editor mode", pDemoCore->overlayFont);
+	sf::Text text("Editor mode", pCore->overlayFont);
 	text.setPosition(sf::Vector2f(30, 25));
 	text.setCharacterSize(18);
 	text.setColor(sf::Color(210, 65, 240, ~sf::Uint8(0)));
 	text.setStyle(sf::Text::Bold);
-	pDemoCore->textDrawer.DrawBackground(glContext, text, sf::Color(50, 50, 50, 150), 5);
-	pDemoCore->textDrawer.Draw(glContext, text);
+	pCore->textDrawer.DrawBackground(glContext, text, sf::Color(50, 50, 50, 150), 5);
+	pCore->textDrawer.Draw(glContext, text);
 
 	//Set complete text for calculating background correctly
 	sf::String str = "E -- Toggle editor mode";
@@ -221,8 +221,8 @@ void EditorContext::DrawOverlayElements()
 	text.setCharacterSize(16);
 	text.setStyle(sf::Text::Regular);
 	text.setColor(sf::Color::White);
-	pDemoCore->textDrawer.DrawBackground(glContext, text, sf::Color(100, 100, 100, 150), 5);
-	pDemoCore->textDrawer.DrawAsList(glContext, text, GetToolInfo(selectedTool).id+1, sf::Color::Cyan);
+	pCore->textDrawer.DrawBackground(glContext, text, sf::Color(100, 100, 100, 150), 5);
+	pCore->textDrawer.DrawAsList(glContext, text, GetToolInfo(selectedTool).id+1, sf::Color::Cyan);
 
 	if (selectedTool == EditorTool::PLACE_MODEL) {
 		str = "Selected model:\n";
@@ -234,8 +234,8 @@ void EditorContext::DrawOverlayElements()
 		}
 		text.setString(str);
 		text.setPosition(sf::Vector2f(2, 350));
-		pDemoCore->textDrawer.DrawBackground(glContext, text, sf::Color(100, 100, 100, 150), 5);
-		pDemoCore->textDrawer.Draw(glContext, text);
+		pCore->textDrawer.DrawBackground(glContext, text, sf::Color(100, 100, 100, 150), 5);
+		pCore->textDrawer.Draw(glContext, text);
 	}
 }
 
@@ -246,10 +246,10 @@ void EditorContext::MouseButtonPressed(const sf::Event& event)
 		if (selectedTool == EditorTool::PLACE_MODEL) {
 			static float TMP_rot = 0;
 			TMP_rot += (double(std::rand())/RAND_MAX)*gl::math::Pi() + gl::math::Pi()*0.5;
-			GraphicalObject loadedObject = pDemoCore->LoadGraphicalObjectFromFile(modelSelectionContext.GetSelectedModelFilename());
+			GraphicalObject loadedObject = pCore->LoadGraphicalObjectFromFile(modelSelectionContext.GetSelectedModelFilename());
 			loadedObject.SetTransform(gl::ModelMatrixf::Translation(0, -0.1, 0) * gl::ModelMatrixf::Translation(pointPosAtCursor) * gl::ModelMatrixf::RotationY(gl::Radians<float>(TMP_rot)));
 
-			pDemoCore->AddGraphicalObject(std::move(loadedObject));
+			pCore->AddGraphicalObject(std::move(loadedObject));
 		}
 	}
 	else {
@@ -302,7 +302,7 @@ void EditorContext::KeyPressed(const sf::Event& event)
 		break;
 
 	case sf::Keyboard::M:
-		pDemoCore->SaveAll();
+		pCore->SaveAll();
 		break;
 
 	case sf::Keyboard::E:
@@ -325,18 +325,18 @@ void EditorContext::KeyPressed(const sf::Event& event)
 
 void EditorContext::UpdatePointPosAtCursor()
 {
-	int screenWidth = pDemoCore->GetCamera().GetScreenWidth();
-	int screenHeight = pDemoCore->GetCamera().GetScreenHeight();
+	int screenWidth = pCore->GetScreenWidth();
+	int screenHeight = pCore->GetScreenHeight();
 
-	sf::Vector2i cursorPos = sf::Mouse::getPosition(*pDemoCore->GetWindow());
+	sf::Vector2i cursorPos = sf::Mouse::getPosition(*pCore->GetWindow());
 
 	//invert y to suit opengl coordinates
 	cursorPos.y = screenHeight-cursorPos.y;
 
 	GLfloat depthAtPixel;
-	pDemoCore->GetGLContext().ReadPixels(cursorPos.x, cursorPos.y, 1, 1, gl::enums::PixelDataFormat::DepthComponent, gl::PixelDataType::Float, &depthAtPixel);
+	pCore->GetGLContext().ReadPixels(cursorPos.x, cursorPos.y, 1, 1, gl::enums::PixelDataFormat::DepthComponent, gl::PixelDataType::Float, &depthAtPixel);
 
-	pointPosAtCursor = gl::Inverse(pDemoCore->GetCamera().GetViewProjectionTransform()) * gl::Vec4f(
+	pointPosAtCursor = gl::Inverse(pCore->GetActiveCamera()->GetViewProjectionTransform()) * gl::Vec4f(
 		((float(cursorPos.x)/screenWidth)*2-1),
 		((float(cursorPos.y)/screenHeight)*2-1),
 		(depthAtPixel)*2-1,

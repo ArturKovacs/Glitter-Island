@@ -5,27 +5,40 @@ add_executable(${EXECUTABLE_NAME} ${all_src_files})
 
 source_group(GUIContext FILES
 BaseDemoContext.cpp
-EditorContext.cpp
-GUIContext.cpp
-ModelSelectionContext.cpp
-ContextManager.cpp
 BaseDemoContext.hpp
+EditorContext.cpp
 EditorContext.hpp
+GUIContext.cpp
 GUIContext.hpp
+ModelSelectionContext.cpp
 ModelSelectionContext.hpp
+ContextManager.cpp
 ContextManager.hpp)
 
 source_group(GraphicalObject FILES
 AttributeCategory.cpp
-GraphicalObject.cpp
-Material.cpp
-Mesh.cpp
-StandardMaterial.cpp
 AttributeCategory.hpp
+GraphicalObject.cpp
 GraphicalObject.hpp
+Material.cpp
 Material.hpp
+Mesh.cpp
 Mesh.hpp
-StandardMaterial.hpp)
+StandardMaterial.cpp
+StandardMaterial.hpp
+DepthOnlyMaterial.cpp
+DepthOnlyMaterial.hpp)
+
+source_group(Camera FILES
+Camera.cpp
+Camera.hpp
+OrthoCamera.cpp
+OrthoCamera.hpp
+PerspectiveCamera.cpp
+PerspectiveCamera.hpp
+RawCamera.cpp
+RawCamera.hpp
+)
 
 add_library(sfml-graphics UNKNOWN IMPORTED)
 add_library(sfml-window UNKNOWN IMPORTED)

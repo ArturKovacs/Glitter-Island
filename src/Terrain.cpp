@@ -5,8 +5,11 @@
 #include <SFML/Graphics.hpp>
 #include <exception>
 #include <cmath>
+#include <string>
 
-Terrain::Terrain()
+#define IGNORE_TRY(x) try{x;}catch(std::exception&ex){std::cout<<ex.what()<<std::endl;}
+
+Terrain::Terrain(DemoCore* pCore) : pCore(pCore)
 {
 	terrainScale = 0;
 
@@ -16,11 +19,22 @@ Terrain::Terrain()
 	try {
 		sh_sunDir = gl::Uniform<gl::Vec3f>(shaderProgram, "sunDir");
 		sh_sunColor = gl::Uniform<gl::Vec3f>(shaderProgram, "sunColor");
+		sh_modelTransform = gl::Uniform<gl::Mat4f>(shaderProgram, "modelTransform");
 		sh_MVP = gl::Uniform<gl::Mat4f>(shaderProgram, "MVP");
 		sh_modelTransposedInverse = gl::Uniform<gl::Mat4f>(shaderProgram, "model_transposed_inverse");
 		gl::UniformSampler(shaderProgram, "sandTexture").Set(0);
 		gl::UniformSampler(shaderProgram, "grassTexture").Set(1);
 		gl::UniformSampler(shaderProgram, "materialTexture").Set(2);
+
+		sh_worldToShadowMap.resize(pCore->GetLightCascadeCount());
+		sh_viewSubfrustumFarPlanesTexDepth.resize(pCore->GetLightCascadeCount());
+
+		int currTextureID = 3;
+		for (int i = 0; i < pCore->GetLightCascadeCount(); i++) {
+			IGNORE_TRY(gl::UniformSampler(shaderProgram, "cascadeShadowMaps[" + std::to_string(i) + "]").Set(currTextureID++));
+			IGNORE_TRY(sh_worldToShadowMap.at(i) = gl::Uniform<gl::Mat4f>(shaderProgram, "worldToShadowMap[" + std::to_string(i) + "]"));
+			IGNORE_TRY(sh_viewSubfrustumFarPlanesTexDepth.at(i) = gl::Uniform<float>(shaderProgram, "viewSubfrustumFarPlanesTexDepth[" + std::to_string(i) + "]"));
+		}
 	}
 	catch (gl::Error& err) {
 		std::cout << err.what() << std::endl;
@@ -132,7 +146,7 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float 
 	seabottom.GetSubmeshes().push_back(std::move(seabottom_submsh));
 }
 
-static gl::Mat4f SajatTransposeMertNemMukodikAzOglPlusOsTODO(const gl::Mat4f& input)
+static gl::Mat4f MyTranspose(const gl::Mat4f& input)
 {
 	gl::Mat4f result;
 
@@ -145,7 +159,7 @@ static gl::Mat4f SajatTransposeMertNemMukodikAzOglPlusOsTODO(const gl::Mat4f& in
 	return result;
 }
 
-void Terrain::Draw(DemoCore& core)
+void Terrain::Draw()
 {
 	shaderProgram.Use();
 	gl::Texture::Active(0);
@@ -157,19 +171,33 @@ void Terrain::Draw(DemoCore& core)
 	gl::Texture::Active(2);
 	materialTexture.Bind(gl::Texture::Target::_2D);
 
-	sh_sunDir.Set(core.GetSun().GetDirectionTowardsSource());
-	sh_sunColor.Set(core.GetSun().GetColor());
-	sh_MVP.Set(core.GetCamera().GetViewProjectionTransform() * modelTransform);
-	sh_modelTransposedInverse.Set(SajatTransposeMertNemMukodikAzOglPlusOsTODO(gl::Inverse(modelTransform)));
+	int currTextureID = 3;
+	for (int i = 0; i < pCore->GetLightCascadeCount(); i++) {
+		gl::Texture::Active(currTextureID++);
+		pCore->GetCascadeShadowMap(i).Bind(gl::Texture::Target::_2D);
+
+		if (sh_worldToShadowMap[i].IsActive()){
+			sh_worldToShadowMap[i].Set(pCore->GetCascadeViewProjectionTransform(i));
+		}
+		if (sh_viewSubfrustumFarPlanesTexDepth[i].IsActive()) {
+			sh_viewSubfrustumFarPlanesTexDepth[i].Set(pCore->GetViewSubfrustumFarPlaneInTexCoordZ(i));
+		}
+	}
+
+	sh_sunDir.Set(pCore->GetSun().GetDirectionTowardsSource());
+	sh_sunColor.Set(pCore->GetSun().GetColor());
+	sh_modelTransform.Set(modelTransform);
+	sh_MVP.Set(pCore->GetActiveCamera()->GetViewProjectionTransform() * modelTransform);
+	sh_modelTransposedInverse.Set(MyTranspose(gl::Inverse(modelTransform)));
 	//sh_modelTransposedInverse.Set(gl::Transposed(gl::Inverse(modelTransform)));
 
 	Mesh::Submesh& terrain_submsh = terrainModel.GetSubmeshes().at(0);
 	terrain_submsh.BindVAO();
-	core.GetGLContext().DrawElements(terrain_submsh.GetPrimitiveType(), terrain_submsh.GetNumOfIndices(), terrain_submsh.indexTypeEnum);
+	pCore->GetGLContext().DrawElements(terrain_submsh.GetPrimitiveType(), terrain_submsh.GetNumOfIndices(), terrain_submsh.indexTypeEnum);
 
 	Mesh::Submesh& seabottom_submsh = seabottom.GetSubmeshes().at(0);
 	seabottom_submsh.BindVAO();
-	core.GetGLContext().DrawElements(seabottom_submsh.GetPrimitiveType(), seabottom_submsh.GetNumOfIndices(), seabottom_submsh.indexTypeEnum);
+	pCore->GetGLContext().DrawElements(seabottom_submsh.GetPrimitiveType(), seabottom_submsh.GetNumOfIndices(), seabottom_submsh.indexTypeEnum);
 }
 
 void Terrain::SetTransform(const gl::Mat4f& transform)

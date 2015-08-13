@@ -3,6 +3,8 @@
 #include "all_gl_headers.hpp"
 
 #include "Mesh.hpp"
+#include "Material.hpp"
+#include "DepthOnlyMaterial.hpp"
 #include <SFML/Graphics.hpp>
 
 class DemoCore;
@@ -10,10 +12,10 @@ class DemoCore;
 class Terrain
 {
 public:
-	Terrain();
+	Terrain(DemoCore* pCore);
 
 	void LoadFromHeightMap(const std::string& fileName, float scale, float heightMultiplyer, bool invertNormals = false);
-	void Draw(DemoCore& core);
+	void Draw();
 
 	void SetTransform(const gl::Mat4f& transform);
 	gl::Mat4f GetTransform() const;
@@ -25,6 +27,8 @@ public:
 	void SaveMaterialMap() const;
 
 private:
+	DemoCore* pCore;
+
 	Mesh terrainModel;
 	Mesh seabottom;
 
@@ -37,14 +41,15 @@ private:
 	gl::Texture grassTexture;
 
 	gl::Mat4f modelTransform;
+	std::vector<gl::Uniform<gl::Mat4f>> sh_worldToShadowMap;
+	std::vector<gl::Uniform<float>> sh_viewSubfrustumFarPlanesTexDepth;
+	gl::Uniform<gl::Mat4f> sh_modelTransform;
 	gl::Uniform<gl::Mat4f> sh_MVP;
 	gl::Uniform<gl::Mat4f> sh_modelTransposedInverse;
-
-	gl::Program shaderProgram;
 	gl::Uniform<gl::Vec3f> sh_sunDir;
 	gl::Uniform<gl::Vec3f> sh_sunColor;
 
-	//gl::Vec3f lightDir;
+	gl::Program shaderProgram;
 
 private:
 	static void LoadTexture(gl::Texture& target, sf::Image& srcImg, const std::string& filename, bool data, float anisotropy = 0);

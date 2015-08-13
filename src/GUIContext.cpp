@@ -3,7 +3,7 @@
 #include "ContextManager.hpp"
 #include "DemoCore.hpp"
 
-GUIContext::GUIContext(ContextManager* pContextManager, DemoCore* pDemoCore) : pContextManager(pContextManager), pDemoCore(pDemoCore), requireFocus(false)
+GUIContext::GUIContext(ContextManager* pContextManager, DemoCore* pCore) : pContextManager(pContextManager), pCore(pCore), requireFocus(false)
 {}
 
 GUIContext::~GUIContext()

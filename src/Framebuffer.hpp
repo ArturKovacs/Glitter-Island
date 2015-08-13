@@ -9,6 +9,7 @@ class DemoCore;
 class Framebuffer : public IFramebuffer
 {
 public:
+	Framebuffer();
 	Framebuffer(const int width, const int height);
 	Framebuffer(Framebuffer&&);
 

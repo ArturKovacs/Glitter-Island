@@ -16,7 +16,7 @@
 #define OGLPLUS_PNG_FOUND 0
 #define OGLPLUS_PANGO_CAIRO_FOUND 0
 
-//WARNING Manually overwritten to 3.3
+//Manually overridden
 #define OGLPLUS_GL_VERSION_MAJOR 3
 #define OGLPLUS_GL_VERSION_MINOR 3
 

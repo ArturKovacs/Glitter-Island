@@ -21,6 +21,7 @@
 #include "ContextManager.hpp"
 #include "MeshManager.hpp"
 #include "MaterialManager.hpp"
+#include "DebugDrawer.hpp"
 
 class DemoCore
 {
@@ -54,12 +55,24 @@ public:
 	sf::Time GetElapsedTime();
 	bool GetWireframeModeEnabled() const;
 
+	int GetScreenWidth() const;
+	int GetScreenHeight() const;
+
+	void SetActiveCamera(Camera* cam);
+	Camera* GetActiveCamera();
+
+	DebugDrawer& GetDebugDrawer();
+
 	DirectionalLight& GetSun();
-	Camera& GetCamera();
 	Terrain& GetTerrain();
 	float GetMouseSensitivity();
 
 	sf::Window* GetWindow();
+
+	int GetLightCascadeCount() const;
+	const gl::Texture& GetCascadeShadowMap(int cascadeID) const;
+	gl::Mat4f GetCascadeViewProjectionTransform(int cascadeID) const;
+	float GetViewSubfrustumFarPlaneInTexCoordZ(int subfrustumID) const;
 
 	void AddGraphicalObject(GraphicalObject&& newObject);
 
@@ -93,7 +106,9 @@ private: // misc
 	BaseDemoContext baseDemoContext;
 
 	const float mouseSensitivity;
-	Camera cam;
+	Camera* pActiveCam;
+
+	DebugDrawer debugDrawer;
 
 private: //resources
 	MeshManager meshManager;
