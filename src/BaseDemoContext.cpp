@@ -41,10 +41,11 @@ editorContext(pContextManager, pCore)
 	//subfrustumFarPlanePositionRatios[2] = 0.430201759;
 	//subfrustumFarPlanePositionRatios[3] = 1;
 
-	subfrustumFarPlanePositionRatios[0] = 0.02;
-	subfrustumFarPlanePositionRatios[1] = 0.1;
-	subfrustumFarPlanePositionRatios[2] = 0.3;
-	subfrustumFarPlanePositionRatios[3] = 1;
+	subfrustumFarPlanePositionRatios[0] = 0.01;
+	subfrustumFarPlanePositionRatios[1] = 0.04;
+	subfrustumFarPlanePositionRatios[2] = 0.1;
+	subfrustumFarPlanePositionRatios[3] = 0.3;
+	subfrustumFarPlanePositionRatios[4] = 1;
 
 	//H rot: 4.10499
 	//V rot: -0.275

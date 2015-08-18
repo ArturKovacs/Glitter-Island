@@ -66,7 +66,7 @@ private: //CSM
 	DepthOnlyMaterial depthMaterial;
 
 	static const int shadowMapResolution = 2048;
-	static const int lightCascadeCount = 4;
+	static const int lightCascadeCount = 5;
 	/// Position of the far planes of the subfrusta. Values mean a linear interpolation where 0 is view frustum's nearPlane, and 1 is view frustum's farPlane.
 	/// The value with the lowest index corresponds to the nearest subfrustum.
 	std::array<float, lightCascadeCount> subfrustumFarPlanePositionRatios;
