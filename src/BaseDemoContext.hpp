@@ -37,7 +37,7 @@ public:
 	bool GetWireframeModeEnabled() const;
 
 	DirectionalLight& GetSun();
-	Camera& GetCamera();
+	//Camera& GetCamera();
 	Terrain& GetTerrain();
 
 	int GetLightCascadeCount() const;
@@ -73,6 +73,8 @@ private: //CSM
 	std::array<RawCamera, lightCascadeCount> lightCascadeCameras;
 	std::array<Framebuffer, lightCascadeCount> lightCascadeShadowMapFramebuffers;
 
+	gl::Mat4f lightViewTransform;
+
 private: //user state
 	enum class SpeedMode { NORMAL, FAST, ULTRA };
 
@@ -96,5 +98,9 @@ private:
 	void KeyPressed(sf::Event::KeyEvent key);
 	void KeyReleased(sf::Event::KeyEvent key);
 
+	void UpdateLightViewTransform();
+	float GetSubfrustumZNear(int cascadeID) const;
+	void UpdateLightCascadeCamera(int cascadeID);
+	void DrawShadowMap(int cascadeID);
 	void DrawObjects();
 };

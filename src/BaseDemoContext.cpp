@@ -167,82 +167,14 @@ void BaseDemoContext::Draw()
 	glContext.Enable(gl::Capability::DepthTest);
 	glContext.DepthFunc(gl::enums::CompareFunction::LEqual);
 
-	gl::Vec3f lightViewZ = sun.GetDirectionTowardsSource();
-	gl::Vec3f lightViewX = gl::Cross(gl::Vec3f(0, 1, 0), lightViewZ);
-	if (gl::Dot(lightViewX, lightViewX) == 0) {
-		lightViewX = gl::Vec3f(1, 0, 0);
-	}
-	else {
-		lightViewX = gl::Normalized(lightViewX);
-	}
-	gl::Vec3f lightViewY = gl::Cross(lightViewZ, lightViewX);
+	UpdateLightViewTransform();
 
-	assert(lightViewX.y() == 0);
-	assert(gl::Dot(lightViewX, lightViewY) < 0.001 && gl::Dot(lightViewZ, lightViewY) < 0.001 && gl::Dot(lightViewX, lightViewZ) < 0.001);
-	//Use transpose instead of expensive inverse since this matrix is orthogonal.
-	//TODO might be accidently written down transposed
-	const gl::Mat4f lightViewTransform = (gl::Mat4f(
-		lightViewX.x(), lightViewX.y(), lightViewX.z(), 0,
-		lightViewY.x(), lightViewY.y(), lightViewY.z(), 0,
-		lightViewZ.x(), lightViewZ.y(), lightViewZ.z(), 0,
-		             0,              0,              0, 1));
-
-	float prevZFar = cam.GetZNear();
-	const float totalDepth = cam.GetZFar() - cam.GetZNear();
-	for (int cascadeID = 0; cascadeID < lightCascadeCameras.size(); cascadeID++) {
-		PerspectiveCamera subCamera = cam;
-		subCamera.SetZNear(prevZFar);
-		subCamera.SetZFar(cam.GetZNear() + totalDepth*subfrustumFarPlanePositionRatios[cascadeID]);
-
-		Frustum subFrustum = subCamera.GetFrustum();
-		subFrustum = subFrustum.Transformed(lightViewTransform);
-
-		{
-			using planeType = decltype(subFrustum.nearPlane);
-			static_assert(std::is_same<gl::Vec3f, planeType::value_type >::value, "Error plane quad does not consist of expected types.");
-		}
-		gl::Vec3f AABBmin = subFrustum.nearPlane.at(0);
-		gl::Vec3f AABBmax = subFrustum.nearPlane.at(0);
-
-		assert(subFrustum.nearPlane.at(0).Size() == 3);
-
-		for (auto& currVertex : subFrustum.nearPlane) {
-			for (int i = 0; i < currVertex.Size(); i++) {
-				AABBmin[i] = std::min(AABBmin[i], currVertex[i]);
-				AABBmax[i] = std::max(AABBmax[i], currVertex[i]);
-			}
-		}
-		for (auto& currVertex : subFrustum.farPlane) {
-			for (int i = 0; i < currVertex.Size(); i++) {
-				AABBmin[i] = std::min(AABBmin[i], currVertex[i]);
-				AABBmax[i] = std::max(AABBmax[i], currVertex[i]);
-			}
-		}
-
-		lightCascadeCameras[cascadeID].SetViewTransform(lightViewTransform);
-		lightCascadeCameras[cascadeID].SetProjectionTransform(gl::CamMatrixf::Ortho(AABBmin.x(), AABBmax.x(), AABBmin.y(), AABBmax.y(), -AABBmax.z()-400, -AABBmin.z()+400));
-
-		if (cascadeID <= 1) {
-			pCore->GetDebugDrawer().SetActiveCam(&debugCam);
-			PerspectiveCamera sub2 = cam;
-			sub2.SetZNear(prevZFar);
-			sub2.SetZFar(cam.GetZNear() + totalDepth*subfrustumFarPlanePositionRatios[cascadeID]);
-			pCore->GetDebugDrawer().DrawOnce(sub2.GetFrustum());
-			pCore->GetDebugDrawer().DrawOnce(lightCascadeCameras[cascadeID].GetFrustum());
-		}
-		prevZFar = subCamera.GetZFar();
-	}
-
-	//glContext.ClearColor(1, 1, 1, 1);
-	for (int cascadeID = 0; cascadeID < lightCascadeCameras.size(); cascadeID++) {
-		lightCascadeShadowMapFramebuffers[cascadeID].Bind(gl::enums::FramebufferTarget::Draw);
-		glContext.DrawBuffer(gl::enums::ColorBuffer::None);
-
-		pCore->SetActiveCamera(&(lightCascadeCameras[cascadeID]));
-		glContext.Viewport(0, 0, shadowMapResolution, shadowMapResolution);
-		glContext.Clear().DepthBuffer();
-		//Draw depth only!
-		DrawObjects();
+	static int cascadeID = 0;
+	for (int i = 0; i < 1; i ++) {
+		UpdateLightCascadeCamera(cascadeID);
+		DrawShadowMap(cascadeID);
+		cascadeID += 1;
+		cascadeID = cascadeID % lightCascadeCount;
 	}
 
 	pCore->GetCurrentFramebuffer().Bind(gl::enums::FramebufferTarget::Draw);
@@ -429,6 +361,97 @@ void BaseDemoContext::KeyReleased(sf::Event::KeyEvent key)
     default:
         break;
 	}
+}
+
+void BaseDemoContext::UpdateLightViewTransform()
+{
+	gl::Vec3f lightViewZ = sun.GetDirectionTowardsSource();
+	gl::Vec3f lightViewX = gl::Cross(gl::Vec3f(0, 1, 0), lightViewZ);
+	if (gl::Dot(lightViewX, lightViewX) == 0) {
+		lightViewX = gl::Vec3f(1, 0, 0);
+	}
+	else {
+		lightViewX = gl::Normalized(lightViewX);
+	}
+	gl::Vec3f lightViewY = gl::Cross(lightViewZ, lightViewX);
+
+	assert(lightViewX.y() == 0);
+	assert(gl::Dot(lightViewX, lightViewY) < 0.001 && gl::Dot(lightViewZ, lightViewY) < 0.001 && gl::Dot(lightViewX, lightViewZ) < 0.001);
+	/// Use transpose instead of expensive inverse since this matrix is orthogonal.
+	/// The elements are written down transposed so this matrix
+	/// is already transposed when constructed.
+	lightViewTransform = gl::Mat4f(
+		lightViewX.x(), lightViewX.y(), lightViewX.z(), 0,
+		lightViewY.x(), lightViewY.y(), lightViewY.z(), 0,
+		lightViewZ.x(), lightViewZ.y(), lightViewZ.z(), 0,
+		             0,              0,              0, 1);
+}
+
+float BaseDemoContext::GetSubfrustumZNear(int cascadeID) const
+{
+	const float totalDepth = cam.GetZFar() - cam.GetZNear();
+	const int prevID = cascadeID-1;
+	float prevFarPlaneRatio = prevID >=0 ? subfrustumFarPlanePositionRatios[prevID] : 0;
+	return cam.GetZNear() + totalDepth*prevFarPlaneRatio;
+}
+
+void BaseDemoContext::UpdateLightCascadeCamera(int cascadeID)
+{
+	const float totalDepth = cam.GetZFar() - cam.GetZNear();
+	PerspectiveCamera subCamera = cam;
+	subCamera.SetZNear(GetSubfrustumZNear(cascadeID));
+	subCamera.SetZFar(cam.GetZNear() + totalDepth*subfrustumFarPlanePositionRatios[cascadeID]);
+
+	Frustum subFrustum = subCamera.GetFrustum();
+	subFrustum = subFrustum.Transformed(lightViewTransform);
+
+	{
+		using planeType = decltype(subFrustum.nearPlane);
+		static_assert(std::is_same<gl::Vec3f, planeType::value_type >::value, "Error plane quad does not consist of expected types.");
+	}
+	gl::Vec3f AABBmin = subFrustum.nearPlane.at(0);
+	gl::Vec3f AABBmax = subFrustum.nearPlane.at(0);
+
+	assert(subFrustum.nearPlane.at(0).Size() == 3);
+
+	for (auto& currVertex : subFrustum.nearPlane) {
+		for (int i = 0; i < currVertex.Size(); i++) {
+			AABBmin[i] = std::min(AABBmin[i], currVertex[i]);
+			AABBmax[i] = std::max(AABBmax[i], currVertex[i]);
+		}
+	}
+	for (auto& currVertex : subFrustum.farPlane) {
+		for (int i = 0; i < currVertex.Size(); i++) {
+			AABBmin[i] = std::min(AABBmin[i], currVertex[i]);
+			AABBmax[i] = std::max(AABBmax[i], currVertex[i]);
+		}
+	}
+
+	lightCascadeCameras[cascadeID].SetViewTransform(lightViewTransform);
+	lightCascadeCameras[cascadeID].SetProjectionTransform(gl::CamMatrixf::Ortho(AABBmin.x(), AABBmax.x(), AABBmin.y(), AABBmax.y(), -AABBmax.z()-400, -AABBmin.z()+400));
+
+	if (cascadeID <= 1) {
+		pCore->GetDebugDrawer().SetActiveCam(&debugCam);
+		PerspectiveCamera sub2 = cam;
+		sub2.SetZNear(GetSubfrustumZNear(cascadeID));
+		sub2.SetZFar(cam.GetZNear() + totalDepth*subfrustumFarPlanePositionRatios[cascadeID]);
+		pCore->GetDebugDrawer().DrawOnce(sub2.GetFrustum());
+		pCore->GetDebugDrawer().DrawOnce(lightCascadeCameras[cascadeID].GetFrustum());
+	}
+}
+
+void BaseDemoContext::DrawShadowMap(int cascadeID)
+{
+	gl::Context& glContext = pCore->GetGLContext();
+
+	lightCascadeShadowMapFramebuffers[cascadeID].Bind(gl::enums::FramebufferTarget::Draw);
+	//Draw depth only!
+	glContext.DrawBuffer(gl::enums::ColorBuffer::None);
+
+	pCore->SetActiveCamera(&(lightCascadeCameras[cascadeID]));
+	glContext.Viewport(0, 0, shadowMapResolution, shadowMapResolution);
+	glContext.Clear().DepthBuffer();
+	DrawObjects();
 }
 
 void BaseDemoContext::DrawObjects()
