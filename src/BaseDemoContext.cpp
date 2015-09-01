@@ -451,20 +451,17 @@ void BaseDemoContext::DrawShadowMap(int cascadeID)
 	pCore->SetActiveCamera(&(lightCascadeCameras[cascadeID]));
 	glContext.Viewport(0, 0, shadowMapResolution, shadowMapResolution);
 	glContext.Clear().DepthBuffer();
-	DrawObjects();
+
+	for (auto& current : graphicalObjects) {
+		current.Draw(*pCore);
+	}
 }
 
 void BaseDemoContext::DrawObjects()
 {
-	gl::Mat4f projection = cam.GetProjectionTransform();
-	gl::Mat4f view = cam.GetViewTransform();
-	gl::Mat4f viewProjection = projection*view;
-
-	pCore->GetGLContext().Enable(gl::Capability::CullFace);
 	terrain.Draw();
 
 	for (auto& current : graphicalObjects) {
 		current.Draw(*pCore);
-		//pCore->simpleColoredDrawer.Draw(pCore->GetGLContext(), current.GetMesh(), cam.GetViewProjectionTransform() * current.GetTransform(), gl::Vec4f(1, 1, 0, 0.7));
 	}
 }

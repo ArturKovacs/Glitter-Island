@@ -191,6 +191,7 @@ void Terrain::Draw()
 	sh_modelTransposedInverse.Set(MyTranspose(gl::Inverse(modelTransform)));
 	//sh_modelTransposedInverse.Set(gl::Transposed(gl::Inverse(modelTransform)));
 
+	pCore->GetGLContext().Enable(gl::Capability::CullFace);
 	Mesh::Submesh& terrain_submsh = terrainModel.GetSubmeshes().at(0);
 	terrain_submsh.BindVAO();
 	pCore->GetGLContext().DrawElements(terrain_submsh.GetPrimitiveType(), terrain_submsh.GetNumOfIndices(), terrain_submsh.indexTypeEnum);
