@@ -31,10 +31,10 @@ void GraphicalObject::Draw(GraphicsEngine* pGraphicsEngine)
 	gl::Context::BlendFunc(gl::enums::BlendFunction::SrcAlpha, gl::enums::BlendFunction::OneMinusSrcAlpha);
 
 	if (depthTest) {
-		//glContext.Enable(gl::Capability::DepthTest);
+		glContext.Enable(gl::Capability::DepthTest);
 	}
 	else {
-		//glContext.Disable(gl::Capability::DepthTest);
+		glContext.Disable(gl::Capability::DepthTest);
 	}
 	
 	for (auto& curr : pMesh->GetSubmeshes()) {
@@ -69,3 +69,14 @@ bool GraphicalObject::IsVisible() const
 {
 	return visible;
 }
+
+void GraphicalObject::SetDepthTestEnabled(bool enabled)
+{
+	depthTest = enabled;
+}
+
+bool GraphicalObject::IsDepthTestEnabled() const
+{
+	return depthTest;
+}
+

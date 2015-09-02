@@ -22,7 +22,7 @@ public:
     void SetVisible(bool value);
     bool IsVisible() const;
 	
-	void SetDepthEnabled(bool enabled);
+	void SetDepthTestEnabled(bool enabled);
 	bool IsDepthTestEnabled() const;
 
 private:

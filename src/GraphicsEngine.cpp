@@ -422,7 +422,7 @@ void GraphicsEngine::DrawObjects()
 		current.Draw(this);
 	}
 	for (auto current : externalGraphicalObjects) {
-		//current->Draw(this);
+		current->Draw(this);
 	}
 }
 

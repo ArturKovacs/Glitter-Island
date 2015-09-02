@@ -78,11 +78,14 @@ selectedTool(EditorTool::NO_TOOL), brushRadius(1),
 brushCircleMaterial(&(pCore->GetGraphicsEngine()))
 {
 	modelSelectionContext.ForceUpdateModelFileList();
-	
+
 	brushCircleMesh = Mesh::GenerateCircle(1, 16);
+	assert(brushCircleMesh.GetSubmeshes().size() == 1);
+	brushCircleMaterial.SetColor(gl::Vec4f(1, 0.1, 0.5, 1));
 	brushCircleMesh.GetSubmeshes().at(0).SetMaterial(&brushCircleMaterial);
 	
 	brushCircle.SetMesh(&brushCircleMesh);
+	brushCircle.SetDepthTestEnabled(false);
 	
 	pCore->GetGraphicsEngine().AddGraphicalObject(&brushCircle);
 }
@@ -121,12 +124,16 @@ void EditorContext::Update(float deltaSec)
 {
 	UpdatePointPosAtCursor();
 
+	brushCircle.SetVisible(GetToolType(selectedTool) == EditorToolType::PAINT);
+	
+	if (GetToolType(selectedTool) == EditorToolType::PAINT) {
+		UpdateBrushCirclePos();
+	}
+	
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-		
-		brushCircle.SetVisible(GetToolType(selectedTool) == EditorToolType::PAINT);
-		
 		switch (GetToolType(selectedTool)) {
 		case EditorToolType::PAINT: {
+					
 			gl::Vec2i cursorPosOnMaterialMap = pCore->GetGraphicsEngine().GetTerrain().GetMaterialMapPos(pointPosAtCursor);
 			sf::Image& materialMap = pCore->GetGraphicsEngine().GetTerrain().GetMaterialMap();
 			sf::Color selectedMaterialColor;
@@ -187,31 +194,11 @@ void EditorContext::Update(float deltaSec)
 			break;
 		}
 	}
-	else {
-		brushCircle.SetVisible(false);
-	}
 }
 
 void EditorContext::Draw()
 {
-	gl::Context& glContext = pCore->GetGraphicsEngine().GetGLContext();
-
-	EditorToolType selectedToolType = GetToolType(selectedTool);
-	if (selectedToolType == EditorToolType::PAINT) {
-		float meshScale = pCore->GetGraphicsEngine().GetTerrain().GetMaterialMapPixelSizeInWorldScale() * brushRadius;
-		using ModelMatf = gl::ModelMatrixf;
-		gl::Mat4f MVP =
-			pCore->GetGraphicsEngine().GetActiveCamera()->GetViewProjectionTransform() *
-			ModelMatf::Translation(pointPosAtCursor.xyz()) *
-			ModelMatf::Scale(meshScale, meshScale, meshScale) *
-			ModelMatf::RotationX(gl::Radians<float>(gl::math::Pi()*0.5));
-
-		glContext.Disable(gl::Capability::DepthTest);
-		glContext.LineWidth(2);
-		pCore->GetGraphicsEngine().GetSimpleColoredDrawer().Draw(glContext, pCore->circle, MVP, gl::Vec4f(1, 0.1, 0.5, 1));
-		glContext.LineWidth(1);
-		glContext.Enable(gl::Capability::DepthTest);
-	}
+	assert(false);
 }
 
 void EditorContext::DrawOverlayElements()
@@ -361,4 +348,15 @@ void EditorContext::UpdatePointPosAtCursor()
 		1);
 
 	pointPosAtCursor = pointPosAtCursor / pointPosAtCursor.w();
+}
+
+void EditorContext::UpdateBrushCirclePos()
+{
+	float meshScale = pCore->GetGraphicsEngine().GetTerrain().GetMaterialMapPixelSizeInWorldScale() * brushRadius;
+	gl::Mat4f modelMatrix =
+		gl::ModelMatrixf::Translation(pointPosAtCursor.xyz()) *
+		gl::ModelMatrixf::Scale(meshScale, meshScale, meshScale) *
+		gl::ModelMatrixf::RotationX(gl::Radians<float>(gl::math::Pi()*0.5));
+
+	brushCircle.SetTransform(modelMatrix);
 }
