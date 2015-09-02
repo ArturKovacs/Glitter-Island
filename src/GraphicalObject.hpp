@@ -3,26 +3,33 @@
 #include "all_gl_headers.hpp"
 #include "Mesh.hpp"
 #include "Material.hpp"
-#include "DepthOnlyMaterial.hpp"
 
-class DemoCore;
+class GraphicsEngine;
 
 class GraphicalObject
 {
 public:
-	GraphicalObject();
+    GraphicalObject();
 
-	void SetMesh(Mesh* newMesh);
-	Mesh* GetMesh();
+    void SetMesh(Mesh* newMesh);
+    Mesh* GetMesh();
 
-	void Draw(DemoCore& core);
-	void DrawDepthOnly(DemoCore& core, DepthOnlyMaterial& depthMaterial);
+    void Draw(GraphicsEngine* pGraphicsEngine);
 
-	void SetTransform(const gl::Mat4f& transform);
-	gl::Mat4f GetTransform() const;
+    void SetTransform(const gl::Mat4f& transform);
+    gl::Mat4f GetTransform() const;
+    
+    void SetVisible(bool value);
+    bool IsVisible() const;
+	
+	void SetDepthEnabled(bool enabled);
+	bool IsDepthTestEnabled() const;
 
 private:
-	Mesh* pMesh;
-
-	gl::Mat4f modelTransform;
+    bool visible;
+	bool depthTest;
+    
+    Mesh* pMesh;
+    
+    gl::Mat4f modelTransform;
 };

@@ -1,7 +1,7 @@
 #include "DebugDrawer.hpp"
-#include "DemoCore.hpp"
+#include "GraphicsEngine.hpp"
 
-DebugDrawer::DebugDrawer(DemoCore* pCore) : pCore(pCore), enabled(true), activeCam(nullptr)
+DebugDrawer::DebugDrawer(GraphicsEngine* pGraphicsEngine) : pGraphicsEngine(pGraphicsEngine), enabled(true), activeCam(nullptr)
 {}
 
 void DebugDrawer::SetActiveCam(Camera* cam)
@@ -29,10 +29,10 @@ void DebugDrawer::Draw()
 		return;
 	}
 
-	pCore->GetGLContext().Clear().ColorBuffer().DepthBuffer();
+	pGraphicsEngine->GetGLContext().Clear().ColorBuffer().DepthBuffer();
 
 	for (auto& currMesh : meshes) {
-		pCore->simpleColoredDrawer.Draw(pCore->GetGLContext(), currMesh, activeCam->GetViewProjectionTransform(), gl::Vec4f(1));
+		pGraphicsEngine->GetSimpleColoredDrawer().Draw(pGraphicsEngine->GetGLContext(), currMesh, activeCam->GetViewProjectionTransform(), gl::Vec4f(1));
 	}
 
 	meshes.clear();

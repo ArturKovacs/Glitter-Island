@@ -4,7 +4,7 @@
 
 #include "IFramebuffer.hpp"
 
-class DemoCore;
+class GraphicsEngine;
 
 class Framebuffer : public IFramebuffer
 {
@@ -20,7 +20,7 @@ public:
 	const gl::Texture& GetDepthTexture() const;
 
 	void Bind(gl::Framebuffer::Target target) const override;
-	void Draw(DemoCore& core);
+	void Draw(GraphicsEngine& graphicsEngine);
 
 	void SetVertexPosName(const std::string& name);
 	void SetColorTexName(const std::string& name);

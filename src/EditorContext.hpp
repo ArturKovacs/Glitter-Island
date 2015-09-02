@@ -5,6 +5,8 @@
 
 //WARNING assuming that model selection won't include this file!
 #include "ModelSelectionContext.hpp"
+#include "GraphicalObject.hpp"
+#include "SimpleColoredMaterial.hpp"
 
 class EditorContext : public GUIContext
 {
@@ -47,7 +49,9 @@ private:
 	EditorTool selectedTool;
 	gl::Vec4f pointPosAtCursor;
 	float brushRadius;
-	//bool showModelSelection;
+	Mesh brushCircleMesh;
+	SimpleColoredMaterial brushCircleMaterial;
+	GraphicalObject brushCircle;
 
 	ModelSelectionContext modelSelectionContext;
 

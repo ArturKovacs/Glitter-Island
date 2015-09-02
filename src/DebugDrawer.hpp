@@ -4,12 +4,12 @@
 #include "Mesh.hpp"
 #include <vector>
 
-class DemoCore;
+class GraphicsEngine;
 
 class DebugDrawer
 {
 public:
-	DebugDrawer(DemoCore* pCore);
+	DebugDrawer(GraphicsEngine* pGraphicsEngine);
 
 	void SetActiveCam(Camera* cam);
 	const Camera* GetActiveCam() const;
@@ -21,7 +21,7 @@ public:
 	void SetEnabled(bool isEnabled);
 
 private:
-	DemoCore* pCore;
+	GraphicsEngine* pGraphicsEngine;
 
 	bool enabled;
 	Camera* activeCam;

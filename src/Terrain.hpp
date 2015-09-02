@@ -4,15 +4,14 @@
 
 #include "Mesh.hpp"
 #include "Material.hpp"
-#include "DepthOnlyMaterial.hpp"
 #include <SFML/Graphics.hpp>
 
-class DemoCore;
+class GraphicsEngine;
 
 class Terrain
 {
 public:
-	Terrain(DemoCore* pCore);
+	Terrain(GraphicsEngine* pGraphicsEngine);
 
 	void LoadFromHeightMap(const std::string& fileName, float scale, float heightMultiplyer, bool invertNormals = false);
 	void Draw();
@@ -27,7 +26,7 @@ public:
 	void SaveMaterialMap() const;
 
 private:
-	DemoCore* pCore;
+	GraphicsEngine* pGraphicsEngine;
 
 	Mesh terrainModel;
 	Mesh seabottom;

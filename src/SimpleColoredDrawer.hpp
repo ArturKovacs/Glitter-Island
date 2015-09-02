@@ -17,4 +17,3 @@ private:
 
 	gl::Program shaderProgram;
 };
-

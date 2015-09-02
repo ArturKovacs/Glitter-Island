@@ -4,7 +4,7 @@
 #include <sstream>
 #include "DemoCore.hpp"
 
-Mesh* MeshManager::LoadMeshFromFile(DemoCore* pCore, const std::string& filename)
+Mesh* MeshManager::LoadMeshFromFile(GraphicsEngine* pGraphicsEngine, const std::string& filename)
 {
 	auto elementIter = meshes.find(filename);
 	if (elementIter != meshes.end()) {
@@ -13,7 +13,7 @@ Mesh* MeshManager::LoadMeshFromFile(DemoCore* pCore, const std::string& filename
 
 	std::cout << "Loading mesh!" << std::endl;
 
-	Mesh* pResult = LoadFromOBJFile(pCore, filename);
+	Mesh* pResult = LoadFromOBJFile(pGraphicsEngine, filename);
 
 	std::cout << "Mesh loaded!" << std::endl;
 
@@ -91,7 +91,7 @@ struct OBJSubmesh
 	std::map<AttributeCategory,  std::vector<gl::Vec3f> > vertexAttributes;
 };
 
-Mesh* MeshManager::LoadFromOBJFile(DemoCore* pCore, const std::string& filename)
+Mesh* MeshManager::LoadFromOBJFile(GraphicsEngine* pGraphicsEngine, const std::string& filename)
 {
 	Mesh* pResult = new Mesh;
 
@@ -240,7 +240,7 @@ Mesh* MeshManager::LoadFromOBJFile(DemoCore* pCore, const std::string& filename)
 
 		Mesh::Submesh currDst;
 
-		currDst.SetMaterial(pCore->LoadStandardMaterialFromFile(mtllibFilename, currMaterialName));
+		currDst.SetMaterial(pGraphicsEngine->LoadStandardMaterialFromFile(mtllibFilename, currMaterialName));
 		currDst.SetIndices(currOBJSubmesh.indices);
 
 		auto GetOBJVertexAttribute = [&](AttributeCategory target) {

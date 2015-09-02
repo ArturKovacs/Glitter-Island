@@ -4,17 +4,17 @@
 #include "StandardMaterial.hpp"
 #include <map>
 
-class DemoCore;
+class GraphicsEngine;
 
 class MaterialManager
 {
 public:
-	Material* LoadStandardMaterialFromFile(DemoCore* pCore, const std::string& filename, const std::string& materialName);
+	Material* LoadStandardMaterialFromFile(GraphicsEngine* pGraphicsEngine, const std::string& filename, const std::string& materialName);
 private:
 	std::map<std::string, Material*> materials;
 
 private:
-	StandardMaterial* LoadFromMTLFile(DemoCore* pCore, const std::string& filename, const std::string& materialName);
+	StandardMaterial* LoadFromMTLFile(GraphicsEngine* pGraphicsEngine, const std::string& filename, const std::string& materialName);
 
 private:
 	enum class TextureType { COLOR, DATA };

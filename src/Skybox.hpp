@@ -3,7 +3,7 @@
 #include "all_gl_headers.hpp"
 #include "Camera.hpp"
 
-class DemoCore;
+class GraphicsEngine;
 
 class Skybox
 {
@@ -31,6 +31,6 @@ public:
 		const std::string& negZfileName,
 		const std::string& posZfileName);
 
-	void Draw(DemoCore& core);
+	void Draw(GraphicsEngine& graphicsEngine);
 };
 

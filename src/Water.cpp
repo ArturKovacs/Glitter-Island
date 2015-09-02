@@ -4,7 +4,7 @@
 
 Water::Water(const float waterSize)
 {
-	waterShader = DemoCore::LoadShaderProgramFromFiles("Water_v.glsl", "Water_f.glsl");
+	waterShader = GraphicsEngine::LoadShaderProgramFromFiles("Water_v.glsl", "Water_f.glsl");
 	waterShader.Use();
 
 	sh_MVP = gl::Uniform<gl::Mat4f>(waterShader, "MVP");
@@ -44,11 +44,11 @@ Water::Water(const float waterSize)
 
 void Water::Draw(DemoCore& core)
 {
-	auto& gl = core.GetGLContext();
+	auto& gl = core.GetGraphicsEngine().GetGLContext();
 
-	auto& screenFB = core.GetCurrentFramebuffer();
-	core.PushFramebuffer();
-	core.CopyFramebufferContents(screenFB);
+	auto& screenFB = core.GetGraphicsEngine().GetCurrentFramebuffer();
+	core.GetGraphicsEngine().PushFramebuffer();
+	core.GetGraphicsEngine().CopyFramebufferContents(screenFB);
 
 	waterShader.Use();
 
@@ -63,17 +63,17 @@ void Water::Draw(DemoCore& core)
 	sh_screenWidth.Set(core.GetScreenWidth());
 	sh_screenHeight.Set(core.GetScreenHeight());
 
-	sh_MVP.Set(core.GetActiveCamera()->GetViewProjectionTransform());
-	sh_viewProj.Set(core.GetActiveCamera()->GetViewProjectionTransform());
+	sh_MVP.Set(core.GetGraphicsEngine().GetActiveCamera()->GetViewProjectionTransform());
+	sh_viewProj.Set(core.GetGraphicsEngine().GetActiveCamera()->GetViewProjectionTransform());
 	//sh_invMVP.Set(gl::Inverse(core.GetCamera().GetViewProjectionTransform()));
 
-	PerspectiveCamera* pActivePerspectiveCam = dynamic_cast<PerspectiveCamera*>(core.GetActiveCamera());
+	PerspectiveCamera* pActivePerspectiveCam = dynamic_cast<PerspectiveCamera*>(core.GetGraphicsEngine().GetActiveCamera());
 	if (pActivePerspectiveCam == nullptr) {
 		throw std::runtime_error("Active camera was not a PerspectiveCamera when rendering water.");
 	}
 
 	sh_camPos.Set(pActivePerspectiveCam->GetPosition());
-	sh_sunDir.Set(core.GetSun().GetDirectionTowardsSource());
+	sh_sunDir.Set(core.GetGraphicsEngine().GetSun().GetDirectionTowardsSource());
 	sh_time.Set(core.GetElapsedTime().asSeconds());
 
 	VAO.Bind();

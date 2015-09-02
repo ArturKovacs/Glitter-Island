@@ -1,6 +1,6 @@
 #include "Framebuffer.hpp"
 
-#include "DemoCore.hpp"
+#include "GraphicsEngine.hpp"
 
 Framebuffer::Framebuffer() : Framebuffer(1, 1)
 {}
@@ -118,9 +118,9 @@ void Framebuffer::Bind(gl::Framebuffer::Target target) const
 	fbo.Bind(target);
 }
 
-void Framebuffer::Draw(DemoCore& core)
+void Framebuffer::Draw(GraphicsEngine& graphicsEngine)
 {
-	gl::Context& glContext = core.GetGLContext();
+	gl::Context& glContext = graphicsEngine.GetGLContext();
 	if (pShaderProgram != nullptr) {
 		pShaderProgram->Use();
 
@@ -138,7 +138,7 @@ void Framebuffer::Draw(DemoCore& core)
 
 		glContext.PolygonMode(gl::enums::PolygonMode::Fill);
 		glContext.DrawElements(gl::enums::PrimitiveType::TriangleFan, 4, gl::enums::DataType::UnsignedShort);
-		if (core.GetWireframeModeEnabled()) {
+		if (graphicsEngine.GetWireframeModeEnabled()) {
 			glContext.PolygonMode(gl::enums::PolygonMode::Line);
 		}
 		glContext.DepthFunc(gl::enums::CompareFunction::LEqual);

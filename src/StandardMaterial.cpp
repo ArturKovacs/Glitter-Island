@@ -2,10 +2,10 @@
 
 #include "DemoCore.hpp"
 
-StandardMaterial::StandardMaterial(DemoCore* pCore) : pCore(pCore)
+StandardMaterial::StandardMaterial(GraphicsEngine* pGraphicsEngine) : pGraphicsEngine(pGraphicsEngine)
 {
 	//TODO shader loading might be better to be done by DemoCore too.
-	shaderProgram = DemoCore::LoadShaderProgramFromFiles("StandardMaterial_v.glsl", "StandardMaterial_f.glsl");
+	shaderProgram = GraphicsEngine::LoadShaderProgramFromFiles("StandardMaterial_v.glsl", "StandardMaterial_f.glsl");
 	shaderProgram.Use();
 
 	try {
@@ -27,7 +27,7 @@ StandardMaterial::~StandardMaterial()
 {}
 
 StandardMaterial::StandardMaterial(StandardMaterial&& r) :
-pCore(r.pCore),
+pGraphicsEngine(r.pGraphicsEngine),
 albedoTexture(std::move(r.albedoTexture)),
 normalMap(std::move(r.normalMap)),
 specularTexture(std::move(r.specularTexture)),
@@ -41,7 +41,7 @@ shaderProgram(std::move(r.shaderProgram))
 
 StandardMaterial& StandardMaterial::operator=(StandardMaterial&& r)
 {
-	pCore = r.pCore;
+	pGraphicsEngine = r.pGraphicsEngine;
 	albedoTexture = std::move(r.albedoTexture);
 	normalMap = std::move(r.normalMap);
 	specularTexture = std::move(r.specularTexture);
@@ -84,9 +84,9 @@ void StandardMaterial::Prepare(Mesh::Submesh& submsh, gl::Mat4f& modelTransform)
 
 	shaderProgram.Use();
 
-	sh_MVP.Set(pCore->GetActiveCamera()->GetViewProjectionTransform() * modelTransform);
+	sh_MVP.Set(pGraphicsEngine->GetActiveCamera()->GetViewProjectionTransform() * modelTransform);
 	sh_modelTransposedInverse.Set(MyTranspose(gl::Inverse(modelTransform)));
-	sh_lightDir.Set(pCore->GetSun().GetDirectionTowardsSource());
+	sh_lightDir.Set(pGraphicsEngine->GetSun().GetDirectionTowardsSource());
 
 	gl::Texture::Active(0);
 	albedoTexture.Bind(gl::Texture::Target::_2D);

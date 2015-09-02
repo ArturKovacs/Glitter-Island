@@ -8,7 +8,6 @@ class Material
 public:
 	virtual ~Material();
 
-	virtual const gl::Texture* GetTextureContainigAlpha() const = 0;
+	//virtual const gl::Texture* GetTextureContainigAlpha() const = 0;
 	virtual void Prepare(Mesh::Submesh& submsh, gl::Mat4f& modelTransform) = 0;
 };
-

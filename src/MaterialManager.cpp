@@ -2,7 +2,7 @@
 
 #include "DemoCore.hpp"
 
-Material* MaterialManager::LoadStandardMaterialFromFile(DemoCore* pCore, const std::string& filename, const std::string& materialName)
+Material* MaterialManager::LoadStandardMaterialFromFile(GraphicsEngine* pGraphicsEngine, const std::string& filename, const std::string& materialName)
 {
 	const std::string materialKey = filename + "?" + materialName;
 
@@ -13,7 +13,7 @@ Material* MaterialManager::LoadStandardMaterialFromFile(DemoCore* pCore, const s
 
 	std::cout << "Loading material..." << std::endl;
 
-	StandardMaterial *pResult  = LoadFromMTLFile(pCore, filename, materialName);
+	StandardMaterial *pResult  = LoadFromMTLFile(pGraphicsEngine, filename, materialName);
 
 	std::cout << "Material loaded!" << std::endl;
 
@@ -22,9 +22,9 @@ Material* MaterialManager::LoadStandardMaterialFromFile(DemoCore* pCore, const s
 	return pResult;
 }
 
-StandardMaterial* MaterialManager::LoadFromMTLFile(DemoCore* pCore, const std::string& filename, const std::string& materialName)
+StandardMaterial* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngine, const std::string& filename, const std::string& materialName)
 {
-	StandardMaterial *pResult = new StandardMaterial(pCore);
+	StandardMaterial *pResult = new StandardMaterial(pGraphicsEngine);
 
 	//Initialize normal map
 	{

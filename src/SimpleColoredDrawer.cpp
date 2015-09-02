@@ -4,7 +4,7 @@
 
 SimpleColoredDrawer::SimpleColoredDrawer()
 {
-	shaderProgram = DemoCore::LoadShaderProgramFromFiles("SimpleColored_v.glsl", "SimpleColored_f.glsl");
+	shaderProgram = GraphicsEngine::LoadShaderProgramFromFiles("SimpleColored_v.glsl", "SimpleColored_f.glsl");
 	shaderProgram.Use();
 
 	sh_MVP = gl::Uniform<gl::Mat4f>(shaderProgram, "MVP");

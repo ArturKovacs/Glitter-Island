@@ -27,6 +27,8 @@ Fog::Fog()
 
 void Fog::Draw(DemoCore& core)
 {
+	assert(false);
+	/*
 	auto& screenFB = core.GetCurrentFramebuffer();
 	core.PushFramebuffer();
 
@@ -38,4 +40,5 @@ void Fog::Draw(DemoCore& core)
 	core.GetGLContext().Disable(gl::Capability::DepthTest);
 
 	screenFB.Draw(core);
+	*/
 }

@@ -4,7 +4,7 @@
 
 TextDrawer::TextDrawer()
 {
-	characterShader = DemoCore::LoadShaderProgramFromFiles("CharacterDraw_v.glsl", "CharacterDraw_f.glsl");
+	characterShader = GraphicsEngine::LoadShaderProgramFromFiles("CharacterDraw_v.glsl", "CharacterDraw_f.glsl");
 	characterShader.Use();
 
 	try {
@@ -18,7 +18,7 @@ TextDrawer::TextDrawer()
 		std::cout << err.what() << std::endl;
 	}
 
-	backgroundShader = DemoCore::LoadShaderProgramFromFiles("SimpleColored_v.glsl", "SimpleColored_f.glsl");
+	backgroundShader = GraphicsEngine::LoadShaderProgramFromFiles("SimpleColored_v.glsl", "SimpleColored_f.glsl");
 	backgroundShader.Use();
 
 	try {

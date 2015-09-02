@@ -2,6 +2,7 @@
 
 #include "DemoCore.hpp"
 #include "Utility.hpp"
+#include "SimpleColoredMaterial.hpp"
 
 EditorContext::EditorToolType EditorContext::GetToolType(EditorContext::EditorTool tool)
 {
@@ -73,9 +74,17 @@ EditorContext::EditorToolInfo EditorContext::GetToolInfo(EditorContext::EditorTo
 EditorContext::EditorContext(ContextManager* pContextManager, DemoCore* pCore) :
 GUIContext(pContextManager, pCore),
 modelSelectionContext(pContextManager, pCore),
-selectedTool(EditorTool::NO_TOOL), brushRadius(1)
+selectedTool(EditorTool::NO_TOOL), brushRadius(1),
+brushCircleMaterial(&(pCore->GetGraphicsEngine()))
 {
 	modelSelectionContext.ForceUpdateModelFileList();
+	
+	brushCircleMesh = Mesh::GenerateCircle(1, 16);
+	brushCircleMesh.GetSubmeshes().at(0).SetMaterial(&brushCircleMaterial);
+	
+	brushCircle.SetMesh(&brushCircleMesh);
+	
+	pCore->GetGraphicsEngine().AddGraphicalObject(&brushCircle);
 }
 
 EditorContext::~EditorContext()
@@ -100,12 +109,12 @@ void EditorContext::HandleWindowEvent(const sf::Event& event)
 
 void EditorContext::EnteringContext()
 {
-	pCore->GetDebugDrawer().SetEnabled(true);
+	pCore->GetGraphicsEngine().GetDebugDrawer().SetEnabled(true);
 }
 
 void EditorContext::LeavingContext()
 {
-	pCore->GetDebugDrawer().SetEnabled(false);
+	pCore->GetGraphicsEngine().GetDebugDrawer().SetEnabled(false);
 }
 
 void EditorContext::Update(float deltaSec)
@@ -113,11 +122,13 @@ void EditorContext::Update(float deltaSec)
 	UpdatePointPosAtCursor();
 
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-
+		
+		brushCircle.SetVisible(GetToolType(selectedTool) == EditorToolType::PAINT);
+		
 		switch (GetToolType(selectedTool)) {
 		case EditorToolType::PAINT: {
-			gl::Vec2i cursorPosOnMaterialMap = pCore->GetTerrain().GetMaterialMapPos(pointPosAtCursor);
-			sf::Image& materialMap = pCore->GetTerrain().GetMaterialMap();
+			gl::Vec2i cursorPosOnMaterialMap = pCore->GetGraphicsEngine().GetTerrain().GetMaterialMapPos(pointPosAtCursor);
+			sf::Image& materialMap = pCore->GetGraphicsEngine().GetTerrain().GetMaterialMap();
 			sf::Color selectedMaterialColor;
 			if (selectedTool == EditorTool::PAINT_FLAT_SAND) {
 				selectedMaterialColor = sf::Color(0, 0, 0, 255);
@@ -159,7 +170,7 @@ void EditorContext::Update(float deltaSec)
 				}
 			}
 
-			pCore->GetTerrain().DownloadMaterialMapToGPU();
+			pCore->GetGraphicsEngine().GetTerrain().DownloadMaterialMapToGPU();
 			break;
 		}
 		case EditorToolType::SPAWN: {
@@ -176,25 +187,28 @@ void EditorContext::Update(float deltaSec)
 			break;
 		}
 	}
+	else {
+		brushCircle.SetVisible(false);
+	}
 }
 
 void EditorContext::Draw()
 {
-	gl::Context& glContext = pCore->GetGLContext();
+	gl::Context& glContext = pCore->GetGraphicsEngine().GetGLContext();
 
 	EditorToolType selectedToolType = GetToolType(selectedTool);
 	if (selectedToolType == EditorToolType::PAINT) {
-		float meshScale = pCore->GetTerrain().GetMaterialMapPixelSizeInWorldScale() * brushRadius;
+		float meshScale = pCore->GetGraphicsEngine().GetTerrain().GetMaterialMapPixelSizeInWorldScale() * brushRadius;
 		using ModelMatf = gl::ModelMatrixf;
 		gl::Mat4f MVP =
-			pCore->GetActiveCamera()->GetViewProjectionTransform() *
+			pCore->GetGraphicsEngine().GetActiveCamera()->GetViewProjectionTransform() *
 			ModelMatf::Translation(pointPosAtCursor.xyz()) *
 			ModelMatf::Scale(meshScale, meshScale, meshScale) *
 			ModelMatf::RotationX(gl::Radians<float>(gl::math::Pi()*0.5));
 
 		glContext.Disable(gl::Capability::DepthTest);
 		glContext.LineWidth(2);
-		pCore->simpleColoredDrawer.Draw(glContext, pCore->circle, MVP, gl::Vec4f(1, 0.1, 0.5, 1));
+		pCore->GetGraphicsEngine().GetSimpleColoredDrawer().Draw(glContext, pCore->circle, MVP, gl::Vec4f(1, 0.1, 0.5, 1));
 		glContext.LineWidth(1);
 		glContext.Enable(gl::Capability::DepthTest);
 	}
@@ -202,7 +216,7 @@ void EditorContext::Draw()
 
 void EditorContext::DrawOverlayElements()
 {
-	gl::Context& glContext = pCore->GetGLContext();
+	gl::Context& glContext = pCore->GetGraphicsEngine().GetGLContext();
 
 	//TODO move overlay rendering to Core! Other obejcts should only be able to add overlay elements to core - review this statement!! -
 
@@ -250,10 +264,10 @@ void EditorContext::MouseButtonPressed(const sf::Event& event)
 		if (selectedTool == EditorTool::PLACE_MODEL) {
 			static float TMP_rot = 0;
 			TMP_rot += (double(std::rand())/RAND_MAX)*gl::math::Pi() + gl::math::Pi()*0.5;
-			GraphicalObject loadedObject = pCore->LoadGraphicalObjectFromFile(modelSelectionContext.GetSelectedModelFilename());
+			GraphicalObject loadedObject = pCore->GetGraphicsEngine().LoadGraphicalObjectFromFile(modelSelectionContext.GetSelectedModelFilename());
 			loadedObject.SetTransform(gl::ModelMatrixf::Translation(0, -0.1, 0) * gl::ModelMatrixf::Translation(pointPosAtCursor) * gl::ModelMatrixf::RotationY(gl::Radians<float>(TMP_rot)));
 
-			pCore->AddGraphicalObject(std::move(loadedObject));
+			pCore->GetGraphicsEngine().AddGraphicalObject(std::move(loadedObject));
 		}
 	}
 	else {
@@ -338,9 +352,9 @@ void EditorContext::UpdatePointPosAtCursor()
 	cursorPos.y = screenHeight-cursorPos.y;
 
 	GLfloat depthAtPixel;
-	pCore->GetGLContext().ReadPixels(cursorPos.x, cursorPos.y, 1, 1, gl::enums::PixelDataFormat::DepthComponent, gl::PixelDataType::Float, &depthAtPixel);
+	pCore->GetGraphicsEngine().GetGLContext().ReadPixels(cursorPos.x, cursorPos.y, 1, 1, gl::enums::PixelDataFormat::DepthComponent, gl::PixelDataType::Float, &depthAtPixel);
 
-	pointPosAtCursor = gl::Inverse(pCore->GetActiveCamera()->GetViewProjectionTransform()) * gl::Vec4f(
+	pointPosAtCursor = gl::Inverse(pCore->GetGraphicsEngine().GetActiveCamera()->GetViewProjectionTransform()) * gl::Vec4f(
 		((float(cursorPos.x)/screenWidth)*2-1),
 		((float(cursorPos.y)/screenHeight)*2-1),
 		(depthAtPixel)*2-1,

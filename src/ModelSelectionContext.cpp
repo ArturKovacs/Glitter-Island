@@ -75,15 +75,14 @@ void ModelSelectionContext::Update(float deltaSec)
 }
 
 void ModelSelectionContext::Draw() 
-{
-}
+{}
 
 void ModelSelectionContext::DrawOverlayElements()
 {
 	const int columnElementCount = 15;
-	gl::Context& glContext = pCore->GetGLContext();
+	gl::Context& glContext = pCore->GetGraphicsEngine().GetGLContext();
 
-	pCore->simpleColoredDrawer.Draw(glContext, screenRectangle, gl::Mat4f(), gl::Vec4f(0, 0, 0, 0.75));
+	pCore->GetGraphicsEngine().GetSimpleColoredDrawer().Draw(glContext, screenRectangle, gl::Mat4f(), gl::Vec4f(0, 0, 0, 0.75));
 
 	if (modelFileList.size() > 0) {
 		std::string visibleList;
