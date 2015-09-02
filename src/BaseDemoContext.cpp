@@ -407,7 +407,7 @@ void BaseDemoContext::UpdateLightCascadeCamera(int cascadeID)
 
 	{
 		using planeType = decltype(subFrustum.nearPlane);
-		static_assert(std::is_same<gl::Vec3f, planeType::value_type >::value, "Error plane quad does not consist of expected types.");
+		static_assert(std::is_same<gl::Vec3f, planeType::value_type>::value, "Error plane quad does not consist of expected types.");
 	}
 	gl::Vec3f AABBmin = subFrustum.nearPlane.at(0);
 	gl::Vec3f AABBmax = subFrustum.nearPlane.at(0);

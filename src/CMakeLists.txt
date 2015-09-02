@@ -15,7 +15,9 @@ ModelSelectionContext.hpp
 ContextManager.cpp
 ContextManager.hpp)
 
-source_group(GraphicalObject FILES
+source_group(GraphicsEngine FILES
+GraphicsEngine.cpp
+GraphicsEngine.hpp
 AttributeCategory.cpp
 AttributeCategory.hpp
 GraphicalObject.cpp
