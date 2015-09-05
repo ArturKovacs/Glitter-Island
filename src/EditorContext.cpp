@@ -86,6 +86,7 @@ brushCircleMaterial(&(pCore->GetGraphicsEngine()))
 	
 	brushCircle.SetMesh(&brushCircleMesh);
 	brushCircle.SetDepthTestEnabled(false);
+	brushCircle.SetVisible(false);
 	
 	pCore->GetGraphicsEngine().AddGraphicalObject(&brushCircle);
 }
@@ -113,11 +114,13 @@ void EditorContext::HandleWindowEvent(const sf::Event& event)
 void EditorContext::EnteringContext()
 {
 	pCore->GetGraphicsEngine().GetDebugDrawer().SetEnabled(true);
+	brushCircle.SetVisible(true);
 }
 
 void EditorContext::LeavingContext()
 {
 	pCore->GetGraphicsEngine().GetDebugDrawer().SetEnabled(false);
+	brushCircle.SetVisible(false);
 }
 
 void EditorContext::Update(float deltaSec)

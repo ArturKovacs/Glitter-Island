@@ -28,12 +28,9 @@ graphicsEngine(&contextManager)
 	circle = Mesh::GenerateCircle(1, 16);
 
 	graphicsEngine.Resize(pWindow->getSize().x, pWindow->getSize().y);
-        
-	//screenWidth = pWindow->getSize().x;
-	//screenHeight = pWindow->getSize().y;
 
 	textDrawer.SetScreenResolution(gl::Vec2i(graphicsEngine.GetScreenWidth(),
-                graphicsEngine.GetScreenWidth()));
+                graphicsEngine.GetScreenHeight()));
 
 	contextManager.PushContext(&baseDemoContext);
 	
