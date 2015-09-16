@@ -4,14 +4,35 @@ file(GLOB all_src_files "*.cpp" "../include/GE/*.hpp")
 add_library(${ENGINE_NAME} STATIC ${all_src_files})
 
 source_group(Camera FILES
+../include/GE/Camera.hpp
+../include/GE/OrthoCamera.hpp
+../include/GE/PerspectiveCamera.hpp
+../include/GE/RawCamera.hpp
+
 Camera.cpp
-Camera.hpp
 OrthoCamera.cpp
-OrthoCamera.hpp
 PerspectiveCamera.cpp
-PerspectiveCamera.hpp
 RawCamera.cpp
-RawCamera.hpp
+)
+
+source_group(GraphicalObject FILES
+../include/GE/AttributeCategory.hpp
+../include/GE/GraphicalObject.hpp
+../include/GE/Material.hpp
+../include/GE/MaterialManager.hpp
+../include/GE/Mesh.hpp
+../include/GE/MeshManager.hpp
+../include/GE/SimpleColoredMaterial.hpp
+../include/GE/StandardMaterial.hpp
+
+AttributeCategory.cpp
+GraphicalObject.cpp
+Material.cpp
+MaterialManager.cpp
+Mesh.cpp
+MeshManager.cpp
+SimpleColoredMaterial.cpp
+StandardMaterial.cpp
 )
 
 include_directories("../include")
