@@ -107,8 +107,11 @@ private: // objects
 	Water water;
 	//Fog fog;
 
-	std::vector<GraphicalObject> managedGraphicalObjects;
+	//it is a list (not a std::vector) so that all Graphical Object pointers remain valid after a new Graphical Object is inserted
+	std::list<GraphicalObject> managedGraphicalObjects;
 	std::vector<GraphicalObject*> externalGraphicalObjects;
+
+	std::map<Mesh::Submesh*, std::vector<GraphicalObject*>> instancedGraphicalObjects;
 	
 	Camera* pActiveCam;
 	PerspectiveCamera* pActiveViewerCam;

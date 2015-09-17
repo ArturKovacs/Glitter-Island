@@ -268,6 +268,11 @@ float GraphicsEngine::GetViewSubfrustumFarPlaneInTexCoordZ(int subfrustumID) con
 void GraphicsEngine::AddGraphicalObject(GraphicalObject&& newObject)
 {
 	managedGraphicalObjects.push_back(std::move(newObject));
+	GraphicalObject& moved = managedGraphicalObjects.back();
+
+	for (auto& currSubmesh : moved.GetMesh()->GetSubmeshes()) {
+		instancedGraphicalObjects[&currSubmesh].push_back(&moved);
+	}
 }
 
 void GraphicsEngine::AddGraphicalObject(GraphicalObject* newObject)
@@ -419,9 +424,40 @@ void GraphicsEngine::DrawObjects()
 {
 	terrain.Draw();
 
-	for (auto& current : managedGraphicalObjects) {
-		current.Draw(this);
+	//for (auto& current : managedGraphicalObjects) {
+	//	current.Draw(this);
+	//}
+
+	glContext.Disable(gl::Capability::CullFace);
+	glContext.Enable(gl::Capability::Blend);
+	gl::Context::BlendFunc(gl::enums::BlendFunction::SrcAlpha, gl::enums::BlendFunction::OneMinusSrcAlpha);
+
+	for (auto& current : instancedGraphicalObjects) {
+		Mesh::Submesh* submesh = current.first;
+		Material* pMaterial = submesh->GetMaterial();
+		if (pMaterial != nullptr) {
+			submesh->BindVAO();
+			auto& vector = current.second;
+			pMaterial->Prepare(*submesh);
+			for(auto currentObject : vector) {
+				if (currentObject->IsVisible()){
+					if (currentObject->IsDepthTestEnabled()) {
+						glContext.Enable(gl::Capability::DepthTest);
+					}
+					else {
+						glContext.Disable(gl::Capability::DepthTest);
+					}
+					pMaterial->SetTransform(currentObject->GetTransform());
+
+					glContext.DrawElements(submesh->GetPrimitiveType(), submesh->GetNumOfIndices(), submesh->indexTypeEnum);
+				}
+			}
+		}
 	}
+
+	glContext.Disable(gl::Capability::Blend);
+	glContext.Enable(gl::Capability::CullFace);
+
 	for (auto current : externalGraphicalObjects) {
 		current->Draw(this);
 	}

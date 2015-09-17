@@ -20,8 +20,10 @@ public:
 	StandardMaterial(StandardMaterial&&);
 	StandardMaterial& operator=(StandardMaterial&&);
 
-	const gl::Texture* GetTextureContainigAlpha() const;
-	void Prepare(Mesh::Submesh& submsh, gl::Mat4f& modelTransform) override;
+	//const gl::Texture* GetTextureContainigAlpha() const;
+	void Prepare(Mesh::Submesh& submsh, const gl::Mat4f& modelTransform) override;
+	void Prepare(Mesh::Submesh& submsh) override;
+	void SetTransform(const gl::Mat4f& modelTransform) override;
 
 private:
 	GraphicsEngine* pGraphicsEngine;

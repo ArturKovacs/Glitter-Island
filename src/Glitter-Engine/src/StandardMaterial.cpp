@@ -55,10 +55,10 @@ StandardMaterial& StandardMaterial::operator=(StandardMaterial&& r)
 	return *this;
 }
 
-const gl::Texture* StandardMaterial::GetTextureContainigAlpha() const
-{
-	return &albedoTexture;
-}
+//const gl::Texture* StandardMaterial::GetTextureContainigAlpha() const
+//{
+//	return &albedoTexture;
+//}
 
 static gl::Mat4f MyTranspose(const gl::Mat4f& input)
 {
@@ -73,7 +73,13 @@ static gl::Mat4f MyTranspose(const gl::Mat4f& input)
 	return result;
 }
 
-void StandardMaterial::Prepare(Mesh::Submesh& submsh, gl::Mat4f& modelTransform)
+void StandardMaterial::Prepare(Mesh::Submesh& submsh, const gl::Mat4f& modelTransform)
+{
+	Prepare(submsh);
+	SetTransform(modelTransform);
+}
+
+void StandardMaterial::Prepare(Mesh::Submesh& submsh)
 {
 	//TODO might be too slow to set vertex attributes every time,
 	//but if multiple meshes are drawn with a single  material it is necessary
@@ -84,8 +90,6 @@ void StandardMaterial::Prepare(Mesh::Submesh& submsh, gl::Mat4f& modelTransform)
 
 	shaderProgram.Use();
 
-	sh_MVP.Set(pGraphicsEngine->GetActiveCamera()->GetViewProjectionTransform() * modelTransform);
-	sh_modelTransposedInverse.Set(MyTranspose(gl::Inverse(modelTransform)));
 	sh_lightDir.Set(pGraphicsEngine->GetSun().GetDirectionTowardsSource());
 
 	gl::Texture::Active(0);
@@ -96,4 +100,12 @@ void StandardMaterial::Prepare(Mesh::Submesh& submsh, gl::Mat4f& modelTransform)
 	specularTexture.Bind(gl::Texture::Target::_2D);
 	gl::Texture::Active(3);
 	roughnessTexture.Bind(gl::Texture::Target::_2D);
+}
+
+void StandardMaterial::SetTransform(const gl::Mat4f& modelTransform)
+{
+	shaderProgram.Use();
+
+	sh_MVP.Set(pGraphicsEngine->GetActiveCamera()->GetViewProjectionTransform() * modelTransform);
+	sh_modelTransposedInverse.Set(MyTranspose(gl::Inverse(modelTransform)));
 }

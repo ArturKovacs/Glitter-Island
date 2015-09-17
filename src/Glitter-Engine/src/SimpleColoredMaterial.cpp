@@ -26,11 +26,22 @@ void SimpleColoredMaterial::SetColor(const gl::Vec4f& newColor)
 	color = newColor;
 }
 
-void SimpleColoredMaterial::Prepare(Mesh::Submesh& submsh, gl::Mat4f& modelTransform)
+void SimpleColoredMaterial::Prepare(Mesh::Submesh& submsh, const gl::Mat4f& modelTransform)
+{
+	Prepare(submsh);
+	SetTransform(modelTransform);
+}
+
+void SimpleColoredMaterial::Prepare(Mesh::Submesh& submsh)
 {
 	shaderProgram.Use();
 	submsh.AttachVertexAttribute(AttributeCategory::POSITION, shaderProgram, "vertexPos");
 
-	sh_MVP.Set(pGraphicsEngine->GetActiveCamera()->GetViewProjectionTransform() * modelTransform);
 	sh_color.Set(color);
+}
+
+void SimpleColoredMaterial::SetTransform(const gl::Mat4f& modelTransform)
+{
+	shaderProgram.Use();
+	sh_MVP.Set(pGraphicsEngine->GetActiveCamera()->GetViewProjectionTransform() * modelTransform);
 }

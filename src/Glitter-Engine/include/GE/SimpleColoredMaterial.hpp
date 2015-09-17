@@ -11,7 +11,9 @@ public:
     SimpleColoredMaterial(GraphicsEngine* pGraphicsEngine);
     ~SimpleColoredMaterial();
     
-    void Prepare(Mesh::Submesh& submsh, gl::Mat4f& modelTransform);
+    void Prepare(Mesh::Submesh& submsh, const gl::Mat4f& modelTransform) override;
+	void Prepare(Mesh::Submesh& submsh) override;
+	void SetTransform(const gl::Mat4f& modelTransform) override;
     
     gl::Vec4f GetColor() const;
     void SetColor(const gl::Vec4f& newColor);
