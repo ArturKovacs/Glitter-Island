@@ -2,6 +2,8 @@
 
 #include "all_gl_headers.hpp"
 
+class GraphicsEngine;
+
 class Water
 {
 	friend class GraphicsEngine;
