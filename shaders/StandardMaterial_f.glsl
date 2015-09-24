@@ -24,6 +24,13 @@ float PhongBlinn(const in vec3 lightSourceDir, const in vec3 viewerDir, const in
 
 void main(void) 
 {
+	vec4 kd = texture(albedoTexture, texCoord_v);
+	if(kd.a == 0) { discard; }
+
+	vec3 ks = texture(specularTexture, texCoord_v).xyz;
+	//vec4 kd = texture(albedoTexture, texCoord_v) * (vec4(1) - vec4(ks, 0));
+	vec3 ambient = kd.rgb * 0.02;
+
 	vec3 normal = normalize(normal_v);
 	vec3 tangent  = normalize(tangent_v);
 	tangent = normalize(tangent - normal * dot(normal, tangent));
@@ -35,12 +42,6 @@ void main(void)
 	normal = normalize(textureToWorld * (texture(normalMap, texCoord_v).xyz*2.0-1.0));
 	
 	//normal = (texture(normalMap, texCoord_v).xyz*2.0-1.0);
-	
-	vec3 ks = texture(specularTexture, texCoord_v).xyz;
-	vec4 kd = texture(albedoTexture, texCoord_v) * (vec4(1) - vec4(ks, 0));
-	vec3 ambient = kd.rgb * 0.02;
-	
-	gl_FragDepth = mix(1.0, gl_FragCoord.z, kd.a);
 	
 	const float maxShininess = 256;
 	float shininess = (1 - texture(roughnessTexture, texCoord_v).x) * maxShininess;
