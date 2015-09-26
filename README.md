@@ -18,7 +18,7 @@ try out this little humble program.
 ### Build
 
 CMake project files are provided. Project files for a desired environment 
-can be generated using CMake.
+can be generated using [CMake](https://cmake.org/).
 
 **OpenGL 3.3 is required to build and run this application.**
 
@@ -26,7 +26,7 @@ Theres no dependencies needed to be installed for _Visual Studio 2013_, project 
 ready to be used out-of-the-box for its compiler.
 
 In case of an _other compiler_ the following dependencies' dev packages are required to be installed:
-SFML 2.1 (or higher) and GLEW.
+[SFML 2.1](http://www.sfml-dev.org/download/sfml/2.1/) (or higher) and [GLEW](http://glew.sourceforge.net/).
 
 A particular configuration of oglplus is provided, but it can be optionally used or 
 discarded by setting a cmake variable to the desired value. If the provided oglplus 
