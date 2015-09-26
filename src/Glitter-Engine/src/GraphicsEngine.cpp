@@ -108,7 +108,8 @@ debugDrawer(this)
 	subfrustumFarPlanePositionRatios[4] = 1;
 	
 	for (auto& currFramebuffer : lightCascadeShadowMapFramebuffers) {
-		currFramebuffer.SetResolution(shadowMapResolution, shadowMapResolution);
+		currFramebuffer = std::move(Framebuffer{shadowMapResolution, shadowMapResolution, Framebuffer::ATTACHEMNT_DEPTH});
+		//currFramebuffer.SetResolution(shadowMapResolution, shadowMapResolution);
 	}
 }
 
@@ -249,7 +250,7 @@ int GraphicsEngine::GetLightCascadeCount() const
 
 const gl::Texture& GraphicsEngine::GetCascadeShadowMap(int cascadeID) const
 {
-	return lightCascadeShadowMapFramebuffers.at(cascadeID).GetDepthTexture();
+	return lightCascadeShadowMapFramebuffers.at(cascadeID).GetTexture(Framebuffer::ATTACHEMNT_DEPTH);
 }
 
 gl::Mat4f GraphicsEngine::GetCascadeViewProjectionTransform(int cascadeID) const

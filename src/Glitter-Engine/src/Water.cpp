@@ -54,11 +54,11 @@ void Water::Draw(GraphicsEngine& graphicsEngine)
 
 	sh_screen.Set(0);
 	gl::Texture::Active(0);
-	screenFB.GetColorTexture().Bind(gl::Texture::Target::_2D);
+	screenFB.GetTexture(Framebuffer::ATTACHEMNT_COLOR).Bind(gl::Texture::Target::_2D);
 
 	sh_screenDepth.Set(1);
 	gl::Texture::Active(1);
-	screenFB.GetDepthTexture().Bind(gl::Texture::Target::_2D);
+	screenFB.GetTexture(Framebuffer::ATTACHEMNT_DEPTH).Bind(gl::Texture::Target::_2D);
 
 	sh_screenWidth.Set(graphicsEngine.GetScreenWidth());
 	sh_screenHeight.Set(graphicsEngine.GetScreenHeight());

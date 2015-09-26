@@ -9,15 +9,23 @@ class GraphicsEngine;
 class Framebuffer : public IFramebuffer
 {
 public:
+	enum AttachmentFlag : uint8_t {
+		ATTACHEMNT_COLOR = 1,
+		ATTACHEMNT_DEPTH = 2,
+		ATTACHEMNT_NORMAL = 4,
+		_ATTACHMENT_END_
+	};
+
+public:
 	Framebuffer();
-	Framebuffer(const int width, const int height);
+	Framebuffer(const int width, const int height, uint8_t attachmentFlags = ATTACHEMNT_COLOR | ATTACHEMNT_DEPTH);
 	Framebuffer(Framebuffer&&);
 
 	Framebuffer(const Framebuffer&) = delete;
-	void operator=(const Framebuffer&) = delete;
+	Framebuffer& operator=(const Framebuffer&) = delete;
+	Framebuffer& operator=(Framebuffer&&);
 
-	const gl::Texture& GetColorTexture() const;
-	const gl::Texture& GetDepthTexture() const;
+	const gl::Texture& GetTexture(AttachmentFlag attachmentID) const;
 
 	void Bind(gl::Framebuffer::Target target) const override;
 	void Draw(GraphicsEngine& graphicsEngine);
@@ -30,9 +38,11 @@ public:
 	void SetResolution(const int width, const int height);
 
 private:
+	static gl::FramebufferAttachment GetGLAttachmentFromFlag(AttachmentFlag flag);
+
+private:
 	gl::Framebuffer fbo;
-	gl::Texture colorTex;
-	gl::Texture depthTex;
+	std::map<uint8_t, gl::Texture> textures;
 
 	gl::VertexArray VAO;
 	gl::Buffer vertexPos;
