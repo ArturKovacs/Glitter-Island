@@ -6,7 +6,7 @@ Framebuffer::Framebuffer() : pShaderProgram(nullptr)
 {}
 
 Framebuffer::Framebuffer(const int width, const int height, uint8_t attachmentFlags) : 
-colorTexName("colorTex"), depthTexName("depthTex"), vertexPosName("vertexPos"), pShaderProgram(nullptr)
+/*colorTexName("colorTex"), depthTexName("depthTex"),*/ vertexPosName("vertexPos"), pShaderProgram(nullptr)
 {
 	fbo.Bind(gl::Framebuffer::Target::Draw);
 
@@ -19,7 +19,7 @@ colorTexName("colorTex"), depthTexName("depthTex"), vertexPosName("vertexPos"), 
 			gl::Texture::WrapS(gl::Texture::Target::_2D, gl::TextureWrap::MirroredRepeat);
 			gl::Texture::WrapT(gl::Texture::Target::_2D, gl::TextureWrap::MirroredRepeat);
 
-			if ((currFlag & ATTACHEMNT_DEPTH) != 0) {
+			if ((currFlag & ATTACHMENT_DEPTH) != 0) {
 				gl::Texture::CompareMode(gl::Texture::Target::_2D, gl::enums::TextureCompareMode::CompareRefToTexture);
 			}
 
@@ -78,112 +78,27 @@ const gl::Texture& Framebuffer::GetTexture(AttachmentFlag attachmentID) const
 	return textures.at((uint8_t)attachmentID);
 }
 
-void Framebuffer::SetShaderProgram(const gl::Program* program)
-{
-	VAO.Bind();
-
-	pShaderProgram = program;
-
-	pShaderProgram->Use();
-
-	gl::UniformSampler(*pShaderProgram, colorTexName).Set(0);
-	gl::UniformSampler(*pShaderProgram, depthTexName).Set(1);
-
-	vertexPos.Bind(gl::Buffer::Target::Array);
-	gl::VertexArrayAttrib attrib(*pShaderProgram, vertexPosName);
-	attrib.Setup<GLfloat>(2);
-	attrib.Enable();
-}
-
-void Framebuffer::SetResolution(const int width, const int height)
-{
-	//frameWidth = width;
-	//frameHeight = height;
-
-	for(auto& current : textures) {
-		gl::PixelDataInternalFormat internalFormat;
-		gl::PixelDataFormat format;
-
-		switch (current.first) {
-		case ATTACHEMNT_COLOR:
-			internalFormat = gl::PixelDataInternalFormat::RGBA16F;
-			format = gl::PixelDataFormat::RGBA;
-			break;
-		case ATTACHEMNT_NORMAL:
-			internalFormat = gl::PixelDataInternalFormat::RGB16F;
-			format = gl::PixelDataFormat::RGB;
-			break;
-		case ATTACHEMNT_DEPTH:
-			internalFormat = gl::PixelDataInternalFormat::DepthComponent32;
-			format = gl::PixelDataFormat::DepthComponent;
-			break;
-		default:
-			assert(false);
-			break;
-		}
-
-		gl::Texture::Bind(gl::Texture::Target::_2D, current.second);
-		gl::Texture::Image2D(gl::Texture::Target::_2D,
-			0,
-			internalFormat,
-			width, height,
-			0,
-			format,
-			gl::PixelDataType::Float,
-			nullptr);
-	}
-
-	//gl::Texture::Bind(gl::Texture::Target::_2D, colorTex);
-	//gl::Texture::Image2D(gl::Texture::Target::_2D,
-	//	0,
-	//	gl::PixelDataInternalFormat::RGBA16F,
-	//	width, height,
-	//	0,
-	//	gl::PixelDataFormat::RGBA,
-	//	gl::PixelDataType::Float,
-	//	nullptr);
-
-	//gl::Texture::Bind(gl::Texture::Target::_2D, depthTex);
-	//gl::Texture::Image2D(gl::Texture::Target::_2D,
-	//	0,
-	//	gl::PixelDataInternalFormat::DepthComponent32,
-	//	width, height,
-	//	0,
-	//	gl::PixelDataFormat::DepthComponent,
-	//	gl::PixelDataType::Float,
-	//	nullptr);
-}
-
 void Framebuffer::Bind(gl::Framebuffer::Target target) const
 {
 	fbo.Bind(target);
 }
 
-void Framebuffer::Draw(GraphicsEngine& graphicsEngine)
+void Framebuffer::Draw(GraphicsEngine& graphicsEngine, uint8_t usedAttachmentFlags)
 {
 	gl::Context& glContext = graphicsEngine.GetGLContext();
 	if (pShaderProgram != nullptr) {
 		pShaderProgram->Use();
 
 		for(auto& current : textures) {
-			gl::TextureUnitSelector index;
-			switch (current.first) {
-			case ATTACHEMNT_COLOR:
-				index = 0;
-				break;
-			case ATTACHEMNT_NORMAL:
-				index = 2;
-				break;
-			case ATTACHEMNT_DEPTH:
-				index = 1;
-				break;
-			default:
-				assert(false);
-				break;
+			if ((usedAttachmentFlags & current.first) != 0) {
+				try {
+					gl::Texture::Active(textureShaderIDs.at(current.first).index);
+					gl::Texture::Bind(gl::Texture::Target::_2D, current.second);
+				}
+				catch (std::out_of_range& e) {
+					throw std::out_of_range("Framebuffer was tried to be drawn with unknown attachments. Call SetTextureShaderID for the desired attachemnt before setting the shader.");
+				}
 			}
-
-			gl::Texture::Active(index);
-			gl::Texture::Bind(gl::Texture::Target::_2D, current.second);
 		}
 
 		VAO.Bind();
@@ -206,30 +121,83 @@ void Framebuffer::SetVertexPosName(const std::string& name)
 	vertexPosName = name;
 }
 
-void Framebuffer::SetColorTexName(const std::string& name)
+void Framebuffer::SetTextureShaderID(AttachmentFlag attachmentID, std::string name, int index)
 {
-	colorTexName = name;
+	textureShaderIDs[(uint8_t)attachmentID] = std::move(TextureShaderID(name, index));
 }
 
-void Framebuffer::SetDepthTexName(const std::string& name)
+void Framebuffer::SetShaderProgram(const gl::Program* program)
 {
-	depthTexName = name;
+	VAO.Bind();
+
+	pShaderProgram = program;
+
+	pShaderProgram->Use();
+	
+	for (auto& current : textureShaderIDs) {
+		gl::UniformSampler(*pShaderProgram, current.second.name).Set(current.second.index);
+	}
+
+	vertexPos.Bind(gl::Buffer::Target::Array);
+	gl::VertexArrayAttrib attrib(*pShaderProgram, vertexPosName);
+	attrib.Setup<GLfloat>(2);
+	attrib.Enable();
+}
+
+void Framebuffer::SetResolution(const int width, const int height)
+{
+	//frameWidth = width;
+	//frameHeight = height;
+
+	for(auto& current : textures) {
+		gl::PixelDataInternalFormat internalFormat;
+		gl::PixelDataFormat format;
+
+		switch (current.first) {
+		case ATTACHMENT_COLOR:
+			internalFormat = gl::PixelDataInternalFormat::RGBA16F;
+			format = gl::PixelDataFormat::RGBA;
+			break;
+		case ATTACHMENT_NORMAL:
+			internalFormat = gl::PixelDataInternalFormat::RGB16F;
+			format = gl::PixelDataFormat::RGB;
+			break;
+		case ATTACHMENT_DEPTH:
+			internalFormat = gl::PixelDataInternalFormat::DepthComponent32;
+			format = gl::PixelDataFormat::DepthComponent;
+			break;
+		default:
+			assert(false);
+			break;
+		}
+
+		gl::Texture::Bind(gl::Texture::Target::_2D, current.second);
+		gl::Texture::Image2D(gl::Texture::Target::_2D,
+			0,
+			internalFormat,
+			width, height,
+			0,
+			format,
+			gl::PixelDataType::Float,
+			nullptr);
+	}
 }
 
 gl::FramebufferAttachment Framebuffer::GetGLAttachmentFromFlag(AttachmentFlag flag)
 {
 	gl::FramebufferAttachment result;
 	switch (flag) {
-	case ATTACHEMNT_COLOR:
+	case ATTACHMENT_COLOR:
 		result = gl::FramebufferAttachment::Color;
 		break;
-	case ATTACHEMNT_NORMAL:
-		result = gl::FramebufferAttachment::Color2;
+	case ATTACHMENT_NORMAL:
+		result = gl::FramebufferAttachment::Color1;
 		break;
-	case ATTACHEMNT_DEPTH:
+	case ATTACHMENT_DEPTH:
 		result = gl::FramebufferAttachment::Depth;
 		break;
 	default:
+		assert(false);
 		break;
 	}
 

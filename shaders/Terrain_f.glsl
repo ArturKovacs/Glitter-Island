@@ -17,7 +17,7 @@ in vec3 normal_v;
 in vec2 texCoord_v;
 in vec3 worldPos_v;
 
-out vec4 fragColor;
+//out vec4 fragColor;
 
 /// Stratified poisson sampling is taken from:
 /// http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/#Stratified_Poisson_Sampling
@@ -148,5 +148,6 @@ void main(void)
 	
 	diffuseColor *= shadowFactor;
 	
-	fragColor = vec4((diffuseColor + ambientColor) * (flatSandSample + sandTexSample + grassTexSample) * checkerTex(texPos), 1.0);
-} 
+	gl_FragData[0] = vec4((diffuseColor + ambientColor) * (flatSandSample + sandTexSample + grassTexSample) * checkerTex(texPos), 1.0);
+	gl_FragData[1] = vec4(normal, 1);
+}

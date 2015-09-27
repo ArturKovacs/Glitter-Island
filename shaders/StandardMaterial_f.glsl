@@ -12,7 +12,7 @@ in vec3 tangent_v;
 
 in vec3 viewerDir_v;
 
-out vec4 fragColor;
+//out vec4 fragColor;
 
 //vec3 lightDir = normalize(vec3(-3, 2, 2));
 
@@ -46,6 +46,7 @@ void main(void)
 	const float maxShininess = 256;
 	float shininess = (1 - texture(roughnessTexture, texCoord_v).x) * maxShininess;
 	
-	fragColor = vec4((kd.xyz + ks*PhongBlinn(lightDir, normalize(viewerDir_v), normal, shininess)) * max(dot(lightDir, normal), 0) + ambient, kd.a); 
-	//fragColor = vec4(normal, 1.0);
+	gl_FragData[0] = vec4((kd.xyz + ks*PhongBlinn(lightDir, normalize(viewerDir_v), normal, shininess)) * max(dot(lightDir, normal), 0) + ambient, kd.a);
+	gl_FragData[1] = vec4(normal, 1);
+	//fragColor = vec4((kd.xyz + ks*PhongBlinn(lightDir, normalize(viewerDir_v), normal, shininess)) * max(dot(lightDir, normal), 0) + ambient, kd.a);
 } 

@@ -10,15 +10,24 @@ class Framebuffer : public IFramebuffer
 {
 public:
 	enum AttachmentFlag : uint8_t {
-		ATTACHEMNT_COLOR = 1,
-		ATTACHEMNT_DEPTH = 2,
-		ATTACHEMNT_NORMAL = 4,
+		ATTACHMENT_COLOR = 1,
+		ATTACHMENT_DEPTH = 2,
+		ATTACHMENT_NORMAL = 4,
 		_ATTACHMENT_END_
+	};
+	
+private:
+	struct TextureShaderID {
+		std::string name;
+		int index;
+		
+		TextureShaderID() = default;
+		TextureShaderID(std::string name, int index) : name(name), index(index) {}
 	};
 
 public:
 	Framebuffer();
-	Framebuffer(const int width, const int height, uint8_t attachmentFlags = ATTACHEMNT_COLOR | ATTACHEMNT_DEPTH);
+	Framebuffer(const int width, const int height, uint8_t attachmentFlags = ATTACHMENT_COLOR | ATTACHMENT_DEPTH);
 	Framebuffer(Framebuffer&&);
 
 	Framebuffer(const Framebuffer&) = delete;
@@ -28,11 +37,10 @@ public:
 	const gl::Texture& GetTexture(AttachmentFlag attachmentID) const;
 
 	void Bind(gl::Framebuffer::Target target) const override;
-	void Draw(GraphicsEngine& graphicsEngine);
+	void Draw(GraphicsEngine& graphicsEngine, uint8_t usedAttachmentFlags);
 
 	void SetVertexPosName(const std::string& name);
-	void SetColorTexName(const std::string& name);
-	void SetDepthTexName(const std::string& name);
+	void SetTextureShaderID(AttachmentFlag attachmentID, std::string name, int index);
 
 	void SetShaderProgram(const gl::Program* program);
 	void SetResolution(const int width, const int height);
@@ -48,8 +56,9 @@ private:
 	gl::Buffer vertexPos;
 	gl::Buffer indices;
 
-	std::string colorTexName;
-	std::string depthTexName;
+	std::map<uint8_t, TextureShaderID> textureShaderIDs;
+	//std::string colorTexName;
+	//std::string depthTexName;
 	std::string vertexPosName;
 	const gl::Program *pShaderProgram;
 };

@@ -4,7 +4,7 @@ uniform sampler2D screenColor;
 uniform sampler2D screenDepth;
 uniform sampler2D skyboxColor;
 
-out vec4 fragColor;
+//out vec4 fragColor;
 
 vec4 fogFunction(const in vec4 originalColor, const in vec4 fogColor, const in float depth)
 {
@@ -20,6 +20,6 @@ void main()
 	float depth = texelFetch(screenDepth, ivec2(gl_FragCoord.xy), 0).x;
 	gl_FragDepth = depth;
 	//gl_FragDepth = 0;
-	fragColor = vec4(fogFunction(vec4(texelFetch(screenColor, ivec2(gl_FragCoord.xy), 0).xyz, 1), fogColor, depth).xyz, 1);
+	gl_FragColor = vec4(fogFunction(vec4(texelFetch(screenColor, ivec2(gl_FragCoord.xy), 0).xyz, 1), fogColor, depth).xyz, 1);
 	//fragColor = vec4(fogFunction(vec4(texelFetch(screenColor, ivec2(gl_FragCoord.xy), 0).xyz, 1), fogColor, depth).xyz*0+vec3(0, 1, 0), 1);
 }

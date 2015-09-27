@@ -151,15 +151,15 @@ void Skybox::Draw(GraphicsEngine& graphicsEngine)
 	graphicsEngine.PushFramebuffer();
 	glContext.Clear().DepthBuffer();
 
-	screenFB.SetColorTexName("screenColor");
-	screenFB.SetDepthTexName("screenDepth");
+	screenFB.SetTextureShaderID(Framebuffer::ATTACHMENT_COLOR, "screenColor", 0);
+	screenFB.SetTextureShaderID(Framebuffer::ATTACHMENT_DEPTH, "screenDepth", 1);
 	screenFB.SetShaderProgram(&fadeoutShader);
 
 	fadeoutShader.Use();
 
 	gl::Texture::Active(2);
-	skyboxFB.GetTexture(Framebuffer::ATTACHEMNT_COLOR).Bind(gl::Texture::Target::_2D);
+	skyboxFB.GetTexture(Framebuffer::ATTACHMENT_COLOR).Bind(gl::Texture::Target::_2D);
 
 	//Problem is the fadeout shader writes 1 where the skybox is. So its color will be ignored due to depth testing at .
-	screenFB.Draw(graphicsEngine);
+	screenFB.Draw(graphicsEngine, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
 }

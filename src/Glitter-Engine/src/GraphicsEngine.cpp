@@ -90,6 +90,8 @@ debugDrawer(this)
 	//gl::UniformSampler(finalFramebufferCopy, "colorTex").Set(0);
 	//gl::UniformSampler(finalFramebufferCopy, "depthTex").Set(1);
 
+	ssaoProgram = LoadShaderProgramFromFiles("Passthrough2_v.glsl", "HBAO_f.glsl");
+
 	debugDrawer.SetEnabled(false);
 	
 	wireframeModeEnabled = false;
@@ -108,7 +110,7 @@ debugDrawer(this)
 	subfrustumFarPlanePositionRatios[4] = 1;
 	
 	for (auto& currFramebuffer : lightCascadeShadowMapFramebuffers) {
-		currFramebuffer = std::move(Framebuffer{shadowMapResolution, shadowMapResolution, Framebuffer::ATTACHEMNT_DEPTH});
+		currFramebuffer = std::move(Framebuffer{shadowMapResolution, shadowMapResolution, Framebuffer::ATTACHMENT_DEPTH});
 		//currFramebuffer.SetResolution(shadowMapResolution, shadowMapResolution);
 	}
 }
@@ -130,13 +132,13 @@ void GraphicsEngine::Draw()
 
 	//draw current framebuffer to screen
 	GetCurrentFramebuffer().SetVertexPosName("vertexPos");
-	GetCurrentFramebuffer().SetColorTexName("colorTex");
-	GetCurrentFramebuffer().SetDepthTexName("depthTex");
+	GetCurrentFramebuffer().SetTextureShaderID(Framebuffer::ATTACHMENT_COLOR, "colorTex", 0);
+	GetCurrentFramebuffer().SetTextureShaderID(Framebuffer::ATTACHMENT_DEPTH, "depthTex", 1);
 	GetCurrentFramebuffer().SetShaderProgram(&finalFramebufferCopy);
 
 	defaultFBO.Bind(gl::Framebuffer::Target::Draw);
 	glContext.Clear().ColorBuffer().DepthBuffer();
-	GetCurrentFramebuffer().Draw(*this);
+	GetCurrentFramebuffer().Draw(*this, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
 
 	glContext.Viewport(0, 0, 200, 200);
 	glContext.Enable(gl::Capability::ScissorTest);
@@ -178,9 +180,9 @@ int GraphicsEngine::GetScreenHeight() const
 	return screenHeight;
 }
 
-void GraphicsEngine::PushFramebuffer()
+void GraphicsEngine::PushFramebuffer(uint8_t framebufferAttachmentFlags)
 {
-	framebuffers.push_back(std::move(Framebuffer(screenWidth, screenHeight)));
+	framebuffers.push_back(std::move(Framebuffer(screenWidth, screenHeight, framebufferAttachmentFlags)));
 	framebuffers.back().Bind(gl::Framebuffer::Target::Draw);
 }
 
@@ -250,7 +252,7 @@ int GraphicsEngine::GetLightCascadeCount() const
 
 const gl::Texture& GraphicsEngine::GetCascadeShadowMap(int cascadeID) const
 {
-	return lightCascadeShadowMapFramebuffers.at(cascadeID).GetTexture(Framebuffer::ATTACHEMNT_DEPTH);
+	return lightCascadeShadowMapFramebuffers.at(cascadeID).GetTexture(Framebuffer::ATTACHMENT_DEPTH);
 }
 
 gl::Mat4f GraphicsEngine::GetCascadeViewProjectionTransform(int cascadeID) const
@@ -486,18 +488,42 @@ void GraphicsEngine::DrawScene()
 	}
 
 	GetCurrentFramebuffer().Bind(gl::enums::FramebufferTarget::Draw);
+	PushFramebuffer(Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH | Framebuffer::ATTACHMENT_NORMAL);
+	std::vector<gl::context::BufferSelection::ColorBuffer> selectedBuffers = {
+		gl::enums::FramebufferColorAttachment::_0, gl::enums::FramebufferColorAttachment::_1
+	};
+	glContext.DrawBuffers(selectedBuffers);
 	SetActiveCamera(pActiveViewerCam);
 	glContext.Viewport(0, 0, screenWidth, screenHeight);
 	glContext.ClearColor(0, 0, 0, 1);
 	glContext.Clear().ColorBuffer().DepthBuffer();
 	DrawObjects();
 
+	selectedBuffers.pop_back();
+	glContext.DrawBuffers(selectedBuffers);
+
+	DrawAmbientOcclusion(GetCurrentFramebuffer());
+
 	skybox.Draw(*this);
 
 	water.Draw(*this);
+
+//	fog.Draw(*this);
 
 	//(TODO) WARNING: Drawing Skybox twice! It's only purpose is to make water fade out.
 	//Please note that drawing skybox ONLY after water is not a good solution, because without a skybox behind water, it will refract black background making distant water black.
 	skybox.Draw(*this);
 }
 
+void GraphicsEngine::DrawAmbientOcclusion(Framebuffer& objectsFB)
+{
+	PushFramebuffer(Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
+	glContext.Clear().ColorBuffer().DepthBuffer();
+
+	objectsFB.SetTextureShaderID(Framebuffer::ATTACHMENT_COLOR, "objectColor", 0);
+	//objectsFB.SetTextureShaderID(Framebuffer::ATTACHMENT_NORMAL, "objectNormal", 1);
+	objectsFB.SetTextureShaderID(Framebuffer::ATTACHMENT_DEPTH, "objectDepth", 2);
+	objectsFB.SetShaderProgram(&ssaoProgram);
+
+	objectsFB.Draw(*this, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
+}

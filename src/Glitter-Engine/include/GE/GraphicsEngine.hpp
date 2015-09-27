@@ -41,7 +41,7 @@ public:
 	int GetScreenWidth() const;
 	int GetScreenHeight() const;
 	
-	void PushFramebuffer();
+	void PushFramebuffer(uint8_t framebufferAttachmentFlags = Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
 	void PopFramebuffer();
 
 	void CopyFramebufferContents(const Framebuffer& source);
@@ -131,6 +131,9 @@ private: //CSM
 
 	gl::Mat4f lightViewTransform;
 	
+private: //Ambient Occlusion
+	gl::Program ssaoProgram;
+
 private: //resources
 	MeshManager meshManager;
 	MaterialManager materialManager;
@@ -144,4 +147,5 @@ private:
 	void DrawShadowMap(int cascadeID);
 	void DrawObjects();
 	void DrawScene();
+	void DrawAmbientOcclusion(Framebuffer& objectsFB);
 };
