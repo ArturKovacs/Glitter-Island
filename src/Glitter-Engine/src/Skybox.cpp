@@ -139,7 +139,7 @@ void Skybox::Draw(GraphicsEngine& graphicsEngine)
 	glContext.Disable(gl::Capability::CullFace);
 	glContext.Enable(gl::Capability::PrimitiveRestart);
 	glContext.PrimitiveRestartIndex(9);
-	glContext.Enable(gl::Capability::DepthTest);
+	//glContext.Enable(gl::Capability::DepthTest);
 	
 	glContext.DrawElements(gl::PrimitiveType::TriangleStrip, 6*5, gl::DataType::UnsignedShort);
 	glContext.Disable(gl::Capability::PrimitiveRestart);

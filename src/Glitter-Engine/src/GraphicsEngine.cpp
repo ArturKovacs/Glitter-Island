@@ -12,6 +12,8 @@ std::string GraphicsEngine::modelsFolderPath = "../models/";
 //std::string GraphicsEngine::modelsFolderPath;
 //std::string GraphicsEngine::shadersFolderPath;
 
+#define IGNORE_TRY(x) try{x;}catch(std::exception&ex){std::cout<<ex.what()<<std::endl;}
+
 std::string& GraphicsEngine::GetShadersFolderPath()
 {
 	return shadersFolderPath;
@@ -56,6 +58,8 @@ gl::Program GraphicsEngine::LoadShaderProgramFromFiles(const std::string& vs_nam
 	return result;
 }
 
+#define IGNORE_TRY(x) try{x;}catch(std::exception&ex){std::cout<<ex.what()<<std::endl;}
+
 GraphicsEngine::GraphicsEngine() :
 screenWidth(0), screenHeight(0),
 terrainSize(500), waterLevel(49), terrain(this), water(terrainSize * 7),
@@ -90,7 +94,15 @@ debugDrawer(this)
 	//gl::UniformSampler(finalFramebufferCopy, "colorTex").Set(0);
 	//gl::UniformSampler(finalFramebufferCopy, "depthTex").Set(1);
 
-	ssaoProgram = LoadShaderProgramFromFiles("Passthrough2_v.glsl", "HBAO_f.glsl");
+	ssaoProgram = LoadShaderProgramFromFiles("Passthrough2_v.glsl", "SSAO_f.glsl");
+	ssaoProgram.Use();
+	IGNORE_TRY(ssao_viewProj = gl::Uniform<gl::Mat4f>(ssaoProgram, "viewProj"));
+	IGNORE_TRY(ssao_viewProjInv = gl::Uniform<gl::Mat4f>(ssaoProgram, "viewProjInv"));
+	gl::Uniform<gl::Mat4f> ssao_viewProj;
+	gl::Uniform<gl::Mat4f> ssao_viewProjInv;
+
+	IGNORE_TRY(ssao_screenWidth = gl::Uniform<GLint>(ssaoProgram, "screenWidth"));
+	IGNORE_TRY(ssao_screenHeight = gl::Uniform<GLint>(ssaoProgram, "screenHeight"));
 
 	debugDrawer.SetEnabled(false);
 	
@@ -515,15 +527,41 @@ void GraphicsEngine::DrawScene()
 	skybox.Draw(*this);
 }
 
+static gl::Mat4f MyTranspose(const gl::Mat4f& input)
+{
+	gl::Mat4f result;
+
+	for (std::size_t i = 0; i != 4; ++i) {
+		for (std::size_t j = 0; j != 4; ++j) {
+			result.Set(i, j, input.At(j, i));
+		}
+	}
+
+	return result;
+}
+
 void GraphicsEngine::DrawAmbientOcclusion(Framebuffer& objectsFB)
 {
 	PushFramebuffer(Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
 	glContext.Clear().ColorBuffer().DepthBuffer();
 
 	objectsFB.SetTextureShaderID(Framebuffer::ATTACHMENT_COLOR, "objectColor", 0);
-	//objectsFB.SetTextureShaderID(Framebuffer::ATTACHMENT_NORMAL, "objectNormal", 1);
+	objectsFB.SetTextureShaderID(Framebuffer::ATTACHMENT_NORMAL, "objectNormal", 1);
 	objectsFB.SetTextureShaderID(Framebuffer::ATTACHMENT_DEPTH, "objectDepth", 2);
 	objectsFB.SetShaderProgram(&ssaoProgram);
+	ssaoProgram.Use();
+	//IGNORE_TRY( ssao_view_TrInv.Set(MyTranspose(gl::Inverse(pActiveViewerCam->GetViewTransform()))) );
+	//IGNORE_TRY( ssao_projInv.Set(gl::Inverse(pActiveViewerCam->GetProjectionTransform())) );
+	//IGNORE_TRY( ssao_proj.Set(pActiveViewerCam->GetProjectionTransform()) );
 
-	objectsFB.Draw(*this, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
+	ssao_viewProj.Set(pActiveViewerCam->GetViewProjectionTransform());
+	ssao_viewProjInv.Set(gl::Inverse(pActiveViewerCam->GetViewProjectionTransform()));
+
+	//IGNORE_TRY( ssao_projInv_TrInv.Set(MyTranspose(pActiveViewerCam->GetProjectionTransform())) );
+	IGNORE_TRY( ssao_screenWidth.Set(screenWidth) );
+	IGNORE_TRY( ssao_screenHeight.Set(screenHeight) );
+
+	objectsFB.Draw(*this, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_NORMAL | Framebuffer::ATTACHMENT_DEPTH);
+	//objectsFB.Draw(*this, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
+	//objectsFB.Draw(*this, Framebuffer::ATTACHMENT_NORMAL);
 }

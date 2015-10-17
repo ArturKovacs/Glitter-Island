@@ -105,7 +105,10 @@ void Framebuffer::Draw(GraphicsEngine& graphicsEngine, uint8_t usedAttachmentFla
 
 		//Force frame to be drawn on the screen no matter what was there before.
 		//Do not disable depth testing! Disabling depth testing will prevent shader from writing to the depth buffer.
-		glContext.DepthFunc(gl::enums::CompareFunction::Always);
+		if (usedAttachmentFlags & Framebuffer::ATTACHMENT_DEPTH) {
+			glContext.Enable(gl::Capability::DepthTest);
+			glContext.DepthFunc(gl::enums::CompareFunction::Always);
+		}
 
 		glContext.PolygonMode(gl::enums::PolygonMode::Fill);
 		glContext.DrawElements(gl::enums::PrimitiveType::TriangleFan, 4, gl::enums::DataType::UnsignedShort);

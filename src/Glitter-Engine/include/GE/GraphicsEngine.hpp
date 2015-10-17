@@ -80,7 +80,7 @@ private:
 	static std::string modelsFolderPath;
 	
 private: //misc
-	double elapsedSec; //Seconds elapsed from an arbitrary moment in the past to present. (The actual vale does not matter, only requirement is to increase continously, and one unit by a second)
+	double elapsedSec; //Seconds elapsed from an arbitrary moment in the past to present. (The actual value does not matter, only requirement is to increase continously, and one unit by a second)
 
 private: // graphical state
 	int screenWidth;
@@ -133,6 +133,10 @@ private: //CSM
 	
 private: //Ambient Occlusion
 	gl::Program ssaoProgram;
+	gl::Uniform<gl::Mat4f> ssao_viewProj;
+	gl::Uniform<gl::Mat4f> ssao_viewProjInv;
+	gl::Uniform<GLint> ssao_screenWidth;
+	gl::Uniform<GLint> ssao_screenHeight;
 
 private: //resources
 	MeshManager meshManager;

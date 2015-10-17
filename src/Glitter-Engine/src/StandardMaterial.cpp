@@ -55,11 +55,6 @@ StandardMaterial& StandardMaterial::operator=(StandardMaterial&& r)
 	return *this;
 }
 
-//const gl::Texture* StandardMaterial::GetTextureContainigAlpha() const
-//{
-//	return &albedoTexture;
-//}
-
 static gl::Mat4f MyTranspose(const gl::Mat4f& input)
 {
 	gl::Mat4f result;

@@ -113,13 +113,13 @@ void EditorContext::HandleWindowEvent(const sf::Event& event)
 
 void EditorContext::EnteringContext()
 {
-	pCore->GetGraphicsEngine().GetDebugDrawer().SetEnabled(true);
-	brushCircle.SetVisible(true);
+	//pCore->GetGraphicsEngine().GetDebugDrawer().SetEnabled(true);
+	//brushCircle.SetVisible(true);
 }
 
 void EditorContext::LeavingContext()
 {
-	pCore->GetGraphicsEngine().GetDebugDrawer().SetEnabled(false);
+	//pCore->GetGraphicsEngine().GetDebugDrawer().SetEnabled(false);
 	brushCircle.SetVisible(false);
 }
 
@@ -136,7 +136,7 @@ void EditorContext::Update(float deltaSec)
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
 		switch (GetToolType(selectedTool)) {
 		case EditorToolType::PAINT: {
-					
+			
 			gl::Vec2i cursorPosOnMaterialMap = pCore->GetGraphicsEngine().GetTerrain().GetMaterialMapPos(pointPosAtCursor);
 			sf::Image& materialMap = pCore->GetGraphicsEngine().GetTerrain().GetMaterialMap();
 			sf::Color selectedMaterialColor;
