@@ -1,6 +1,5 @@
 #version 330
 
-uniform sampler2D objectColor;
 uniform sampler2D objectNormal;
 uniform sampler2D objectDepth;
 
@@ -59,20 +58,22 @@ float calculateAOFactor(vec3 posWorld, vec3 normalWorld, vec2 seed, float radius
 
 void main()
 {
-	float depth = texelFetch(objectDepth, ivec2(gl_FragCoord.xy), 0).x;
-	gl_FragDepth = depth;
+	vec2 screenDimensions = vec2(screenWidth, screenHeight);
+	float depth = texture(objectDepth, gl_FragCoord.xy/screenDimensions, 0).x;
 	
-	vec3 normal = texelFetch(objectNormal, ivec2(gl_FragCoord.xy), 0).xyz;
+	vec3 normal = texture(objectNormal, gl_FragCoord.xy/screenDimensions, 0).xyz;
 	//vec4 normalViewSpace = view_InvTr * vec4(normal, 0);
 	//normalViewSpace /= normalViewSpace.w;
 	//normalViewSpace.xyz = normalize(normalViewSpace.xyz);
 	
-	vec4 posWorld = viewProjInv * vec4(vec3(gl_FragCoord.xy/vec2(screenWidth, screenHeight), depth)*2 - vec3(1), 1);
+	vec4 posWorld = viewProjInv * vec4(vec3(gl_FragCoord.xy/screenDimensions, depth)*2 - vec3(1), 1);
 	posWorld /= posWorld.w;
 	
 	float aoFactor = clamp(calculateAOFactor(posWorld.xyz, normal.xyz, gl_FragCoord.xy, 0.15)*2, 0, 1);
 	
-	gl_FragColor = vec4(texelFetch(objectColor, ivec2(gl_FragCoord.xy), 0).xyz * (1-aoFactor), 1);// *0 + vec4(normal.xyz*(1-1*aoFactor), 1);
+	gl_FragColor = vec4(vec3(aoFactor), 1);
+	//gl_FragColor = vec4(texelFetch(objectColor, ivec2(gl_FragCoord.xy), 0).xyz * (1-aoFactor), 1);// *0 + vec4(normal.xyz*(1-1*aoFactor), 1);
+	
 	//gl_FragColor = vec4(texelFetch(objectColor, ivec2(gl_FragCoord.xy), 0).xyz * (1-aoFactor), 1) *0 + vec4(normal.xyz*(1-1*aoFactor), 1);
 	//gl_FragColor = vec4(texelFetch(objectColor, ivec2(gl_FragCoord.xy), 0).xyz + vec3(0)*aoFactor, 1);
 }
