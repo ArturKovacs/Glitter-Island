@@ -1,6 +1,7 @@
 #pragma once
 
 #include "all_gl_headers.hpp"
+#include "Framebuffer.hpp"
 
 class GraphicsEngine;
 
@@ -8,9 +9,14 @@ class Water
 {
 	friend class GraphicsEngine;
 public:
-	Water(const float waterSize = 50);
-
+	Water(GraphicsEngine* pGraphicsEngine, const float waterSize = 50);
+	
 private:
+	GraphicsEngine* pGraphEngine;
+	Framebuffer targetFB;
+	
+	bool visible;
+	
 	gl::VertexArray VAO;
 
 	gl::Buffer vertexPos;
@@ -32,6 +38,6 @@ private:
 	gl::Uniform<gl::Mat4f> sh_geomOnly_MVP;
 	
 private:
-	void Draw(GraphicsEngine& graphicsEngine);
+	void Draw();
 };
 

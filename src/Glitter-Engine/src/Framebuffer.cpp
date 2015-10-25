@@ -6,7 +6,7 @@ Framebuffer::Framebuffer() : pShaderProgram(nullptr)
 {}
 
 Framebuffer::Framebuffer(const int width, const int height, uint8_t attachmentFlags) : 
-/*colorTexName("colorTex"), depthTexName("depthTex"),*/ vertexPosName("vertexPos"), pShaderProgram(nullptr)
+vertexPosName("vertexPos"), pShaderProgram(nullptr), w(width), h(height)
 {
 	fbo.Bind(gl::Framebuffer::Target::Draw);
 
@@ -57,7 +57,9 @@ VAO(std::move(other.VAO)),
 vertexPos(std::move(other.vertexPos)),
 indices(std::move(other.indices)),
 vertexPosName(std::move(other.vertexPosName)),
-pShaderProgram(other.pShaderProgram)
+pShaderProgram(other.pShaderProgram),
+w(other.w),
+h(other.h)
 {}
 
 Framebuffer& Framebuffer::operator=(Framebuffer&& other)
@@ -69,8 +71,19 @@ Framebuffer& Framebuffer::operator=(Framebuffer&& other)
 	indices = std::move(other.indices);
 	vertexPosName = std::move(other.vertexPosName);
 	pShaderProgram = other.pShaderProgram;
+	w = other.w;
+	h = other.h;
 
 	return *this;
+}
+
+void Framebuffer::CopyFramebufferContents(const Framebuffer& source)
+{
+	this->Bind(gl::Framebuffer::Target::Draw);
+	source.Bind(gl::Framebuffer::Target::Read);
+	
+	gl::Context::BlitFramebuffer(0, 0, source.w, source.h, 0, 0, w, h, gl::Bitfield<gl::enums::BufferSelectBit>(gl::enums::BufferSelectBit::DepthBuffer) |= gl::enums::BufferSelectBit::ColorBuffer, gl::enums::BlitFilter::Nearest);
+	//glContext.BlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight, gl::Bitfield<gl::enums::BufferSelectBit>(gl::enums::BufferSelectBit::DepthBuffer) |= gl::enums::BufferSelectBit::ColorBuffer, gl::enums::BlitFilter::Nearest);
 }
 
 const gl::Texture& Framebuffer::GetTexture(AttachmentFlag attachmentID) const
@@ -83,14 +96,14 @@ void Framebuffer::Bind(gl::Framebuffer::Target target) const
 	fbo.Bind(target);
 }
 
-void Framebuffer::Draw(GraphicsEngine& graphicsEngine, uint8_t usedAttachmentFlags)
+void Framebuffer::Draw(GraphicsEngine& graphicsEngine)
 {
 	gl::Context& glContext = graphicsEngine.GetGLContext();
 	if (pShaderProgram != nullptr) {
 		pShaderProgram->Use();
 
 		for(auto& current : textures) {
-			if ((usedAttachmentFlags & current.first) != 0) {
+			if ((usedAttachments & current.first) != 0) {
 				try {
 					gl::Texture::Active(textureShaderIDs.at(current.first).index);
 					gl::Texture::Bind(gl::Texture::Target::_2D, current.second);
@@ -105,10 +118,8 @@ void Framebuffer::Draw(GraphicsEngine& graphicsEngine, uint8_t usedAttachmentFla
 
 		//Force frame to be drawn on the screen no matter what was there before.
 		//Do not disable depth testing! Disabling depth testing will prevent shader from writing to the depth buffer.
-		//if (usedAttachmentFlags & Framebuffer::ATTACHMENT_DEPTH) {
-			glContext.Enable(gl::Capability::DepthTest);
-			glContext.DepthFunc(gl::enums::CompareFunction::Always);
-		//}
+		glContext.Enable(gl::Capability::DepthTest);
+		glContext.DepthFunc(gl::enums::CompareFunction::Always);
 
 		glContext.PolygonMode(gl::enums::PolygonMode::Fill);
 		glContext.DrawElements(gl::enums::PrimitiveType::TriangleFan, 4, gl::enums::DataType::UnsignedShort);
@@ -129,7 +140,7 @@ void Framebuffer::SetTextureShaderID(AttachmentFlag attachmentID, std::string na
 	textureShaderIDs[(uint8_t)attachmentID] = std::move(TextureShaderID(name, index));
 }
 
-void Framebuffer::SetShaderProgram(const gl::Program* program)
+void Framebuffer::SetShaderProgram(const gl::Program* program, uint8_t usedAttachmentFlags)
 {
 	VAO.Bind();
 
@@ -137,8 +148,12 @@ void Framebuffer::SetShaderProgram(const gl::Program* program)
 
 	pShaderProgram->Use();
 	
+	usedAttachments = usedAttachmentFlags;
+	
 	for (auto& current : textureShaderIDs) {
-		gl::UniformSampler(*pShaderProgram, current.second.name).Set(current.second.index);
+		if ((usedAttachments & current.first) != 0) {
+			gl::UniformSampler(*pShaderProgram, current.second.name).Set(current.second.index);
+		}
 	}
 
 	vertexPos.Bind(gl::Buffer::Target::Array);
@@ -149,8 +164,8 @@ void Framebuffer::SetShaderProgram(const gl::Program* program)
 
 void Framebuffer::SetResolution(const int width, const int height)
 {
-	//frameWidth = width;
-	//frameHeight = height;
+	w = width;
+	h = height;
 
 	for(auto& current : textures) {
 		gl::PixelDataInternalFormat internalFormat;

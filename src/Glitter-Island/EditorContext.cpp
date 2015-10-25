@@ -267,9 +267,7 @@ void EditorContext::MouseButtonPressed(const sf::Event& event)
 
 void EditorContext::KeyPressed(const sf::Event& event)
 {
-	const sf::Event::KeyEvent& key = event.key;
-
-	switch (key.code) {
+	switch (event.key.code) {
 	case sf::Keyboard::Num0:
 		selectedTool = EditorTool::NO_TOOL;
 		break;
@@ -341,8 +339,8 @@ void EditorContext::UpdatePointPosAtCursor()
 	//invert y to suit opengl coordinates
 	cursorPos.y = screenHeight-cursorPos.y;
 
-	GLfloat depthAtPixel;
-	pCore->GetGraphicsEngine().GetGLContext().ReadPixels(cursorPos.x, cursorPos.y, 1, 1, gl::enums::PixelDataFormat::DepthComponent, gl::PixelDataType::Float, &depthAtPixel);
+	float depthAtPixel = pCore->GetGraphicsEngine().GetObjectsDepthBufferValue(cursorPos.x, cursorPos.y);
+	//pCore->GetGraphicsEngine().GetGLContext().ReadPixels(cursorPos.x, cursorPos.y, 1, 1, gl::enums::PixelDataFormat::DepthComponent, gl::PixelDataType::Float, &depthAtPixel);
 
 	pointPosAtCursor = gl::Inverse(pCore->GetGraphicsEngine().GetActiveCamera()->GetViewProjectionTransform()) * gl::Vec4f(
 		((float(cursorPos.x)/screenWidth)*2-1),

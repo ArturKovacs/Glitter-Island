@@ -11,7 +11,7 @@ uniform int screenHeight;
 void main()
 {
 	vec2 screenDimensions = vec2(screenWidth, screenHeight);
-	gl_FragDepth = texture(objectDepth, gl_FragCoord.xy/screenDimensions, 0).x;
+	gl_FragDepth = texture(objectDepth, gl_FragCoord.xy/screenDimensions).x;
 	
 	float aoFactor = texture(aoValue, gl_FragCoord.xy/screenDimensions).x;
 	

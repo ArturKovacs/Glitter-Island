@@ -2,7 +2,8 @@
 
 #include <GE/GraphicsEngine.hpp>
 
-Water::Water(const float waterSize)
+Water::Water(GraphicsEngine* pGraphicsEngine, const float waterSize) :
+pGraphEngine(pGraphicsEngine), visible(true)
 {
 	waterShader = GraphicsEngine::LoadShaderProgramFromFiles("Water_v.glsl", "Water_f.glsl");
 	waterShader.Use();
@@ -40,15 +41,22 @@ Water::Water(const float waterSize)
 
 	indices.Bind(gl::Buffer::Target::ElementArray);
 	gl::Buffer::Data(gl::Buffer::Target::ElementArray, indexData);
+	
+	targetFB = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
+	pGraphEngine->AddFramebufferForManagment(targetFB);
 }
 
-void Water::Draw(GraphicsEngine& graphicsEngine)
+void Water::Draw()
 {
-	auto& gl = graphicsEngine.GetGLContext();
+	if(!visible) {
+		return;
+	}
+		
+	auto& gl = pGraphEngine->GetGLContext();
 
-	auto& screenFB = graphicsEngine.GetCurrentFramebuffer();
-	graphicsEngine.PushFramebuffer();
-	graphicsEngine.CopyFramebufferContents(screenFB);
+	auto& screenFB = pGraphEngine->GetCurrentFramebuffer();
+	pGraphEngine->SetCurrentFramebuffer(targetFB);
+	targetFB.CopyFramebufferContents(screenFB);
 
 	waterShader.Use();
 
@@ -60,21 +68,21 @@ void Water::Draw(GraphicsEngine& graphicsEngine)
 	gl::Texture::Active(1);
 	screenFB.GetTexture(Framebuffer::ATTACHMENT_DEPTH).Bind(gl::Texture::Target::_2D);
 
-	sh_screenWidth.Set(graphicsEngine.GetScreenWidth());
-	sh_screenHeight.Set(graphicsEngine.GetScreenHeight());
+	sh_screenWidth.Set(pGraphEngine->GetScreenWidth());
+	sh_screenHeight.Set(pGraphEngine->GetScreenHeight());
 
-	sh_MVP.Set(graphicsEngine.GetActiveCamera()->GetViewProjectionTransform());
-	sh_viewProj.Set(graphicsEngine.GetActiveCamera()->GetViewProjectionTransform());
+	sh_MVP.Set(pGraphEngine->GetActiveCamera()->GetViewProjectionTransform());
+	sh_viewProj.Set(pGraphEngine->GetActiveCamera()->GetViewProjectionTransform());
 	//sh_invMVP.Set(gl::Inverse(core.GetCamera().GetViewProjectionTransform()));
 
-	PerspectiveCamera* pActivePerspectiveCam = dynamic_cast<PerspectiveCamera*>(graphicsEngine.GetActiveCamera());
+	PerspectiveCamera* pActivePerspectiveCam = dynamic_cast<PerspectiveCamera*>(pGraphEngine->GetActiveCamera());
 	if (pActivePerspectiveCam == nullptr) {
 		throw std::runtime_error("Active camera was not a PerspectiveCamera when rendering water.");
 	}
 
 	sh_camPos.Set(pActivePerspectiveCam->GetPosition());
-	sh_sunDir.Set(graphicsEngine.GetSun().GetDirectionTowardsSource());
-	sh_time.Set(graphicsEngine.GetElapsedSeconds());
+	sh_sunDir.Set(pGraphEngine->GetSun().GetDirectionTowardsSource());
+	sh_time.Set(pGraphEngine->GetElapsedSeconds());
 
 	VAO.Bind();
 

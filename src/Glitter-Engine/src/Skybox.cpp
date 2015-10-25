@@ -3,7 +3,8 @@
 #include <SFML/Graphics.hpp>
 #include <GE/GraphicsEngine.hpp>
 
-Skybox::Skybox()
+Skybox::Skybox(GraphicsEngine* pGraphicsEngine)
+: pGraphEngine(pGraphicsEngine)
 {
 	skydrawShader = GraphicsEngine::LoadShaderProgramFromFiles("Skybox_skydraw_v.glsl", "Skybox_skydraw_f.glsl");
 	skydrawShader.Use();
@@ -51,6 +52,9 @@ Skybox::Skybox()
 	//gl::UniformSampler(fadeoutShader, "screenColor").Set(0);
 	//gl::UniformSampler(fadeoutShader, "screenDepth").Set(1);
 	gl::UniformSampler(fadeoutShader, "skyboxColor").Set(2);
+	
+	skyboxFB = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
+	pGraphEngine->AddFramebufferForManagment(skyboxFB);
 }
 
 void Skybox::LoadTextureFromFiles(
@@ -109,12 +113,13 @@ void Skybox::LoadTextureFromFiles(
 	}
 }
 
-void Skybox::Draw(GraphicsEngine& graphicsEngine)
+void Skybox::Draw()
 {
-	gl::Context& glContext = graphicsEngine.GetGLContext();
+	gl::Context& glContext = pGraphEngine->GetGLContext();
 
-	auto& screenFB = graphicsEngine.GetCurrentFramebuffer();
-	graphicsEngine.PushFramebuffer();
+	auto& screenFB = pGraphEngine->GetCurrentFramebuffer();
+	pGraphEngine->SetCurrentFramebuffer(skyboxFB);
+	
 	glContext.Clear().ColorBuffer().DepthBuffer();
 
 	skydrawShader.Use();
@@ -122,7 +127,7 @@ void Skybox::Draw(GraphicsEngine& graphicsEngine)
 	gl::Texture::Active(0);
 	cubeMap.Bind(gl::Texture::Target::CubeMap);
 
-	gl::Mat4f viewOnlyRotation = graphicsEngine.GetActiveCamera()->GetViewTransform();
+	gl::Mat4f viewOnlyRotation = pGraphEngine->GetActiveCamera()->GetViewTransform();
 	viewOnlyRotation.Set(0, 3, 0);
 	viewOnlyRotation.Set(1, 3, 0);
 	viewOnlyRotation.Set(2, 3, 0);
@@ -130,7 +135,7 @@ void Skybox::Draw(GraphicsEngine& graphicsEngine)
 	viewOnlyRotation.Set(3, 0, 0);
 	viewOnlyRotation.Set(3, 1, 0);
 	viewOnlyRotation.Set(3, 2, 0);
-	gl::Mat4f projectionMatrix = graphicsEngine.GetActiveCamera()->GetProjectionTransform();
+	gl::Mat4f projectionMatrix = pGraphEngine->GetActiveCamera()->GetProjectionTransform();
 
 	sh_ViewProjectionMatrix.Set(projectionMatrix * viewOnlyRotation);
 
@@ -147,13 +152,13 @@ void Skybox::Draw(GraphicsEngine& graphicsEngine)
 	glContext.Enable(gl::Capability::CullFace);
 
 	//Draw fadeout
-	auto& skyboxFB = graphicsEngine.GetCurrentFramebuffer();
-	graphicsEngine.PushFramebuffer();
+	pGraphEngine->SetCurrentFramebuffer(pGraphEngine->GetBaseFramebuffer());
+	
 	glContext.Clear().DepthBuffer();
 
 	screenFB.SetTextureShaderID(Framebuffer::ATTACHMENT_COLOR, "screenColor", 0);
 	screenFB.SetTextureShaderID(Framebuffer::ATTACHMENT_DEPTH, "screenDepth", 1);
-	screenFB.SetShaderProgram(&fadeoutShader);
+	screenFB.SetShaderProgram(&fadeoutShader, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
 
 	fadeoutShader.Use();
 
@@ -161,5 +166,5 @@ void Skybox::Draw(GraphicsEngine& graphicsEngine)
 	skyboxFB.GetTexture(Framebuffer::ATTACHMENT_COLOR).Bind(gl::Texture::Target::_2D);
 
 	//Problem is the fadeout shader writes 1 where the skybox is. So its color will be ignored due to depth testing at .
-	screenFB.Draw(graphicsEngine, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
+	screenFB.Draw(*pGraphEngine);
 }

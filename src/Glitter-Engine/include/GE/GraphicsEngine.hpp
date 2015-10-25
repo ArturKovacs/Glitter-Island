@@ -43,11 +43,16 @@ public:
 	
 	//TODO REMOVE FRAMEBUFFER STACK - THE IDEA OF CREATING AND REMOVING A BUNCH OF BIG TEXTURES EACH FRAME IS VERY STUPID
 	//(create new framebuffers for every "class instance", not for every frame!) (I should have realized that it is a bad idea)
-	void PushFramebuffer(uint8_t framebufferAttachmentFlags = Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
-	void PopFramebuffer();
-	void CopyFramebufferContents(const Framebuffer& source);
-
+	//void PushFramebuffer(uint8_t framebufferAttachmentFlags = Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
+	//void PopFramebuffer();
+	//void CopyFramebufferContents(const Framebuffer& source);
+	void SetCurrentFramebuffer(Framebuffer& current);
 	Framebuffer& GetCurrentFramebuffer();
+	Framebuffer& GetBaseFramebuffer();
+	void AddFramebufferForManagment(Framebuffer& framebuffer);
+	
+	float GetObjectsDepthBufferValue(int x, int y);
+	
 	gl::Context& GetGLContext();
 	
 	void SetWireframeModeEnabled(bool enabled);
@@ -55,6 +60,7 @@ public:
 	
 	DirectionalLight& GetSun();
 	Terrain& GetTerrain();
+	Water& GetWater();
 	
 	void SetActiveCamera(Camera* cam);
 	Camera* GetActiveCamera();
@@ -88,8 +94,12 @@ private: // graphical state
 	int screenHeight;
 	
 	gl::Context glContext;
-
-	std::list<Framebuffer> framebuffers;
+	
+	Framebuffer aoValueFB;
+	Framebuffer objectsFB;
+	Framebuffer baseFramebuffer;
+	Framebuffer* pCurrentFramebuffer;
+	std::vector<Framebuffer*> managedFramebuffers;
 	gl::DefaultFramebuffer defaultFBO;
 
 	gl::Program finalFramebufferCopy;
@@ -150,7 +160,7 @@ private: //resources
 	MaterialManager materialManager;
 	
 private:
-	void ClearFramebufferStack();
+	//void ClearFramebufferStack();
 	
 	void UpdateLightViewTransform();
 	float GetSubfrustumZNear(int cascadeID) const;
@@ -158,5 +168,5 @@ private:
 	void DrawShadowMap(int cascadeID);
 	void DrawObjects();
 	void DrawScene();
-	void DrawAmbientOcclusion(Framebuffer& objectsFB);
+	void DrawAmbientOcclusion();
 };

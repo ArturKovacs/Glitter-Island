@@ -33,16 +33,18 @@ public:
 	Framebuffer(const Framebuffer&) = delete;
 	Framebuffer& operator=(const Framebuffer&) = delete;
 	Framebuffer& operator=(Framebuffer&&);
+	
+	void CopyFramebufferContents(const Framebuffer& source);
 
 	const gl::Texture& GetTexture(AttachmentFlag attachmentID) const;
 
 	void Bind(gl::Framebuffer::Target target) const override;
-	void Draw(GraphicsEngine& graphicsEngine, uint8_t usedAttachmentFlags);
+	void Draw(GraphicsEngine& graphicsEngine);
 
 	void SetVertexPosName(const std::string& name);
 	void SetTextureShaderID(AttachmentFlag attachmentID, std::string name, int index);
 
-	void SetShaderProgram(const gl::Program* program);
+	void SetShaderProgram(const gl::Program* program, uint8_t usedAttachmentFlags);
 	void SetResolution(const int width, const int height);
 
 private:
@@ -51,6 +53,7 @@ private:
 private:
 	gl::Framebuffer fbo;
 	std::map<uint8_t, gl::Texture> textures;
+	uint8_t usedAttachments;
 
 	gl::VertexArray VAO;
 	gl::Buffer vertexPos;
@@ -61,4 +64,6 @@ private:
 	//std::string depthTexName;
 	std::string vertexPosName;
 	const gl::Program *pShaderProgram;
+	
+	int w, h;
 };
