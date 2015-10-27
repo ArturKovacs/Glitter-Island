@@ -41,14 +41,9 @@ public:
 	int GetScreenWidth() const;
 	int GetScreenHeight() const;
 	
-	//TODO REMOVE FRAMEBUFFER STACK - THE IDEA OF CREATING AND REMOVING A BUNCH OF BIG TEXTURES EACH FRAME IS VERY STUPID
-	//(create new framebuffers for every "class instance", not for every frame!) (I should have realized that it is a bad idea)
-	//void PushFramebuffer(uint8_t framebufferAttachmentFlags = Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
-	//void PopFramebuffer();
-	//void CopyFramebufferContents(const Framebuffer& source);
 	void SetCurrentFramebuffer(Framebuffer& current);
 	Framebuffer& GetCurrentFramebuffer();
-	Framebuffer& GetBaseFramebuffer();
+	Framebuffer& GetIntermediateFramebuffer();
 	void AddFramebufferForManagment(Framebuffer& framebuffer);
 	
 	float GetObjectsDepthBufferValue(int x, int y);
@@ -95,9 +90,10 @@ private: // graphical state
 	
 	gl::Context glContext;
 	
-	Framebuffer aoValueFB;
+	Framebuffer aoResultFB;
 	Framebuffer objectsFB;
-	Framebuffer baseFramebuffer;
+	Framebuffer halfSizedIntermFramebuffer;
+	Framebuffer intermediateFramebuffer;
 	Framebuffer* pCurrentFramebuffer;
 	std::vector<Framebuffer*> managedFramebuffers;
 	gl::DefaultFramebuffer defaultFBO;
@@ -150,8 +146,6 @@ private: //Ambient Occlusion
 	gl::Uniform<GLint> ssaoCalc_screenHeight;
 
 	gl::Program ssaoDrawProgram;
-	//gl::Uniform<gl::Mat4f> ssaoDraw_viewProj;
-	//gl::Uniform<gl::Mat4f> ssaoDraw_viewProjInv;
 	gl::Uniform<GLint> ssaoDraw_screenWidth;
 	gl::Uniform<GLint> ssaoDraw_screenHeight;
 
@@ -160,7 +154,6 @@ private: //resources
 	MaterialManager materialManager;
 	
 private:
-	//void ClearFramebufferStack();
 	
 	void UpdateLightViewTransform();
 	float GetSubfrustumZNear(int cascadeID) const;

@@ -36,6 +36,6 @@ private:
 
 	gl::Uniform<gl::Mat4f> sh_ViewProjectionMatrix;
 	
-	Framebuffer skyboxFB;
+	Framebuffer resultFB;
 };
 

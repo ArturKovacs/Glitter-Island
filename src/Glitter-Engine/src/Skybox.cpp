@@ -53,8 +53,8 @@ Skybox::Skybox(GraphicsEngine* pGraphicsEngine)
 	//gl::UniformSampler(fadeoutShader, "screenDepth").Set(1);
 	gl::UniformSampler(fadeoutShader, "skyboxColor").Set(2);
 	
-	skyboxFB = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
-	pGraphEngine->AddFramebufferForManagment(skyboxFB);
+	resultFB = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
+	pGraphEngine->AddFramebufferForManagment(resultFB);
 }
 
 void Skybox::LoadTextureFromFiles(
@@ -118,8 +118,8 @@ void Skybox::Draw()
 	gl::Context& glContext = pGraphEngine->GetGLContext();
 
 	auto& screenFB = pGraphEngine->GetCurrentFramebuffer();
-	pGraphEngine->SetCurrentFramebuffer(skyboxFB);
-	
+	auto& intermediateFB = pGraphEngine->GetIntermediateFramebuffer();
+	pGraphEngine->SetCurrentFramebuffer(intermediateFB);
 	glContext.Clear().ColorBuffer().DepthBuffer();
 
 	skydrawShader.Use();
@@ -145,15 +145,12 @@ void Skybox::Draw()
 	glContext.Enable(gl::Capability::PrimitiveRestart);
 	glContext.PrimitiveRestartIndex(9);
 	//glContext.Enable(gl::Capability::DepthTest);
-	
 	glContext.DrawElements(gl::PrimitiveType::TriangleStrip, 6*5, gl::DataType::UnsignedShort);
 	glContext.Disable(gl::Capability::PrimitiveRestart);
-
 	glContext.Enable(gl::Capability::CullFace);
 
 	//Draw fadeout
-	pGraphEngine->SetCurrentFramebuffer(pGraphEngine->GetBaseFramebuffer());
-	
+	pGraphEngine->SetCurrentFramebuffer(resultFB);
 	glContext.Clear().DepthBuffer();
 
 	screenFB.SetTextureShaderID(Framebuffer::ATTACHMENT_COLOR, "screenColor", 0);
@@ -163,7 +160,7 @@ void Skybox::Draw()
 	fadeoutShader.Use();
 
 	gl::Texture::Active(2);
-	skyboxFB.GetTexture(Framebuffer::ATTACHMENT_COLOR).Bind(gl::Texture::Target::_2D);
+	intermediateFB.GetTexture(Framebuffer::ATTACHMENT_COLOR).Bind(gl::Texture::Target::_2D);
 
 	//Problem is the fadeout shader writes 1 where the skybox is. So its color will be ignored due to depth testing at .
 	screenFB.Draw(*pGraphEngine);

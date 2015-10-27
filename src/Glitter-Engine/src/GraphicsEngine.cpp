@@ -84,12 +84,13 @@ skybox(this)
 
 	sun.SetColor(gl::Vec3f(1, 1, 1));
 	
-	baseFramebuffer = Framebuffer(screenWidth, screenHeight, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
-	aoValueFB = Framebuffer(screenWidth, screenHeight, Framebuffer::ATTACHMENT_COLOR);
-	objectsFB = Framebuffer(screenWidth, screenHeight, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH | Framebuffer::ATTACHMENT_NORMAL);
-	AddFramebufferForManagment(baseFramebuffer);
+	intermediateFramebuffer = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
+	aoResultFB = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
+	objectsFB = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH | Framebuffer::ATTACHMENT_NORMAL);
+	halfSizedIntermFramebuffer = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
+	AddFramebufferForManagment(intermediateFramebuffer);
+	AddFramebufferForManagment(aoResultFB);
 	AddFramebufferForManagment(objectsFB);
-	//ao FB needs extra care
 
 	finalFramebufferCopy = LoadShaderProgramFromFiles("FinalFramebufferCopy_v.glsl", "FinalFramebufferCopy_f.glsl");
 	finalFramebufferCopy.Use();
@@ -144,7 +145,7 @@ void GraphicsEngine::Update(double elapsedSeconds)
 void GraphicsEngine::Draw()
 {
 	glContext.Viewport(0, 0, screenWidth, screenHeight);
-	baseFramebuffer.Bind(gl::Framebuffer::Target::Draw);
+	intermediateFramebuffer.Bind(gl::Framebuffer::Target::Draw);
 	glContext.Disable(gl::Capability::Blend);
 	glContext.Enable(gl::Capability::DepthTest);
 	DrawScene();
@@ -187,8 +188,8 @@ void GraphicsEngine::Resize(const int width, const int height)
 	for (auto current : managedFramebuffers) {
 		current->SetResolution(width, height);
 	}
-	
-	aoValueFB.SetResolution(width/2, height/2);
+
+	halfSizedIntermFramebuffer.SetResolution(width/2, height/2);
 }
 
 int GraphicsEngine::GetScreenWidth() const
@@ -201,45 +202,6 @@ int GraphicsEngine::GetScreenHeight() const
 	return screenHeight;
 }
 
-/*
-void GraphicsEngine::PushFramebuffer(uint8_t framebufferAttachmentFlags)
-{
-	framebuffers.push_back(std::move(Framebuffer(screenWidth, screenHeight, framebufferAttachmentFlags)));
-	framebuffers.back().Bind(gl::Framebuffer::Target::Draw);
-}
-
-void GraphicsEngine::PopFramebuffer()
-{
-	if (framebuffers.size() > 1) {
-		framebuffers.pop_back();
-		framebuffers.back().Bind(gl::Framebuffer::Target::Draw);
-	}
-}
-
-void GraphicsEngine::CopyFramebufferContents(const Framebuffer& source)
-{
-	source.Bind(gl::Framebuffer::Target::Read);
-	glContext.BlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight, gl::Bitfield<gl::enums::BufferSelectBit>(gl::enums::BufferSelectBit::DepthBuffer) |= gl::enums::BufferSelectBit::ColorBuffer, gl::enums::BlitFilter::Nearest);
-}
-
-Framebuffer& GraphicsEngine::GetCurrentFramebuffer()
-{
-	return framebuffers.back();
-}
-*/
-
-/*
-void GraphicsEngine::SetCurrentFramebuffer(Framebuffer& current)
-{
-	pCurrentFramebuffer = &current;
-}
-
-Framebuffer& GraphicsEngine::GetCurrentFramebuffer()
-{
-	return *pCurrentFramebuffer;
-}
-*/
-
 void GraphicsEngine::SetCurrentFramebuffer(Framebuffer& current)
 {
 	current.Bind(gl::FramebufferTarget::Draw);
@@ -251,9 +213,9 @@ Framebuffer& GraphicsEngine::GetCurrentFramebuffer()
 	return *pCurrentFramebuffer;
 }
 
-Framebuffer& GraphicsEngine::GetBaseFramebuffer()
+Framebuffer& GraphicsEngine::GetIntermediateFramebuffer()
 {
-	return baseFramebuffer;
+	return intermediateFramebuffer;
 }
 
 void GraphicsEngine::AddFramebufferForManagment(Framebuffer& framebuffer)
@@ -266,7 +228,7 @@ float GraphicsEngine::GetObjectsDepthBufferValue(int x, int y)
 	objectsFB.Bind(gl::FramebufferTarget::Read);
 	GLfloat result;
 	glContext.ReadPixels(x, y, 1, 1, gl::enums::PixelDataFormat::DepthComponent, gl::PixelDataType::Float, &result);
-	//ReadPixels(cursorPos.x, cursorPos.y, 1, 1, gl::enums::PixelDataFormat::DepthComponent, gl::PixelDataType::Float, &depthAtPixel);
+	//gl::Framebuffer::Bind(gl::FramebufferTarget::Read, gl::FramebufferName::InvalidName());
 	
 	//RESET framebuffer that was bound if framebuffer was needed to be bound on draw target
 	//SetCurrentFramebuffer(GetCurrentFramebuffer());
@@ -579,7 +541,7 @@ void GraphicsEngine::DrawScene()
 	selectedBuffers.pop_back();
 	glContext.DrawBuffers(selectedBuffers);
 
-	//DrawAmbientOcclusion();
+	DrawAmbientOcclusion();
 
 	skybox.Draw();
 
@@ -612,13 +574,9 @@ void GraphicsEngine::DrawAmbientOcclusion()
 
 	//TODO enable framebuffer to use a chosen number of color channels
 	//so framebuffer texture reads, and writes might be optimized
-	//Framebuffer aoValueFB(targetW, targetH, Framebuffer::ATTACHMENT_COLOR);
-	//aoValueFB.Bind(gl::FramebufferTarget::Draw);
-	SetCurrentFramebuffer(aoValueFB);
+	SetCurrentFramebuffer(halfSizedIntermFramebuffer);
+	glContext.Clear().ColorBuffer();
 
-	glContext.Clear().ColorBuffer().DepthBuffer();
-
-	//objectsFB.SetTextureShaderID(Framebuffer::ATTACHMENT_COLOR, "objectColor", 0);
 	objectsFB.SetTextureShaderID(Framebuffer::ATTACHMENT_NORMAL, "objectNormal", 0);
 	objectsFB.SetTextureShaderID(Framebuffer::ATTACHMENT_DEPTH, "objectDepth", 1);
 	objectsFB.SetShaderProgram(&ssaoCalcProgram, Framebuffer::ATTACHMENT_NORMAL | Framebuffer::ATTACHMENT_DEPTH);
@@ -633,12 +591,11 @@ void GraphicsEngine::DrawAmbientOcclusion()
 	
 
 	//ao is drawn to the target, lets draw it on screen
-	SetCurrentFramebuffer(baseFramebuffer);
+	SetCurrentFramebuffer(aoResultFB);
 	glContext.Clear().ColorBuffer().DepthBuffer();
 
-	//ssaoDrawProgram.Use();
-	aoValueFB.SetTextureShaderID(Framebuffer::ATTACHMENT_COLOR, "aoValue", 2);
-	aoValueFB.SetShaderProgram(&ssaoDrawProgram, Framebuffer::ATTACHMENT_COLOR);
+	halfSizedIntermFramebuffer.SetTextureShaderID(Framebuffer::ATTACHMENT_COLOR, "aoValue", 2);
+	halfSizedIntermFramebuffer.SetShaderProgram(&ssaoDrawProgram, Framebuffer::ATTACHMENT_COLOR);
 	
 	gl::UniformSampler(ssaoDrawProgram, "objectColor").Set(0);
 	gl::Texture::Active(0);
@@ -647,8 +604,7 @@ void GraphicsEngine::DrawAmbientOcclusion()
 	gl::Texture::Active(1);
 	objectsFB.GetTexture(Framebuffer::ATTACHMENT_DEPTH).Bind(gl::Texture::Target::_2D);
 
-	//glContext.Disable(gl::Capability::Blend);
 	IGNORE_TRY( ssaoDraw_screenWidth.Set(screenWidth) );
 	IGNORE_TRY( ssaoDraw_screenHeight.Set(screenHeight) );
-	aoValueFB.Draw(*this);
+	halfSizedIntermFramebuffer.Draw(*this);
 }
