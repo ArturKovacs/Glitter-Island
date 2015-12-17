@@ -22,7 +22,7 @@ can be generated using [CMake](https://cmake.org/).
 
 **OpenGL 3.3 is required to build and run this application.**
 
-Theres no dependencies needed to be installed for _Visual Studio 2013_, project is 
+Theres no dependencies needed to be installed for _Visual Studio 2015_, project is 
 ready to be used out-of-the-box for its compiler.
 
 In case of an _other compiler_ the following dependencies' dev packages are required to be installed:
