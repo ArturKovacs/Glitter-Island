@@ -43,8 +43,8 @@ if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") OR ("${CMAKE_CXX_COMPILER_ID}"
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	# using Visual Studio C++
 	# message("No support for MSVC at this time")
-	if(${USE_PROVIDED_OGLPLUS} AND (${MSVC_VERSION} LESS 1800))
-		message(FATAL_ERROR "Provided oglplus headers are set up for VS 2013. Please use Visual Studio of at least version 12 (2013) or install oglplus from source.")
+	if((${MSVC_VERSION} LESS 1900))
+		message(FATAL_ERROR "Provided libraries are set up for VS 2015. Please use Visual Studio of at least version 14 (2015) or get a previous version of this software from github.")
 	endif()
 	
 	set(SFML_LIB_DIR ${CMAKE_SOURCE_DIR}/extlibs/SFML/lib)
