@@ -53,13 +53,6 @@ void StandardMaterial::Prepare(Mesh::Submesh& submsh)
 	gl::Texture::Active(1);
 	normal_spec_rough_Texture.Bind(gl::Texture::Target::_2D);
 
-	//gl::Texture::Active(1);
-	//normalMap.Bind(gl::Texture::Target::_2D);
-	//gl::Texture::Active(2);
-	//specularTexture.Bind(gl::Texture::Target::_2D);
-	//gl::Texture::Active(3);
-	//roughnessTexture.Bind(gl::Texture::Target::_2D);
-
 	if (isTransparent) {
 		pGraphicsEngine->GetGLContext().Disable(gl::Capability::CullFace);
 	}

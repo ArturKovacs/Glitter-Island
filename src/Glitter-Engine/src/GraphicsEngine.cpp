@@ -133,7 +133,7 @@ skybox(this)
 	subfrustumFarPlanePositionRatios[4] = 1;
 	
 	for (auto& currFramebuffer : lightCascadeShadowMapFramebuffers) {
-		currFramebuffer = std::move(Framebuffer{shadowMapResolution, shadowMapResolution, Framebuffer::ATTACHMENT_DEPTH});
+		currFramebuffer = std::move(Framebuffer{shadowMapResX, shadowMapResY, Framebuffer::ATTACHMENT_DEPTH});
 		//currFramebuffer.SetResolution(shadowMapResolution, shadowMapResolution);
 	}
 }
@@ -360,14 +360,6 @@ SimpleColoredDrawer& GraphicsEngine::GetSimpleColoredDrawer()
 //
 ////////////////////////////////////////////
 
-/*
-void GraphicsEngine::ClearFramebufferStack()
-{
-	framebuffers.resize(1);
-
-	framebuffers.back().Bind(gl::Framebuffer::Target::Draw);
-}
-*/
 
 void GraphicsEngine::UpdateLightViewTransform()
 {
@@ -443,15 +435,16 @@ void GraphicsEngine::DrawShadowMap(int cascadeID)
 	glContext.DrawBuffer(gl::enums::ColorBuffer::None);
 
 	SetActiveCamera(&(lightCascadeCameras[cascadeID]));
-	glContext.Viewport(0, 0, shadowMapResolution, shadowMapResolution);
+	glContext.Viewport(0, 0, shadowMapResX, shadowMapResY);
 	glContext.Clear().DepthBuffer();
-
+	glContext.CullFace(gl::enums::Face::Front);
 	for (auto& current : managedGraphicalObjects) {
 		current.Draw(this);
 	}
 	for (auto current : externalGraphicalObjects) {
 		//current->Draw(this);
 	}
+	glContext.CullFace(gl::enums::Face::Back);
 }
 
 void GraphicsEngine::DrawObjects()

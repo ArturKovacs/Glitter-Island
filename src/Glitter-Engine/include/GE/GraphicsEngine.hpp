@@ -127,8 +127,9 @@ private: // objects
 	SimpleColoredDrawer simpleColoredDrawer;
 	
 private: //CSM
-	static const int shadowMapResolution = 2048;
-	static const int lightCascadeCount = 5;
+	static constexpr int shadowMapResX = 2048;
+	static constexpr int shadowMapResY = 1024;
+	static constexpr int lightCascadeCount = 5;
 	
 	/// Position of the far planes of the subfrusta. Values mean a linear interpolation where 0 is view frustum's nearPlane, and 1 is view frustum's farPlane.
 	/// The value with the lowest index corresponds to the nearest subfrustum.
