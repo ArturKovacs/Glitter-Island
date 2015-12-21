@@ -98,11 +98,11 @@ void TextDrawer::Draw(gl::Context& glContext, const sf::Text& text)
 	sh_char_characterColor.Set(glm::vec4(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f));
 
 	const float* ptr = text.getTransform().getMatrix();
-	glm::mat4 baseTransform = glm::transpose(glm::mat4(
-		ptr[0], ptr[4], ptr[8], ptr[12],
-		ptr[1], ptr[5], ptr[9], ptr[13],
-		ptr[2], ptr[6], ptr[10], ptr[14],
-		ptr[3], ptr[7], ptr[11], ptr[15]));
+	glm::mat4 baseTransform = glm::mat4(
+		ptr[0], ptr[1], ptr[2], ptr[3],
+		ptr[4], ptr[5], ptr[6], ptr[7],
+		ptr[8], ptr[9], ptr[10], ptr[11],
+		ptr[12], ptr[13], ptr[14], ptr[15]);
 
 	sf::Vector2f charOffset = sf::Vector2f(0, characterSize);
 
@@ -159,11 +159,11 @@ void TextDrawer::DrawBackground(gl::Context& glContext, const sf::Text& text, co
 	bgRect.width = maxWidth + 2*border;
 
 	const float* ptr = text.getTransform().getMatrix();
-	glm::mat4 baseTransform = glm::transpose(glm::mat4(
-		ptr[0], ptr[4], ptr[8], ptr[12],
-		ptr[1], ptr[5], ptr[9], ptr[13],
-		ptr[2], ptr[6], ptr[10], ptr[14],
-		ptr[3], ptr[7], ptr[11], ptr[15]));
+	glm::mat4 baseTransform = glm::mat4(
+		ptr[0], ptr[1], ptr[2], ptr[3],
+		ptr[4], ptr[5], ptr[6], ptr[7],
+		ptr[8], ptr[9], ptr[10], ptr[11],
+		ptr[12], ptr[13], ptr[14], ptr[15]);
 
 	backgroundShader.Use();
 

@@ -16,9 +16,10 @@ StandardMaterial::StandardMaterial(GraphicsEngine* pGraphicsEngine) : pGraphicsE
 		sh_modelTransposedInverse = gl::Uniform<glm::mat4>(shaderProgram, "model_transposed_inverse");
 		sh_lightDir = gl::Uniform<glm::vec3>(shaderProgram, "lightDir");
 		gl::UniformSampler(shaderProgram, "albedoTexture").Set(0);
-		gl::UniformSampler(shaderProgram, "normalMap").Set(1);
-		gl::UniformSampler(shaderProgram, "specularTexture").Set(2);
-		gl::UniformSampler(shaderProgram, "roughnessTexture").Set(3);
+		gl::UniformSampler(shaderProgram, "normal2_spec1_rough1_Tex").Set(1);
+		//gl::UniformSampler(shaderProgram, "normalMap").Set(1);
+		//gl::UniformSampler(shaderProgram, "specularTexture").Set(2);
+		//gl::UniformSampler(shaderProgram, "roughnessTexture").Set(3);
 	}
 	catch (gl::Error& err) {
 		std::cout << err.what() << std::endl;
@@ -50,11 +51,14 @@ void StandardMaterial::Prepare(Mesh::Submesh& submsh)
 	gl::Texture::Active(0);
 	albedoTexture.Bind(gl::Texture::Target::_2D);
 	gl::Texture::Active(1);
-	normalMap.Bind(gl::Texture::Target::_2D);
-	gl::Texture::Active(2);
-	specularTexture.Bind(gl::Texture::Target::_2D);
-	gl::Texture::Active(3);
-	roughnessTexture.Bind(gl::Texture::Target::_2D);
+	normal_spec_rough_Texture.Bind(gl::Texture::Target::_2D);
+
+	//gl::Texture::Active(1);
+	//normalMap.Bind(gl::Texture::Target::_2D);
+	//gl::Texture::Active(2);
+	//specularTexture.Bind(gl::Texture::Target::_2D);
+	//gl::Texture::Active(3);
+	//roughnessTexture.Bind(gl::Texture::Target::_2D);
 
 	if (isTransparent) {
 		pGraphicsEngine->GetGLContext().Disable(gl::Capability::CullFace);

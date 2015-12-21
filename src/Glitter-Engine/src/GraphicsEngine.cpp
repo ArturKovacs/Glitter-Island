@@ -61,8 +61,6 @@ gl::Program GraphicsEngine::LoadShaderProgramFromFiles(const std::string& vs_nam
 	return result;
 }
 
-#define IGNORE_TRY(x) try{x;}catch(std::exception&ex){std::cout<<ex.what()<<std::endl;}
-
 GraphicsEngine::GraphicsEngine() :
 screenWidth(0), screenHeight(0),
 terrainSize(500), waterLevel(49), terrain(this), water(this, terrainSize * 7),
@@ -314,6 +312,7 @@ void GraphicsEngine::AddGraphicalObject(GraphicalObject&& newObject)
 
 	for (auto& currSubmesh : moved.GetMesh()->GetSubmeshes()) {
 		instancedGraphicalObjects[&currSubmesh].push_back(&moved);
+		std::cout << "count: " << instancedGraphicalObjects[&currSubmesh].size() << std::endl;
 	}
 }
 
@@ -384,13 +383,14 @@ void GraphicsEngine::UpdateLightViewTransform()
 
 	assert(lightViewX.y == 0);
 	assert(glm::dot(lightViewX, lightViewY) < 0.001 && glm::dot(lightViewZ, lightViewY) < 0.001 && glm::dot(lightViewX, lightViewZ) < 0.001);
+
 	/// Use transpose instead of expensive inverse since this matrix is orthogonal.
 	/// The elements are written down transposed so this matrix
 	/// is already transposed when constructed.
 	lightViewTransform = glm::mat4(
-		lightViewX.x, lightViewX.y, lightViewX.z, 0,
-		lightViewY.x, lightViewY.y, lightViewY.z, 0,
-		lightViewZ.x, lightViewZ.y, lightViewZ.z, 0,
+		lightViewX.x, lightViewY.x, lightViewZ.x, 0,
+		lightViewX.y, lightViewY.y, lightViewZ.y, 0,
+		lightViewX.z, lightViewY.z, lightViewZ.z, 0,
 		           0,            0,            0, 1);
 }
 
@@ -415,22 +415,13 @@ void GraphicsEngine::UpdateLightCascadeCamera(int cascadeID)
 	glm::vec3 AABBmin = subFrustum.nearPlane.at(0);
 	glm::vec3 AABBmax = subFrustum.nearPlane.at(0);
 	
-	{
-		using planeType = decltype(subFrustum.nearPlane);
-		static_assert(std::is_same<glm::vec3, planeType::value_type>::value, "Error plane quad does not consist of expected types.");
-	}
-	constexpr int componentCount = 3;
 	for (auto& currVertex : subFrustum.nearPlane) {
-		for (int i = 0; i < componentCount; i++) {
-			AABBmin[i] = std::min(AABBmin[i], currVertex[i]);
-			AABBmax[i] = std::max(AABBmax[i], currVertex[i]);
-		}
+		AABBmin = glm::min(AABBmin, currVertex);
+		AABBmax = glm::max(AABBmax, currVertex);
 	}
 	for (auto& currVertex : subFrustum.farPlane) {
-		for (int i = 0; i < componentCount; i++) {
-			AABBmin[i] = std::min(AABBmin[i], currVertex[i]);
-			AABBmax[i] = std::max(AABBmax[i], currVertex[i]);
-		}
+		AABBmin = glm::min(AABBmin, currVertex);
+		AABBmax = glm::max(AABBmax, currVertex);
 	}
 
 	lightCascadeCameras[cascadeID].SetViewTransform(lightViewTransform);
@@ -472,8 +463,9 @@ void GraphicsEngine::DrawObjects()
 	//}
 
 	glContext.Disable(gl::Capability::CullFace);
-	glContext.Enable(gl::Capability::Blend);
-	glContext.BlendFunc(gl::enums::BlendFunction::SrcAlpha, gl::enums::BlendFunction::OneMinusSrcAlpha);
+	//glContext.Enable(gl::Capability::Blend);
+	//glContext.BlendFunc(gl::enums::BlendFunction::SrcAlpha, gl::enums::BlendFunction::OneMinusSrcAlpha);
+	glContext.Disable(gl::Capability::Blend);
 
 	for (auto& currAssociation : instancedGraphicalObjects) {
 		Mesh::Submesh* submesh = currAssociation.first;
@@ -547,7 +539,7 @@ void GraphicsEngine::DrawScene()
 
 	water.Draw();
 
-//	fog.Draw(*this);
+	//fog.Draw(*this);
 
 	//(TODO) WARNING: Drawing Skybox twice! It's only purpose is to make water fade out.
 	//Please note that drawing skybox ONLY after water is not a good solution, because without a skybox behind water, it will refract black background making distant water black.

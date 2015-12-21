@@ -29,15 +29,6 @@ StandardMaterial* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngi
 {
 	StandardMaterial *pResult = new StandardMaterial(pGraphicsEngine);
 
-	//Initialize normal map
-	{
-		std::vector<sf::Uint8> pixelData = { 128, 128, 255, 255 };
-		sf::Image img;
-		img.create(1, 1, pixelData.data());
-
-		LoadTexture(pResult->normalMap, img, TextureType::DATA);
-	}
-
 	std::ifstream file(filename);
 
 	if (!file.is_open()) {
@@ -67,6 +58,19 @@ StandardMaterial* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngi
 		throw std::runtime_error(std::string("Could not find material \"") + materialName + "\" in file: " + filename);
 	}
 
+	sf::Image normalImg;
+	sf::Image specularImg;
+	sf::Image roughnessImg;
+
+	//Initialize normal map
+	{
+		std::vector<sf::Uint8> pixelData = { 128, 128, 255, 255 };
+		sf::Image img;
+		img.create(1, 1, pixelData.data());
+
+		normalImg = std::move(img);
+	}
+
 	bool readingTargetMaterial = true;
 	while (file >> read && readingTargetMaterial) {
 		if (read == "map_Kd") {
@@ -78,16 +82,14 @@ StandardMaterial* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngi
 			}
 			img.flipVertically();
 
-			using pixelType = glm::tvec4<sf::Uint8>;
-			static_assert(sizeof(pixelType) == 4*sizeof(sf::Uint8), "glm::vec size does not fit data layout");
-			const pixelType* pixelPtr = reinterpret_cast<const pixelType*>(img.getPixelsPtr());
-
-			const int pixelCount = img.getSize().x * img.getSize().y;
 			const sf::Uint8 treshold = 250;
-			for (size_t i = 0; i < pixelCount; i++) {
-				if (pixelPtr[i].a < treshold) {
-					pResult->isTransparent = true;
-					break;
+			bool &transparent = pResult->isTransparent;
+			transparent = false;
+			for (size_t x = 0; x < img.getSize().x && !transparent; x++) {
+				for (size_t y = 0; y < img.getSize().y && !transparent; y++) {
+					if (img.getPixel(x, y).a < treshold) {
+						pResult->isTransparent = true;
+					}
 				}
 			}
 
@@ -96,18 +98,21 @@ StandardMaterial* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngi
 		else if (read == "map_Ks") {
 			file >> texFilename;
 
-			LoadTexture(pResult->specularTexture, GraphicsEngine::GetImgFolderPath() + texFilename, TextureType::COLOR);
+			specularImg = LoadImage(GraphicsEngine::GetImgFolderPath() + texFilename);
+			//LoadTexture(pResult->specularTexture, GraphicsEngine::GetImgFolderPath() + texFilename, TextureType::COLOR);
 		}
 		else if (read == "map_Ns") {
 			file >> texFilename;
 
 			//TODO map_Ns is the the inverse of roughness!!
-			LoadTexture(pResult->roughnessTexture, GraphicsEngine::GetImgFolderPath() + texFilename, TextureType::COLOR);
+			roughnessImg = LoadImage(GraphicsEngine::GetImgFolderPath() + texFilename);
+			//LoadTexture(pResult->roughnessTexture, GraphicsEngine::GetImgFolderPath() + texFilename, TextureType::COLOR);
 		}
 		else if (read == "map_Bump" || read == "map_bump" || read == "bump") {
 			file >> texFilename;
 
-			LoadTexture(pResult->normalMap, GraphicsEngine::GetImgFolderPath() + texFilename, TextureType::DATA);
+			normalImg = LoadImage(GraphicsEngine::GetImgFolderPath() + texFilename);
+			//LoadTexture(pResult->normalMap, GraphicsEngine::GetImgFolderPath() + texFilename, TextureType::DATA);
 		}
 		else if (read == "newmtl") {
 			readingTargetMaterial = false;
@@ -116,6 +121,36 @@ StandardMaterial* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngi
 			file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		}
 	}
+
+	//merge the normal, specular, and roughness together!
+	const int normalW = normalImg.getSize().x;
+	const int normalH = normalImg.getSize().y;
+
+	if (specularImg.getSize() == sf::Vector2u(0, 0)) {
+		specularImg.create(normalW, normalH);
+	}
+	if (roughnessImg.getSize() == sf::Vector2u(0, 0)) {
+		roughnessImg.create(normalW, normalH);
+	}
+
+	const bool sizes_match = (normalImg.getSize() == specularImg.getSize()) && (normalImg.getSize() == roughnessImg.getSize());
+	if (!sizes_match) {
+		throw std::runtime_error("Normal map, specular map, and roughness map must have the same size. ("+filename+")");
+	}
+
+	sf::Image normal_spec_rough_img;
+	normal_spec_rough_img.create(normalW, normalH);
+
+	for (size_t x = 0; x < normal_spec_rough_img.getSize().x; x++) {
+		for (size_t y = 0; y < normal_spec_rough_img.getSize().y; y++) {
+			sf::Color normal = normalImg.getPixel(x, y);
+			sf::Uint8 spec = specularImg.getPixel(x, y).r;
+			sf::Uint8 roughness = roughnessImg.getPixel(x, y).r;
+			normal_spec_rough_img.setPixel(x, y, sf::Color(normal.r, normal.g, spec, roughness));
+		}
+	}
+
+	LoadTexture(pResult->normal_spec_rough_Texture, normal_spec_rough_img, TextureType::DATA);
 
 	return pResult;
 }
@@ -150,4 +185,17 @@ void MaterialManager::LoadTexture(gl::Texture& target, const sf::Image& img, Tex
 		gl::enums::PixelDataFormat::RGBA,
 		gl::DataType::UnsignedByte,
 		img.getPixelsPtr());
+}
+
+sf::Image MaterialManager::LoadImage(const std::string& filename)
+{
+	sf::Image img;
+
+	if (!img.loadFromFile(filename)){
+		throw std::runtime_error(filename);
+	}
+
+	img.flipVertically();
+
+	return img;
 }
