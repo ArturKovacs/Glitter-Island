@@ -72,7 +72,26 @@ StandardMaterial* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngi
 		if (read == "map_Kd") {
 			file >> texFilename;
 
-			LoadTexture(pResult->albedoTexture, GraphicsEngine::GetImgFolderPath() + texFilename, TextureType::COLOR);
+			sf::Image img;
+			if (!img.loadFromFile(GraphicsEngine::GetImgFolderPath() + texFilename)) {
+				throw std::runtime_error(filename);
+			}
+			img.flipVertically();
+
+			using pixelType = glm::tvec4<sf::Uint8>;
+			static_assert(sizeof(pixelType) == 4*sizeof(sf::Uint8), "glm::vec size does not fit data layout");
+			const pixelType* pixelPtr = reinterpret_cast<const pixelType*>(img.getPixelsPtr());
+
+			const int pixelCount = img.getSize().x * img.getSize().y;
+			const sf::Uint8 treshold = 250;
+			for (size_t i = 0; i < pixelCount; i++) {
+				if (pixelPtr[i].a < treshold) {
+					pResult->isTransparent = true;
+					break;
+				}
+			}
+
+			LoadTexture(pResult->albedoTexture, img, TextureType::COLOR);
 		}
 		else if (read == "map_Ks") {
 			file >> texFilename;

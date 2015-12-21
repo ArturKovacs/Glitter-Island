@@ -473,25 +473,23 @@ void GraphicsEngine::DrawObjects()
 
 	glContext.Disable(gl::Capability::CullFace);
 	glContext.Enable(gl::Capability::Blend);
-	gl::Context::BlendFunc(gl::enums::BlendFunction::SrcAlpha, gl::enums::BlendFunction::OneMinusSrcAlpha);
+	glContext.BlendFunc(gl::enums::BlendFunction::SrcAlpha, gl::enums::BlendFunction::OneMinusSrcAlpha);
 
-	for (auto& current : instancedGraphicalObjects) {
-		Mesh::Submesh* submesh = current.first;
+	for (auto& currAssociation : instancedGraphicalObjects) {
+		Mesh::Submesh* submesh = currAssociation.first;
 		Material* pMaterial = submesh->GetMaterial();
 		if (pMaterial != nullptr) {
 			submesh->BindVAO();
-			auto& vector = current.second;
+			auto& objectsWithThisSubmesh = currAssociation.second;
 			pMaterial->Prepare(*submesh);
-			for(auto currentObject : vector) {
+			for(auto currentObject : objectsWithThisSubmesh) {
 				if (currentObject->IsVisible()){
 					if (currentObject->IsDepthTestEnabled()) {
 						glContext.Enable(gl::Capability::DepthTest);
-					}
-					else {
+					} else {
 						glContext.Disable(gl::Capability::DepthTest);
 					}
 					pMaterial->SetTransform(currentObject->GetTransform());
-
 					glContext.DrawElements(submesh->GetPrimitiveType(), submesh->GetNumOfIndices(), submesh->indexTypeEnum);
 				}
 			}

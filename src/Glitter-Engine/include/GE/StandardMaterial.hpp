@@ -17,8 +17,8 @@ public:
 	StandardMaterial(const StandardMaterial&) = delete;
 	StandardMaterial& operator=(const StandardMaterial&) = delete;
 
-	StandardMaterial(StandardMaterial&&);
-	StandardMaterial& operator=(StandardMaterial&&);
+	StandardMaterial(StandardMaterial&&) = default;
+	StandardMaterial& operator=(StandardMaterial&&) = default;
 
 	void Prepare(Mesh::Submesh& submsh, const glm::mat4& modelTransform) override;
 	void Prepare(Mesh::Submesh& submsh) override;
@@ -26,6 +26,8 @@ public:
 
 private:
 	GraphicsEngine* pGraphicsEngine;
+
+	bool isTransparent;
 
 	gl::Texture albedoTexture;
 	gl::Texture normalMap;

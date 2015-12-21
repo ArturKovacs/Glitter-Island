@@ -8,6 +8,8 @@ StandardMaterial::StandardMaterial(GraphicsEngine* pGraphicsEngine) : pGraphicsE
 	shaderProgram = GraphicsEngine::LoadShaderProgramFromFiles("StandardMaterial_v.glsl", "StandardMaterial_f.glsl");
 	shaderProgram.Use();
 
+	isTransparent = false;
+
 	try {
 		sh_MVP = gl::Uniform<glm::mat4>(shaderProgram, "MVP");
 		sh_MODELVIEW = gl::Uniform<glm::mat4>(shaderProgram, "MODELVIEW");
@@ -25,35 +27,6 @@ StandardMaterial::StandardMaterial(GraphicsEngine* pGraphicsEngine) : pGraphicsE
 
 StandardMaterial::~StandardMaterial()
 {}
-
-StandardMaterial::StandardMaterial(StandardMaterial&& r) :
-pGraphicsEngine(r.pGraphicsEngine),
-albedoTexture(std::move(r.albedoTexture)),
-normalMap(std::move(r.normalMap)),
-specularTexture(std::move(r.specularTexture)),
-roughnessTexture(std::move(r.roughnessTexture)),
-sh_lightDir(std::move(r.sh_lightDir)),
-sh_MVP(std::move(r.sh_MVP)),
-sh_MODELVIEW(std::move(r.sh_MODELVIEW)),
-sh_modelTransposedInverse(std::move(r.sh_modelTransposedInverse)),
-shaderProgram(std::move(r.shaderProgram))
-{}
-
-StandardMaterial& StandardMaterial::operator=(StandardMaterial&& r)
-{
-	pGraphicsEngine = r.pGraphicsEngine;
-	albedoTexture = std::move(r.albedoTexture);
-	normalMap = std::move(r.normalMap);
-	specularTexture = std::move(r.specularTexture);
-	roughnessTexture = std::move(r.roughnessTexture);
-	sh_lightDir = std::move(r.sh_lightDir);
-	sh_MVP = std::move(r.sh_MVP);
-	sh_MODELVIEW = std::move(r.sh_MODELVIEW);
-	sh_modelTransposedInverse = std::move(r.sh_modelTransposedInverse);
-	shaderProgram = std::move(r.shaderProgram);
-
-	return *this;
-}
 
 void StandardMaterial::Prepare(Mesh::Submesh& submsh, const glm::mat4& modelTransform)
 {
@@ -82,6 +55,13 @@ void StandardMaterial::Prepare(Mesh::Submesh& submsh)
 	specularTexture.Bind(gl::Texture::Target::_2D);
 	gl::Texture::Active(3);
 	roughnessTexture.Bind(gl::Texture::Target::_2D);
+
+	if (isTransparent) {
+		pGraphicsEngine->GetGLContext().Disable(gl::Capability::CullFace);
+	}
+	else {
+		pGraphicsEngine->GetGLContext().Enable(gl::Capability::CullFace);
+	}
 }
 
 void StandardMaterial::SetTransform(const glm::mat4& modelTransform)
