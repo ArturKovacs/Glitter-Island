@@ -4,6 +4,11 @@ if (${USE_PROVIDED_OGLPLUS})
 	include_directories(${CMAKE_SOURCE_DIR}/extlibs/oglplus/include)
 endif()
 
+if (${USE_PROVIDED_GLM})
+	message("Using provided glm.")
+	include_directories(${CMAKE_SOURCE_DIR}/extlibs/glm/include)
+endif()
+
 ########################################
 # Find/set all packages
 add_library(sfml-graphics UNKNOWN IMPORTED)

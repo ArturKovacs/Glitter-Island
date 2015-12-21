@@ -23,19 +23,19 @@ private:
 	gl::Buffer indices;
 
 	gl::Program waterShader;
-	gl::Uniform<gl::Mat4f> sh_MVP;
-	gl::Uniform<gl::Mat4f> sh_viewProj;
-	gl::Uniform<gl::Mat4f> sh_invMVP;
+	gl::Uniform<glm::mat4> sh_MVP;
+	gl::Uniform<glm::mat4> sh_viewProj;
+	gl::Uniform<glm::mat4> sh_invMVP;
 	gl::UniformSampler sh_screen;
 	gl::UniformSampler sh_screenDepth;
 	gl::Uniform<GLint> sh_screenWidth;
 	gl::Uniform<GLint> sh_screenHeight;
-	gl::Uniform<gl::Vec3f> sh_camPos;
-	gl::Uniform<gl::Vec3f> sh_sunDir;
+	gl::Uniform<glm::vec3> sh_camPos;
+	gl::Uniform<glm::vec3> sh_sunDir;
 	gl::Uniform<GLfloat> sh_time;
 
 	gl::Program geometryOnlyShader;
-	gl::Uniform<gl::Mat4f> sh_geomOnly_MVP;
+	gl::Uniform<glm::mat4> sh_geomOnly_MVP;
 	
 private:
 	void Draw();

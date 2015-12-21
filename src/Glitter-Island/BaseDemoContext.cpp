@@ -1,6 +1,7 @@
 #include "BaseDemoContext.hpp"
 
 #include "DemoCore.hpp"
+#include <iostream>
 
 BaseDemoContext::BaseDemoContext(ContextManager* pContextManager, DemoCore* pCore) :
 GUIContext(pContextManager, pCore),
@@ -20,17 +21,17 @@ editorContext(pContextManager, pCore)
 	//Y: 21.0493
 	//Z: 17.4667
 
-	cam.SetFovY(gl::Degrees(70));
+	cam.SetFovY(glm::radians(70.f));
 	cam.SetScreenWidth(pCore->GetScreenWidth());
 	cam.SetScreenHeight(pCore->GetScreenHeight());
-	cam.SetHorizontalRot(gl::Radians(4.10499));
-	cam.SetVerticalRot(gl::Radians(-0.275));
-	cam.SetPosition(gl::Vec3f(-27.2224, 21.0493, 17.4667));
+	cam.SetHorizontalRot(4.10499);
+	cam.SetVerticalRot(-0.275);
+	cam.SetPosition(glm::vec3(-27.2224, 21.0493, 17.4667));
 
 	selectedCam = &cam;
 	debugCam = cam;
 
-	sunAngleRad = 2 * (15.f/180)*gl::math::Pi();
+	sunAngleRad = 2 * (15.f/180)*glm::pi<float>();
 	
 	pCore->GetGraphicsEngine().GetDebugDrawer().SetActiveCam(&debugCam);
 	pCore->GetGraphicsEngine().SetActiveCamera(&cam);
@@ -95,8 +96,8 @@ void BaseDemoContext::Update(float deltaSec)
 	if (isTrackingMouse) {
 		const sf::Vector2i windowCenter = sf::Vector2i(pCore->GetScreenWidth() / 2, pCore->GetScreenHeight() / 2);
 
-		selectedCam->RotateHorizontally(gl::Radians(-1.f*(sfCursorPos.x - windowCenter.x) * pCore->GetMouseSensitivity()));
-		selectedCam->RotateVertically(gl::Radians(-1.f*(sfCursorPos.y - windowCenter.y) * pCore->GetMouseSensitivity()));
+		selectedCam->RotateHorizontally(-1.f*(sfCursorPos.x - windowCenter.x) * pCore->GetMouseSensitivity());
+		selectedCam->RotateVertically(-1.f*(sfCursorPos.y - windowCenter.y) * pCore->GetMouseSensitivity());
 
 		if (sfCursorPos != windowCenter) {
 			// Might be too agressive, but can't think of a better solution for now.
@@ -104,21 +105,8 @@ void BaseDemoContext::Update(float deltaSec)
 		}
 	}
 
-	pCore->GetGraphicsEngine().GetSun().SetDirectionTowardsSource(gl::Vec3f(1, 1, -1));
-	//pCore->GetGraphicsEngine().GetSun().SetDirectionTowardsSource(gl::Vec3f(std::cos(sunAngleRad), std::sin(sunAngleRad), 0));
-}
-
-static gl::Mat4f MyTranspose(const gl::Mat4f& input)
-{
-	gl::Mat4f result;
-
-	for (std::size_t i = 0; i != 4; ++i) {
-		for (std::size_t j = 0; j != 4; ++j) {
-			result.Set(i, j, input.At(j, i));
-		}
-	}
-
-	return result;
+	pCore->GetGraphicsEngine().GetSun().SetDirectionTowardsSource(glm::vec3(1, 1, -1));
+	//pCore->GetGraphicsEngine().GetSun().SetDirectionTowardsSource(glm::vec3(std::cos(sunAngleRad), std::sin(sunAngleRad), 0));
 }
 
 void BaseDemoContext::Draw()
@@ -207,11 +195,11 @@ void BaseDemoContext::KeyPressed(sf::Event::KeyEvent key)
 		break;
 
 	case sf::Keyboard::Up:
-		sunAngleRad += (15.f/180)*gl::math::Pi();
+		sunAngleRad += (15.f/180)*glm::pi<float>();
 		break;
 
 	case sf::Keyboard::Down:
-		sunAngleRad -= (15.f/180)*gl::math::Pi();
+		sunAngleRad -= (15.f/180)*glm::pi<float>();
 		break;
 
     default:

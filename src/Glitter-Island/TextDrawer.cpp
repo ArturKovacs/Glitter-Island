@@ -1,6 +1,16 @@
 #include "TextDrawer.hpp"
 
 #include "DemoCore.hpp"
+#include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
+
+class CustomMatrix
+{
+private:
+	float data[4][4];
+
+public:
+};
 
 TextDrawer::TextDrawer()
 {
@@ -8,10 +18,10 @@ TextDrawer::TextDrawer()
 	characterShader.Use();
 
 	try {
-		sh_char_MVP = gl::Uniform<gl::Mat4f>(characterShader, "MVP");
-		sh_char_texCoordMin = gl::Uniform<gl::Vec2f>(characterShader, "texCoordMin");
-		sh_char_texCoordMax = gl::Uniform<gl::Vec2f>(characterShader, "texCoordMax");
-		sh_char_characterColor = gl::Uniform<gl::Vec4f>(characterShader, "characterColor");
+		sh_char_MVP = gl::Uniform<glm::mat4>(characterShader, "MVP");
+		sh_char_texCoordMin = gl::Uniform<glm::vec2>(characterShader, "texCoordMin");
+		sh_char_texCoordMax = gl::Uniform<glm::vec2>(characterShader, "texCoordMax");
+		sh_char_characterColor = gl::Uniform<glm::vec4>(characterShader, "characterColor");
 		gl::UniformSampler(characterShader, "fontTexture").Set(0);
 	}
 	catch (gl::Error& err) {
@@ -22,30 +32,31 @@ TextDrawer::TextDrawer()
 	backgroundShader.Use();
 
 	try {
-		sh_bg_MVP = gl::Uniform<gl::Mat4f>(backgroundShader, "MVP");
-		sh_bg_color = gl::Uniform<gl::Vec4f>(backgroundShader, "color");
+		gl::Uniform<CustomMatrix> a;
+		sh_bg_MVP = gl::Uniform<glm::mat4>(backgroundShader, "MVP");
+		sh_bg_color = gl::Uniform<glm::vec4>(backgroundShader, "color");
 	}
 	catch (gl::Error& err) {
 		std::cout << err.what() << std::endl;
 	}
 
 	Mesh::Submesh submsh;
-	const std::vector<gl::Vec2f> pos = {
-		gl::Vec2f(0., 0.),
-		gl::Vec2f(0., 1.),
-		gl::Vec2f(1., 1.),
-		gl::Vec2f(1., 0.)
+	const std::vector<glm::vec2> pos = {
+		glm::vec2(0., 0.),
+		glm::vec2(0., 1.),
+		glm::vec2(1., 1.),
+		glm::vec2(1., 0.)
 	};
 	submsh.SetVertexAttributeBuffer(AttributeCategory::POSITION, pos);
 	submsh.SetVertexAttributeElementDimensions(AttributeCategory::POSITION, 2);
 	submsh.AttachVertexAttribute(AttributeCategory::POSITION, characterShader, "vertexPos");
 	submsh.AttachVertexAttribute(AttributeCategory::POSITION, backgroundShader, "vertexPos");
 
-	const std::vector<gl::Vec2f> texCoord = {
-		gl::Vec2f(0., 1.),
-		gl::Vec2f(0., 0.),
-		gl::Vec2f(1., 0.),
-		gl::Vec2f(1., 1.)
+	const std::vector<glm::vec2> texCoord = {
+		glm::vec2(0., 1.),
+		glm::vec2(0., 0.),
+		glm::vec2(1., 0.),
+		glm::vec2(1., 1.)
 	};
 	submsh.SetVertexAttributeBuffer(AttributeCategory::TEX_COORD, texCoord);
 	//quadMesh.AttachVertexAttribute(AttributeCategory::TEX_COORD, shaderProgram, "vertexTexCoord");
@@ -60,9 +71,9 @@ TextDrawer::TextDrawer()
 	quadMesh.GetSubmeshes().push_back(std::move(submsh));
 }
 
-void TextDrawer::SetScreenResolution(gl::Vec2i res)
+void TextDrawer::SetScreenResolution(glm::ivec2 res)
 {
-	projectionMatrix = gl::CamMatrixf::Ortho(0, res.x(), res.y(), 0, -1, 1);
+	projectionMatrix = glm::ortho<float>(0, res.x, res.y, 0, -1, 1);
 	//projectionMatrix = gl::CamMatrixf::Ortho(0, res.x(), 0, res.y(), -1, 1);
 }
 
@@ -84,14 +95,14 @@ void TextDrawer::Draw(gl::Context& glContext, const sf::Text& text)
 	sf::Texture::bind(&fontTexture);
 
 	const sf::Color& color = text.getColor();
-	sh_char_characterColor.Set(gl::Vec4f(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f));
+	sh_char_characterColor.Set(glm::vec4(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f));
 
 	const float* ptr = text.getTransform().getMatrix();
-	gl::Mat4f baseTransform = gl::Mat4f(
+	glm::mat4 baseTransform = glm::transpose(glm::mat4(
 		ptr[0], ptr[4], ptr[8], ptr[12],
 		ptr[1], ptr[5], ptr[9], ptr[13],
 		ptr[2], ptr[6], ptr[10], ptr[14],
-		ptr[3], ptr[7], ptr[11], ptr[15]);
+		ptr[3], ptr[7], ptr[11], ptr[15]));
 
 	sf::Vector2f charOffset = sf::Vector2f(0, characterSize);
 
@@ -112,11 +123,14 @@ void TextDrawer::Draw(gl::Context& glContext, const sf::Text& text)
 			sf::Glyph glyph = font.getGlyph(currChar, characterSize, (text.getStyle() & sf::Text::Bold) != 0);
 
 			sf::Vector2f charPos = charOffset + sf::Vector2f(glyph.bounds.left, glyph.bounds.top);
-			gl::Mat4f MVP = projectionMatrix * baseTransform * gl::ModelMatrixf::Translation(charPos.x, charPos.y, 0) * gl::ModelMatrixf::Scale(glyph.textureRect.width, glyph.textureRect.height, 0);
+			glm::mat4 MVP = glm::translate(glm::mat4(1.f), glm::vec3(charPos.x, charPos.y, 0));
+			MVP = glm::scale(MVP, glm::vec3(glyph.textureRect.width, glyph.textureRect.height, 0));
+			MVP = projectionMatrix * baseTransform * MVP;
+			//glm::mat4 MVP = projectionMatrix * baseTransform * gl::ModelMatrixf::Translation(charPos.x, charPos.y, 0) * gl::ModelMatrixf::Scale(glyph.textureRect.width, glyph.textureRect.height, 0);
 			sh_char_MVP.Set(MVP);
 
-			gl::Vec2f texCoordsMin(float(glyph.textureRect.left) / fontTexture.getSize().x, float(glyph.textureRect.top) / fontTexture.getSize().y);
-			gl::Vec2f texCoordsMax = texCoordsMin + gl::Vec2f(float(glyph.textureRect.width) / fontTexture.getSize().x, float(glyph.textureRect.height) / fontTexture.getSize().y);
+			glm::vec2 texCoordsMin(float(glyph.textureRect.left) / fontTexture.getSize().x, float(glyph.textureRect.top) / fontTexture.getSize().y);
+			glm::vec2 texCoordsMax = texCoordsMin + glm::vec2(float(glyph.textureRect.width) / fontTexture.getSize().x, float(glyph.textureRect.height) / fontTexture.getSize().y);
 
 			sh_char_texCoordMin.Set(texCoordsMin);
 			sh_char_texCoordMax.Set(texCoordsMax);
@@ -145,18 +159,21 @@ void TextDrawer::DrawBackground(gl::Context& glContext, const sf::Text& text, co
 	bgRect.width = maxWidth + 2*border;
 
 	const float* ptr = text.getTransform().getMatrix();
-	gl::Mat4f baseTransform = gl::Mat4f(
+	glm::mat4 baseTransform = glm::transpose(glm::mat4(
 		ptr[0], ptr[4], ptr[8], ptr[12],
 		ptr[1], ptr[5], ptr[9], ptr[13],
 		ptr[2], ptr[6], ptr[10], ptr[14],
-		ptr[3], ptr[7], ptr[11], ptr[15]);
+		ptr[3], ptr[7], ptr[11], ptr[15]));
 
 	backgroundShader.Use();
 
-	gl::Mat4f MVP = projectionMatrix * baseTransform * gl::ModelMatrixf::Translation(bgRect.left, bgRect.top, 0) * gl::ModelMatrixf::Scale(bgRect.width, bgRect.height, 0);
+	glm::mat4 MVP = glm::translate(glm::mat4(1.f), glm::vec3(bgRect.left, bgRect.top, 0));
+	MVP = glm::scale(MVP, glm::vec3(bgRect.width, bgRect.height, 0));
+	MVP = projectionMatrix * baseTransform * MVP;
+	//glm::mat4 MVP = projectionMatrix * baseTransform * gl::ModelMatrixf::Translation(bgRect.left, bgRect.top, 0) * gl::ModelMatrixf::Scale(bgRect.width, bgRect.height, 0);
 	sh_bg_MVP.Set(MVP);
 
-	sh_bg_color.Set(gl::Vec4f(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f));
+	sh_bg_color.Set(glm::vec4(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f));
 
 	Mesh::Submesh& quad_submsh = quadMesh.GetSubmeshes().at(0);
 	quad_submsh.BindVAO();

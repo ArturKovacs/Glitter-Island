@@ -32,7 +32,7 @@ void DebugDrawer::Draw()
 	pGraphicsEngine->GetGLContext().Clear().ColorBuffer().DepthBuffer();
 
 	for (auto& currMesh : meshes) {
-		pGraphicsEngine->GetSimpleColoredDrawer().Draw(pGraphicsEngine->GetGLContext(), currMesh, activeCam->GetViewProjectionTransform(), gl::Vec4f(1));
+		pGraphicsEngine->GetSimpleColoredDrawer().Draw(pGraphicsEngine->GetGLContext(), currMesh, activeCam->GetViewProjectionTransform(), glm::vec4(1));
 	}
 
 	meshes.clear();

@@ -8,15 +8,15 @@ pGraphEngine(pGraphicsEngine), visible(true)
 	waterShader = GraphicsEngine::LoadShaderProgramFromFiles("Water_v.glsl", "Water_f.glsl");
 	waterShader.Use();
 
-	sh_MVP = gl::Uniform<gl::Mat4f>(waterShader, "MVP");
-	sh_viewProj = gl::Uniform<gl::Mat4f>(waterShader, "viewProj");
-	//sh_invMVP = gl::Uniform<gl::Mat4f>(waterShader, "invMVP");
+	sh_MVP = gl::Uniform<glm::mat4>(waterShader, "MVP");
+	sh_viewProj = gl::Uniform<glm::mat4>(waterShader, "viewProj");
+	//sh_invMVP = gl::Uniform<glm::mat4>(waterShader, "invMVP");
 	sh_screen = gl::UniformSampler(waterShader, "screen");
 	sh_screenDepth = gl::UniformSampler(waterShader, "screenDepth");
 	sh_screenWidth = gl::Uniform<GLint>(waterShader, "screenWidth");
 	sh_screenHeight = gl::Uniform<GLint>(waterShader, "screenHeight");
-	sh_camPos = gl::Uniform<gl::Vec3f>(waterShader, "campos");
-	sh_sunDir = gl::Uniform<gl::Vec3f>(waterShader, "sunDir");
+	sh_camPos = gl::Uniform<glm::vec3>(waterShader, "campos");
+	sh_sunDir = gl::Uniform<glm::vec3>(waterShader, "sunDir");
 	sh_time = gl::Uniform<GLfloat>(waterShader, "time");
 
 	VAO.Bind();
@@ -32,8 +32,8 @@ pGraphEngine(pGraphicsEngine), visible(true)
 
 	vertexPos.Bind(gl::Buffer::Target::Array);
 	gl::Buffer::Data(gl::Buffer::Target::Array, vertexPosData);
-	gl::VertexArrayAttrib vert_attr(waterShader, "vertexPos");
-	vert_attr.Setup<gl::Vec3f>().Enable();
+	gl::VertexArrayAttrib vertAttr(waterShader, "vertexPos");
+	vertAttr.Setup(3, gl::DataType::Float).Enable();
 
 	std::vector<GLushort> indexData = {
 		0, 1, 2, 3

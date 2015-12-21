@@ -3,14 +3,14 @@
 #include "all_gl_headers.hpp"
 #include <array>
 
-using Quad = std::array<gl::Vec3f, 4>;
+using Quad = std::array<glm::vec3, 4>;
 
 struct Frustum
 {
 	Quad nearPlane;
 	Quad farPlane;
 
-	Frustum Transformed(const gl::Mat4f& transform);
+	Frustum Transformed(const glm::mat4& transform);
 };
 
 class Camera
@@ -18,9 +18,9 @@ class Camera
 public:
 	virtual ~Camera();
 
-	virtual gl::Mat4f GetProjectionTransform() const = 0;
-	virtual gl::Mat4f GetViewTransform() const = 0;
-	gl::Mat4f GetViewProjectionTransform() const;
+	virtual glm::mat4 GetProjectionTransform() const = 0;
+	virtual glm::mat4 GetViewTransform() const = 0;
+	glm::mat4 GetViewProjectionTransform() const;
 
 	/**
 	 * Get absoulte view frustum corresponding to this camera's current state.

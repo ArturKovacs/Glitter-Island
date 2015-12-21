@@ -1,10 +1,14 @@
 #include <GE/PerspectiveCamera.hpp>
 
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/constants.hpp>
+#include <glm/gtx/quaternion.hpp>
+
 PerspectiveCamera::PerspectiveCamera() :
-horRot(gl::Radians(0)),
-vertRot(gl::Radians(0)),
+horRot(0),
+vertRot(0),
 pos(0, 0, 0),
-fovy(gl::Degrees(60)),
+fovy(glm::radians(60.f)),
 zNear(0.5),
 zFar(500),
 screenWidth(0),
@@ -14,44 +18,44 @@ screenHeight(0)
 PerspectiveCamera::~PerspectiveCamera()
 {}
 
-void PerspectiveCamera::RotateVertically(const gl::Anglef rot)
+void PerspectiveCamera::RotateVertically(const float rot)
 {
 	vertRot += rot;
 }
 
-void PerspectiveCamera::RotateHorizontally(const gl::Anglef rot)
+void PerspectiveCamera::RotateHorizontally(const float rot)
 {
 	horRot += rot;
 }
 
 void PerspectiveCamera::MoveForward(const float amount)
 {
-	const gl::Vec3f forward(0, 0, -1);
-	pos += gl::Quatf::RotateVector(GetCameraRotation(), forward * amount);
+	const glm::vec3 forward(0, 0, -1);
+	pos += glm::rotate(GetCameraRotation(), forward * amount);
 }
 
 void PerspectiveCamera::MoveRight(const float amount)
 {
-	const gl::Vec3f right(1, 0, 0);
-	pos += gl::Quatf::RotateVector(GetCameraRotation(), right * amount);
+	const glm::vec3 right(1, 0, 0);
+	pos += glm::rotate(GetCameraRotation(), right * amount);
 }
 
-void PerspectiveCamera::SetHorizontalRot(const gl::Anglef rotRad)
+void PerspectiveCamera::SetHorizontalRot(const float rotRad)
 {
 	horRot = rotRad;
 }
 
-void PerspectiveCamera::SetVerticalRot(const gl::Anglef rotRad)
+void PerspectiveCamera::SetVerticalRot(const float rotRad)
 {
-	vertRot = gl::Degrees(std::min(std::max(rotRad.ValueInDegrees(), -90.f), 90.f));
+	vertRot = std::min(std::max(rotRad, -glm::pi<float>()), glm::pi<float>());
 }
 
-void PerspectiveCamera::SetPosition(const gl::Vec3f& newPos)
+void PerspectiveCamera::SetPosition(const glm::vec3& newPos)
 {
 	pos = newPos;
 }
 
-void PerspectiveCamera::SetFovY(const gl::Anglef fovy)
+void PerspectiveCamera::SetFovY(const float fovy)
 {
 	this->fovy = fovy;
 }
@@ -76,22 +80,22 @@ void PerspectiveCamera::SetScreenHeight(const int height)
 	screenHeight = height;
 }
 
-gl::Anglef PerspectiveCamera::GetHorizontalRot() const
+float PerspectiveCamera::GetHorizontalRot() const
 {
 	return horRot;
 }
 
-gl::Anglef PerspectiveCamera::GetVerticalRot() const
+float PerspectiveCamera::GetVerticalRot() const
 {
 	return vertRot;
 }
 
-gl::Vec3f PerspectiveCamera::GetPosition() const
+glm::vec3 PerspectiveCamera::GetPosition() const
 {
 	return pos;
 }
 
-gl::Anglef PerspectiveCamera::GetFovY() const
+float PerspectiveCamera::GetFovY() const
 {
 	return fovy;
 }
@@ -121,17 +125,17 @@ float PerspectiveCamera::GetAspectRatio() const
 	return float(screenWidth)/screenHeight;
 }
 
-gl::Quatf PerspectiveCamera::GetCameraRotation() const
+glm::quat PerspectiveCamera::GetCameraRotation() const
 {
-	return gl::Quatf(gl::Vec3f(0, 1, 0), horRot) * gl::Quatf(gl::Vec3f(1, 0, 0), vertRot);
+	return glm::angleAxis(horRot, glm::vec3(0, 1, 0)) * glm::angleAxis(vertRot, glm::vec3(1, 0, 0));
 }
 
-gl::Mat4f PerspectiveCamera::GetProjectionTransform() const
+glm::mat4 PerspectiveCamera::GetProjectionTransform() const
 {
-	return gl::CamMatrixf::PerspectiveY(fovy, GetAspectRatio(), zNear, zFar);
+	return glm::perspective(fovy, GetAspectRatio(), zNear, zFar);
 }
 
-gl::Mat4f PerspectiveCamera::GetViewTransform() const
+glm::mat4 PerspectiveCamera::GetViewTransform() const
 {
-	return gl::ModelMatrixf::RotationQ(gl::Quatf::Inverse(GetCameraRotation())) * gl::ModelMatrixf::Translation(-pos);
+	return glm::mat4(glm::inverse(GetCameraRotation())) * glm::translate(glm::mat4(1.f), -pos);
 }

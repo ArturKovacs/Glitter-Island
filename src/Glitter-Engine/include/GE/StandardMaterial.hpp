@@ -20,9 +20,9 @@ public:
 	StandardMaterial(StandardMaterial&&);
 	StandardMaterial& operator=(StandardMaterial&&);
 
-	void Prepare(Mesh::Submesh& submsh, const gl::Mat4f& modelTransform) override;
+	void Prepare(Mesh::Submesh& submsh, const glm::mat4& modelTransform) override;
 	void Prepare(Mesh::Submesh& submsh) override;
-	void SetTransform(const gl::Mat4f& modelTransform) override;
+	void SetTransform(const glm::mat4& modelTransform) override;
 
 private:
 	GraphicsEngine* pGraphicsEngine;
@@ -32,10 +32,10 @@ private:
 	gl::Texture specularTexture;
 	gl::Texture roughnessTexture;
 
-	gl::Uniform<gl::Vec3f> sh_lightDir;
-	gl::Uniform<gl::Mat4f> sh_MVP;
-	gl::Uniform<gl::Mat4f> sh_MODELVIEW;
-	gl::Uniform<gl::Mat4f> sh_modelTransposedInverse;
+	gl::Uniform<glm::vec3> sh_lightDir;
+	gl::Uniform<glm::mat4> sh_MVP;
+	gl::Uniform<glm::mat4> sh_MODELVIEW;
+	gl::Uniform<glm::mat4> sh_modelTransposedInverse;
 
 	gl::Program shaderProgram;
 };

@@ -8,8 +8,8 @@ public:
 	PerspectiveCamera();
 	~PerspectiveCamera();
 
-	void RotateVertically(const gl::Anglef rot);
-	void RotateHorizontally(const gl::Anglef rot);
+	void RotateVertically(const float rot);
+	void RotateHorizontally(const float rot);
 
 	/**
 	 * amount can be negative!
@@ -21,21 +21,21 @@ public:
 	 */
 	void MoveRight(const float amount);
 
-	void SetHorizontalRot(const gl::Anglef rot);
-	void SetVerticalRot(const gl::Anglef rot);
-	void SetPosition(const gl::Vec3f& newPos);
+	void SetHorizontalRot(const float rot);
+	void SetVerticalRot(const float rot);
+	void SetPosition(const glm::vec3& newPos);
 
-	void SetFovY(const gl::Anglef fovy);
+	void SetFovY(const float fovy);
 	void SetZNear(float near);
 	void SetZFar(float far);
 	void SetScreenWidth(const int width);
 	void SetScreenHeight(const int height);
 
-	gl::Anglef GetHorizontalRot() const;
-	gl::Anglef GetVerticalRot() const;
-	gl::Vec3f GetPosition() const;
+	float GetHorizontalRot() const;
+	float GetVerticalRot() const;
+	glm::vec3 GetPosition() const;
 
-	gl::Anglef GetFovY() const;
+	float GetFovY() const;
 	float GetZNear() const;
 	float GetZFar() const;
 	int GetScreenWidth() const;
@@ -43,17 +43,17 @@ public:
 
 	float GetAspectRatio() const;
 
-	gl::Quatf GetCameraRotation() const;
+	glm::quat GetCameraRotation() const;
 
-	gl::Mat4f GetProjectionTransform() const override;
-	gl::Mat4f GetViewTransform() const override;
+	glm::mat4 GetProjectionTransform() const override;
+	glm::mat4 GetViewTransform() const override;
 
 private:
-	gl::Anglef horRot;
-	gl::Anglef vertRot;
-	gl::Vec3f pos;
+	float horRot;
+	float vertRot;
+	glm::vec3 pos;
 
-	gl::Anglef fovy;
+	float fovy;
 	float zNear;
 	float zFar;
 

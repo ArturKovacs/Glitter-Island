@@ -22,8 +22,8 @@ public:
 	float GetZNear();
 	float GetZFar();
 
-	gl::Mat4f GetProjectionTransform() const override;
-	gl::Mat4f GetViewTransform() const override;
+	glm::mat4 GetProjectionTransform() const override;
+	glm::mat4 GetViewTransform() const override;
 
 private:
 	float xLeft, xRight;

@@ -5,16 +5,16 @@
 class DirectionalLight
 {
 private:
-	gl::Vec3f directionTowardsSource;
-	gl::Vec3f color;
+	glm::vec3 directionTowardsSource;
+	glm::vec3 color;
 
 public:
-	DirectionalLight(gl::Vec3f directionTowardsSource = gl::Vec3f(1, 0, 0), gl::Vec3f color = gl::Vec3f(1, 1, 1));
+	DirectionalLight(glm::vec3 directionTowardsSource = glm::vec3(1, 0, 0), glm::vec3 color = glm::vec3(1, 1, 1));
 
-	void SetDirectionTowardsSource(const gl::Vec3f& directionTowardsSource);
-	void SetColor(const gl::Vec3f& color);
+	void SetDirectionTowardsSource(const glm::vec3& directionTowardsSource);
+	void SetColor(const glm::vec3& color);
 
-	gl::Vec3f GetDirectionTowardsSource() const;
-	gl::Vec3f GetColor() const;
+	glm::vec3 GetDirectionTowardsSource() const;
+	glm::vec3 GetColor() const;
 };
 

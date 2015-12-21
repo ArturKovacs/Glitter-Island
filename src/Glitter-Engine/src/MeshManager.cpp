@@ -1,7 +1,9 @@
 #include <GE/MeshManager.hpp>
 
+#include <cassert>
 #include <cctype>
 #include <sstream>
+#include <iostream>
 
 #include <GE/GraphicsEngine.hpp>
 
@@ -26,11 +28,13 @@ Mesh* MeshManager::LoadMeshFromFile(GraphicsEngine* pGraphicsEngine, const std::
 template<typename elementType>
 static std::vector<GLfloat> GetFloatVector(const std::vector<elementType>& input, int inputDimensions)
 {
-	static_assert(std::is_same<elementType, gl::Vec2f>::value || std::is_same<elementType, gl::Vec3f>::value, "Unsupported type!");
+	constexpr bool is_vec2 = std::is_same<elementType, glm::vec2>::value;
+	constexpr bool is_vec3 = std::is_same<elementType, glm::vec3>::value;
+	static_assert(is_vec2 || is_vec3, "Unsupported type!");
 
-	if (input.size() > 0) {
-		assert(inputDimensions <= input.at(0).Size());
-	}
+	constexpr int elementCount = is_vec2 ? 2 : 3;
+
+	assert(inputDimensions <= elementCount);
 
 	std::vector<GLfloat> result(input.size()*inputDimensions);
 
@@ -84,12 +88,12 @@ struct OBJSubmesh
 	OBJSubmesh()
 	{
 		ForEachAttribute([&](AttributeCategory current){
-			vertexAttributes.insert(std::make_pair(current, std::vector<gl::Vec3f>()));
+			vertexAttributes.insert(std::make_pair(current, std::vector<glm::vec3>()));
 		});
 	}
 
 	std::vector<Mesh::Submesh::IndexType> indices;
-	std::map<AttributeCategory,  std::vector<gl::Vec3f> > vertexAttributes;
+	std::map<AttributeCategory,  std::vector<glm::vec3> > vertexAttributes;
 };
 
 Mesh* MeshManager::LoadFromOBJFile(GraphicsEngine* pGraphicsEngine, const std::string& filename)
@@ -109,10 +113,10 @@ Mesh* MeshManager::LoadFromOBJFile(GraphicsEngine* pGraphicsEngine, const std::s
 
 	std::string mtllibFilename;
 
-	std::map<AttributeCategory, std::vector<gl::Vec3f> > attribLists;
-	attribLists.insert(std::make_pair(AttributeCategory::POSITION, std::vector<gl::Vec3f>()));
-	attribLists.insert(std::make_pair(AttributeCategory::TEX_COORD, std::vector<gl::Vec3f>()));
-	attribLists.insert(std::make_pair(AttributeCategory::NORMAL, std::vector<gl::Vec3f>()));
+	std::map<AttributeCategory, std::vector<glm::vec3> > attribLists;
+	attribLists.insert(std::make_pair(AttributeCategory::POSITION, std::vector<glm::vec3>()));
+	attribLists.insert(std::make_pair(AttributeCategory::TEX_COORD, std::vector<glm::vec3>()));
+	attribLists.insert(std::make_pair(AttributeCategory::NORMAL, std::vector<glm::vec3>()));
 
 	std::string read;
 	std::string values_str;
@@ -128,9 +132,10 @@ Mesh* MeshManager::LoadFromOBJFile(GraphicsEngine* pGraphicsEngine, const std::s
 	auto ReadAndPutAttributeToList = [&](AttributeCategory attrib){
 		std::getline(objFile, values_str);
 		auto coordinates = get_values_str<GLfloat>(values_str);
-		gl::Vec3f attribData(0, 0, 0);
+		glm::vec3 attribData(0, 0, 0);
+		constexpr int numComponents = 3;
 
-		assert(coordinates.size() <= attribData.Size());
+		assert(coordinates.size() <= numComponents);
 
 		for (int i = 0; i < coordinates.size(); i++) {
 			attribData[i] = coordinates[i];
@@ -215,18 +220,18 @@ Mesh* MeshManager::LoadFromOBJFile(GraphicsEngine* pGraphicsEngine, const std::s
 				const auto& next = actualPosData.at(i + 1);
 				const auto& nextnext = actualPosData.at(i + 2);
 
-				gl::Vec2f deltaUV1 = actualTexCoordData.at(i + 1).xy() - actualTexCoordData.at(i).xy();
-				gl::Vec2f deltaUV2 = actualTexCoordData.at(i + 2).xy() - actualTexCoordData.at(i).xy();
+				glm::vec2 deltaUV1 = glm::vec2(actualTexCoordData.at(i + 1)) - glm::vec2(actualTexCoordData.at(i));
+				glm::vec2 deltaUV2 = glm::vec2(actualTexCoordData.at(i + 2)) - glm::vec2(actualTexCoordData.at(i));
 
-				float dU1 = deltaUV1.x();
-				float dU2 = deltaUV2.x();
-				float dV1 = deltaUV1.y();
-				float dV2 = deltaUV2.y();
+				float dU1 = deltaUV1.x;
+				float dU2 = deltaUV2.x;
+				float dV1 = deltaUV1.y;
+				float dV2 = deltaUV2.y;
 
-				gl::Vec3f edge1 = next - curr;
-				gl::Vec3f edge2 = nextnext - curr;
+				glm::vec3 edge1 = next - curr;
+				glm::vec3 edge2 = nextnext - curr;
 
-				gl::Vec3f tangent = (dV2*edge1 - dV1*edge2) / (dU1*dV2 - dU2*dV1);
+				glm::vec3 tangent = (dV2*edge1 - dV1*edge2) / (dU1*dV2 - dU2*dV1);
 
 				for (int i = 0; i < 3; i++) {
 					currentMesh.vertexAttributes.at(AttributeCategory::TANGENT).push_back(tangent);

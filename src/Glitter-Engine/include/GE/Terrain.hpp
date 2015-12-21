@@ -16,11 +16,11 @@ public:
 	void LoadFromHeightMap(const std::string& fileName, float scale, float heightMultiplyer, bool invertNormals = false);
 	void Draw();
 
-	void SetTransform(const gl::Mat4f& transform);
-	gl::Mat4f GetTransform() const;
+	void SetTransform(const glm::mat4& transform);
+	glm::mat4 GetTransform() const;
 
 	sf::Image& GetMaterialMap();
-	gl::Vec2i GetMaterialMapPos(const gl::Vec4f worldPos) const;
+	glm::ivec2 GetMaterialMapPos(const glm::vec4 worldPos) const;
 	float GetMaterialMapPixelSizeInWorldScale() const;
 	void DownloadMaterialMapToGPU();
 	void SaveMaterialMap() const;
@@ -39,14 +39,14 @@ private:
 	gl::Texture sandTexture;
 	gl::Texture grassTexture;
 
-	gl::Mat4f modelTransform;
-	std::vector<gl::Uniform<gl::Mat4f>> sh_worldToShadowMap;
+	glm::mat4 modelTransform;
+	std::vector<gl::Uniform<glm::mat4>> sh_worldToShadowMap;
 	std::vector<gl::Uniform<float>> sh_viewSubfrustumFarPlanesTexDepth;
-	gl::Uniform<gl::Mat4f> sh_modelTransform;
-	gl::Uniform<gl::Mat4f> sh_MVP;
-	gl::Uniform<gl::Mat4f> sh_modelTransposedInverse;
-	gl::Uniform<gl::Vec3f> sh_sunDir;
-	gl::Uniform<gl::Vec3f> sh_sunColor;
+	gl::Uniform<glm::mat4> sh_modelTransform;
+	gl::Uniform<glm::mat4> sh_MVP;
+	gl::Uniform<glm::mat4> sh_modelTransposedInverse;
+	gl::Uniform<glm::vec3> sh_sunDir;
+	gl::Uniform<glm::vec3> sh_sunColor;
 
 	gl::Program shaderProgram;
 
@@ -54,13 +54,13 @@ private:
 	static void LoadTexture(gl::Texture& target, sf::Image& srcImg, const std::string& filename, bool data, float anisotropy = 0);
 	static void LoadTexture(gl::Texture& target, const sf::Image& srcImg, bool data, float anisotropy = 0);
 
-	static gl::Vec3f GetLowerTriangleNormalFromQuad(const int bottomLeftVertexPosX, const int bottomLeftVertexPosY, const std::vector<gl::Vec3f>& positions, const int numHorizontalVertices);
-	static gl::Vec3f GetUpperTriangleNormalFromQuad(const int bottomLeftVertexPosX, const int bottomLeftVertexPosY, const std::vector<gl::Vec3f>& positions, const int numHorizontalVertices);
+	static glm::vec3 GetLowerTriangleNormalFromQuad(const int bottomLeftVertexPosX, const int bottomLeftVertexPosY, const std::vector<glm::vec3>& positions, const int numHorizontalVertices);
+	static glm::vec3 GetUpperTriangleNormalFromQuad(const int bottomLeftVertexPosX, const int bottomLeftVertexPosY, const std::vector<glm::vec3>& positions, const int numHorizontalVertices);
 
 	static int GetVertexIndex(const int width, const int x, const int y);
 
-	static void CalculatePositionsAndTexCoords(std::vector<gl::Vec3f>* positions, std::vector<gl::Vec2f>* texCoords, const sf::Image& image, const float scale, const float heightMultiplyer);
-	static void CalculateNormals(std::vector<gl::Vec3f>* normals, const sf::Image& image, const std::vector<gl::Vec3f>& positions);
+	static void CalculatePositionsAndTexCoords(std::vector<glm::vec3>* positions, std::vector<glm::vec2>* texCoords, const sf::Image& image, const float scale, const float heightMultiplyer);
+	static void CalculateNormals(std::vector<glm::vec3>* normals, const sf::Image& image, const std::vector<glm::vec3>& positions);
 
 	static void SetUpIndices(std::vector<Mesh::Submesh::IndexType>* indices, const int imgWidth, const int imgHeight);
 };

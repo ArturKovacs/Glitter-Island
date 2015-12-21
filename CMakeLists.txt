@@ -19,6 +19,7 @@ file(READ ${CMAKE_HOME_DIRECTORY}/cmake/additional-files/project.vcxproj.user US
 file(WRITE ${PROJECT_BINARY_DIR}/${SRC_FOLDER_NAME}/${EXECUTABLE_NAME}/${EXECUTABLE_NAME}.vcxproj.user "${USER_FILE_CONTENTS}")
 
 set(USE_PROVIDED_OGLPLUS 1 CACHE BOOL "If true, the compiler will be given the provided, prebuilt oglplus headres. If false, oglplus must be installed on the system.")
+set(USE_PROVIDED_GLM 1 CACHE BOOL "If true, the compiler will be given the provided glm headres. If false, glm must be installed on the system.")
 
 # From cmake 3 ...
 # set_property(GLOBAL PROPERTY CXX_STANDARD 11)

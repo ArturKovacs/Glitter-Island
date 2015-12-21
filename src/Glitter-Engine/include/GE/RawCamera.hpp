@@ -8,13 +8,13 @@ public:
 	RawCamera();
 	~RawCamera();
 
-	void SetProjectionTransform(const gl::Mat4f& transform);
-	void SetViewTransform(const gl::Mat4f& transform);
+	void SetProjectionTransform(const glm::mat4& transform);
+	void SetViewTransform(const glm::mat4& transform);
 
-	gl::Mat4f GetProjectionTransform() const override;
-	gl::Mat4f GetViewTransform() const override;
+	glm::mat4 GetProjectionTransform() const override;
+	glm::mat4 GetViewTransform() const override;
 
 private:
-	gl::Mat4f projectionTransform;
-	gl::Mat4f viewTransform;
+	glm::mat4 projectionTransform;
+	glm::mat4 viewTransform;
 };

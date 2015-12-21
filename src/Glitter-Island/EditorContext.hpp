@@ -47,7 +47,7 @@ public:
 private:
 	//bool isInEditorMode;
 	EditorTool selectedTool;
-	gl::Vec4f pointPosAtCursor;
+	glm::vec4 pointPosAtCursor;
 	float brushRadius;
 	Mesh brushCircleMesh;
 	SimpleColoredMaterial brushCircleMaterial;

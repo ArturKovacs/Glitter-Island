@@ -1,8 +1,11 @@
 #include <GE/GraphicsEngine.hpp>
 
+#include <glm/gtc/matrix_transform.hpp>
+
 //TODO this shouldnt be included like this
 #include "../../Glitter-Island/Utility.hpp"
 #include <stdexcept>
+#include <iostream>
 
 std::string GraphicsEngine::shadersFolderPath = "../shaders/";
 std::string GraphicsEngine::imgFolderPath = "../img/";
@@ -72,7 +75,7 @@ skybox(this)
 
 	//NOTE: rotation angle does intentionally differ from exactly pi/2.
 	//Reason: oglplus's matrix inversion function doesn't invert correctly for some transforms.
-	terrain.SetTransform(gl::ModelMatrixf::Translation(-terrainSize*0.5, -waterLevel, terrainSize*0.5)*gl::ModelMatrixf::RotationA(gl::Vec3f(1, 0, 0), gl::Radians<float>(-gl::math::Pi() / 2.001)));
+	terrain.SetTransform(glm::rotate(glm::translate(glm::mat4(1.f), glm::vec3(-terrainSize*0.5, -waterLevel, terrainSize*0.5)), -glm::pi<float>() / 2.f, glm::vec3(1, 0, 0)));
 
 	skybox.LoadTextureFromFiles(
 		GetImgFolderPath() + "sb4-x.bmp",
@@ -82,7 +85,7 @@ skybox(this)
 		GetImgFolderPath() + "sb2-z.bmp",
 		GetImgFolderPath() + "sb5+z.bmp");
 
-	sun.SetColor(gl::Vec3f(1, 1, 1));
+	sun.SetColor(glm::vec3(1, 1, 1));
 	
 	intermediateFramebuffer = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
 	aoResultFB = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
@@ -101,16 +104,16 @@ skybox(this)
 
 	ssaoCalcProgram = LoadShaderProgramFromFiles("Passthrough2_v.glsl", "SSAO_Calc_f.glsl");
 	ssaoCalcProgram.Use();
-	IGNORE_TRY(ssaoCalc_viewProj = gl::Uniform<gl::Mat4f>(ssaoCalcProgram, "viewProj"));
-	IGNORE_TRY(ssaoCalc_viewProjInv = gl::Uniform<gl::Mat4f>(ssaoCalcProgram, "viewProjInv"));
+	IGNORE_TRY(ssaoCalc_viewProj = gl::Uniform<glm::mat4>(ssaoCalcProgram, "viewProj"));
+	IGNORE_TRY(ssaoCalc_viewProjInv = gl::Uniform<glm::mat4>(ssaoCalcProgram, "viewProjInv"));
 	IGNORE_TRY(ssaoCalc_screenWidth = gl::Uniform<GLint>(ssaoCalcProgram, "screenWidth"));
 	IGNORE_TRY(ssaoCalc_screenHeight = gl::Uniform<GLint>(ssaoCalcProgram, "screenHeight"));
 
 
 	ssaoDrawProgram = LoadShaderProgramFromFiles("Passthrough2_v.glsl", "SSAO_Draw_f.glsl");
 	ssaoDrawProgram.Use();
-	//IGNORE_TRY(ssaoCalc_viewProj = gl::Uniform<gl::Mat4f>(ssaoDrawProgram, "viewProj"));
-	//IGNORE_TRY(ssaoCalc_viewProjInv = gl::Uniform<gl::Mat4f>(ssaoDrawProgram, "viewProjInv"));
+	//IGNORE_TRY(ssaoCalc_viewProj = gl::Uniform<glm::mat4>(ssaoDrawProgram, "viewProj"));
+	//IGNORE_TRY(ssaoCalc_viewProjInv = gl::Uniform<glm::mat4>(ssaoDrawProgram, "viewProjInv"));
 	IGNORE_TRY(ssaoDraw_screenWidth = gl::Uniform<GLint>(ssaoDrawProgram, "screenWidth"));
 	IGNORE_TRY(ssaoDraw_screenHeight = gl::Uniform<GLint>(ssaoDrawProgram, "screenHeight"));
 
@@ -179,7 +182,7 @@ void GraphicsEngine::Resize(const int width, const int height)
 	screenHeight = height;
 	GetGLContext().Viewport(0, 0, screenWidth, screenHeight);
 
-	//textDrawer.SetScreenResolution(gl::Vec2i(screenWidth, screenHeight));
+	//textDrawer.SetScreenResolution(glm::ivec2(screenWidth, screenHeight));
 	
 	finalFramebufferCopy.Use();
 	framebufferCopy_ScreenWidth.Set(screenWidth);
@@ -291,7 +294,7 @@ const gl::Texture& GraphicsEngine::GetCascadeShadowMap(int cascadeID) const
 	return lightCascadeShadowMapFramebuffers.at(cascadeID).GetTexture(Framebuffer::ATTACHMENT_DEPTH);
 }
 
-gl::Mat4f GraphicsEngine::GetCascadeViewProjectionTransform(int cascadeID) const
+glm::mat4 GraphicsEngine::GetCascadeViewProjectionTransform(int cascadeID) const
 {
 	return lightCascadeCameras.at(cascadeID).GetViewProjectionTransform();
 }
@@ -299,9 +302,9 @@ gl::Mat4f GraphicsEngine::GetCascadeViewProjectionTransform(int cascadeID) const
 float GraphicsEngine::GetViewSubfrustumFarPlaneInTexCoordZ(int subfrustumID) const
 {
 	const float totalDepth = pActiveViewerCam->GetZFar() - pActiveViewerCam->GetZNear();
-	gl::Vec4f farPlanePosInViewSpace = gl::Vec4f(0, 0, -1*(pActiveViewerCam->GetZNear() + totalDepth*subfrustumFarPlanePositionRatios.at(subfrustumID)), 1);
-	gl::Vec4f transformResult = pActiveViewerCam->GetProjectionTransform() * farPlanePosInViewSpace;
-	return (transformResult.z() / transformResult.w())*0.5f + 0.5f;
+	glm::vec4 farPlanePosInViewSpace = glm::vec4(0, 0, -1*(pActiveViewerCam->GetZNear() + totalDepth*subfrustumFarPlanePositionRatios.at(subfrustumID)), 1);
+	glm::vec4 transformResult = pActiveViewerCam->GetProjectionTransform() * farPlanePosInViewSpace;
+	return (transformResult.z / transformResult.w)*0.5f + 0.5f;
 }
 
 void GraphicsEngine::AddGraphicalObject(GraphicalObject&& newObject)
@@ -369,26 +372,26 @@ void GraphicsEngine::ClearFramebufferStack()
 
 void GraphicsEngine::UpdateLightViewTransform()
 {
-	gl::Vec3f lightViewZ = sun.GetDirectionTowardsSource();
-	gl::Vec3f lightViewX = gl::Cross(gl::Vec3f(0, 1, 0), lightViewZ);
-	if (gl::Dot(lightViewX, lightViewX) == 0) {
-		lightViewX = gl::Vec3f(1, 0, 0);
+	glm::vec3 lightViewZ = sun.GetDirectionTowardsSource();
+	glm::vec3 lightViewX = glm::cross(glm::vec3(0, 1, 0), lightViewZ);
+	if (glm::dot(lightViewX, lightViewX) == 0) {
+		lightViewX = glm::vec3(1, 0, 0);
 	}
 	else {
-		lightViewX = gl::Normalized(lightViewX);
+		lightViewX = glm::normalize(lightViewX);
 	}
-	gl::Vec3f lightViewY = gl::Cross(lightViewZ, lightViewX);
+	glm::vec3 lightViewY = glm::cross(lightViewZ, lightViewX);
 
-	assert(lightViewX.y() == 0);
-	assert(gl::Dot(lightViewX, lightViewY) < 0.001 && gl::Dot(lightViewZ, lightViewY) < 0.001 && gl::Dot(lightViewX, lightViewZ) < 0.001);
+	assert(lightViewX.y == 0);
+	assert(glm::dot(lightViewX, lightViewY) < 0.001 && glm::dot(lightViewZ, lightViewY) < 0.001 && glm::dot(lightViewX, lightViewZ) < 0.001);
 	/// Use transpose instead of expensive inverse since this matrix is orthogonal.
 	/// The elements are written down transposed so this matrix
 	/// is already transposed when constructed.
-	lightViewTransform = gl::Mat4f(
-		lightViewX.x(), lightViewX.y(), lightViewX.z(), 0,
-		lightViewY.x(), lightViewY.y(), lightViewY.z(), 0,
-		lightViewZ.x(), lightViewZ.y(), lightViewZ.z(), 0,
-		             0,              0,              0, 1);
+	lightViewTransform = glm::mat4(
+		lightViewX.x, lightViewX.y, lightViewX.z, 0,
+		lightViewY.x, lightViewY.y, lightViewY.z, 0,
+		lightViewZ.x, lightViewZ.y, lightViewZ.z, 0,
+		           0,            0,            0, 1);
 }
 
 float GraphicsEngine::GetSubfrustumZNear(int cascadeID) const
@@ -409,30 +412,29 @@ void GraphicsEngine::UpdateLightCascadeCamera(int cascadeID)
 	Frustum subFrustum = subCamera.GetFrustum();
 	subFrustum = subFrustum.Transformed(lightViewTransform);
 
+	glm::vec3 AABBmin = subFrustum.nearPlane.at(0);
+	glm::vec3 AABBmax = subFrustum.nearPlane.at(0);
+	
 	{
 		using planeType = decltype(subFrustum.nearPlane);
-		static_assert(std::is_same<gl::Vec3f, planeType::value_type>::value, "Error plane quad does not consist of expected types.");
+		static_assert(std::is_same<glm::vec3, planeType::value_type>::value, "Error plane quad does not consist of expected types.");
 	}
-	gl::Vec3f AABBmin = subFrustum.nearPlane.at(0);
-	gl::Vec3f AABBmax = subFrustum.nearPlane.at(0);
-
-	assert(subFrustum.nearPlane.at(0).Size() == 3);
-
+	constexpr int componentCount = 3;
 	for (auto& currVertex : subFrustum.nearPlane) {
-		for (int i = 0; i < currVertex.Size(); i++) {
+		for (int i = 0; i < componentCount; i++) {
 			AABBmin[i] = std::min(AABBmin[i], currVertex[i]);
 			AABBmax[i] = std::max(AABBmax[i], currVertex[i]);
 		}
 	}
 	for (auto& currVertex : subFrustum.farPlane) {
-		for (int i = 0; i < currVertex.Size(); i++) {
+		for (int i = 0; i < componentCount; i++) {
 			AABBmin[i] = std::min(AABBmin[i], currVertex[i]);
 			AABBmax[i] = std::max(AABBmax[i], currVertex[i]);
 		}
 	}
 
 	lightCascadeCameras[cascadeID].SetViewTransform(lightViewTransform);
-	lightCascadeCameras[cascadeID].SetProjectionTransform(gl::CamMatrixf::Ortho(AABBmin.x(), AABBmax.x(), AABBmin.y(), AABBmax.y(), -AABBmax.z()-400, -AABBmin.z()+400));
+	lightCascadeCameras[cascadeID].SetProjectionTransform(glm::ortho(AABBmin.x, AABBmax.x, AABBmin.y, AABBmax.y, -AABBmax.z-400, -AABBmin.z+400));
 
 	if (cascadeID <= 1) {
 		PerspectiveCamera sub2 = *pActiveViewerCam;
@@ -554,19 +556,6 @@ void GraphicsEngine::DrawScene()
 	skybox.Draw();
 }
 
-static gl::Mat4f MyTranspose(const gl::Mat4f& input)
-{
-	gl::Mat4f result;
-
-	for (std::size_t i = 0; i != 4; ++i) {
-		for (std::size_t j = 0; j != 4; ++j) {
-			result.Set(i, j, input.At(j, i));
-		}
-	}
-
-	return result;
-}
-
 void GraphicsEngine::DrawAmbientOcclusion()
 {
 	const int targetW = screenWidth/2;
@@ -583,7 +572,7 @@ void GraphicsEngine::DrawAmbientOcclusion()
 	ssaoCalcProgram.Use();
 
 	ssaoCalc_viewProj.Set(pActiveViewerCam->GetViewProjectionTransform());
-	ssaoCalc_viewProjInv.Set(gl::Inverse(pActiveViewerCam->GetViewProjectionTransform()));
+	ssaoCalc_viewProjInv.Set(glm::inverse(pActiveViewerCam->GetViewProjectionTransform()));
 	IGNORE_TRY( ssaoCalc_screenWidth.Set(targetW) );
 	IGNORE_TRY( ssaoCalc_screenHeight.Set(targetH) );
 

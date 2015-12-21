@@ -9,7 +9,7 @@ Skybox::Skybox(GraphicsEngine* pGraphicsEngine)
 	skydrawShader = GraphicsEngine::LoadShaderProgramFromFiles("Skybox_skydraw_v.glsl", "Skybox_skydraw_f.glsl");
 	skydrawShader.Use();
 
-	sh_ViewProjectionMatrix = gl::Uniform<gl::Mat4f>(skydrawShader, "viewProjectionMatrix");
+	sh_ViewProjectionMatrix = gl::Uniform<glm::mat4>(skydrawShader, "viewProjectionMatrix");
 
 	VAO.Bind();
 
@@ -26,8 +26,8 @@ Skybox::Skybox(GraphicsEngine* pGraphicsEngine)
 
 	vertexPositions.Bind(gl::Buffer::Target::Array);
 	gl::Buffer::Data(gl::Buffer::Target::Array, vertexPosData);
-	gl::VertexArrayAttrib vert_attr(skydrawShader, "vertexPos");
-	vert_attr.Setup<gl::Vec3f>().Enable();
+	gl::VertexArrayAttrib vertAttr(skydrawShader, "vertexPos");
+	vertAttr.Setup(3, gl::DataType::Float).Enable();
 
 	std::vector<GLushort> indexData = {
 		1, 3, 5, 7, 9,
@@ -127,15 +127,15 @@ void Skybox::Draw()
 	gl::Texture::Active(0);
 	cubeMap.Bind(gl::Texture::Target::CubeMap);
 
-	gl::Mat4f viewOnlyRotation = pGraphEngine->GetActiveCamera()->GetViewTransform();
-	viewOnlyRotation.Set(0, 3, 0);
-	viewOnlyRotation.Set(1, 3, 0);
-	viewOnlyRotation.Set(2, 3, 0);
-	viewOnlyRotation.Set(3, 3, 1);
-	viewOnlyRotation.Set(3, 0, 0);
-	viewOnlyRotation.Set(3, 1, 0);
-	viewOnlyRotation.Set(3, 2, 0);
-	gl::Mat4f projectionMatrix = pGraphEngine->GetActiveCamera()->GetProjectionTransform();
+	glm::mat4 viewOnlyRotation = pGraphEngine->GetActiveCamera()->GetViewTransform();
+	viewOnlyRotation[0][3] = 0;
+	viewOnlyRotation[1][3] = 0;
+	viewOnlyRotation[2][3] = 0;
+	viewOnlyRotation[3][3] = 1;
+	viewOnlyRotation[3][0] = 0;
+	viewOnlyRotation[3][1] = 0;
+	viewOnlyRotation[3][2] = 0;
+	glm::mat4 projectionMatrix = pGraphEngine->GetActiveCamera()->GetProjectionTransform();
 
 	sh_ViewProjectionMatrix.Set(projectionMatrix * viewOnlyRotation);
 

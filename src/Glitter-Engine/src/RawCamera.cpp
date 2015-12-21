@@ -6,22 +6,22 @@ RawCamera::RawCamera()
 RawCamera::~RawCamera()
 {}
 
-void RawCamera::SetProjectionTransform(const gl::Mat4f& transform)
+void RawCamera::SetProjectionTransform(const glm::mat4& transform)
 {
 	projectionTransform = transform;
 }
 
-void RawCamera::SetViewTransform(const gl::Mat4f& transform)
+void RawCamera::SetViewTransform(const glm::mat4& transform)
 {
 	viewTransform = transform;
 }
 
-gl::Mat4f RawCamera::GetProjectionTransform() const
+glm::mat4 RawCamera::GetProjectionTransform() const
 {
 	return projectionTransform;
 }
 
-gl::Mat4f RawCamera::GetViewTransform() const
+glm::mat4 RawCamera::GetViewTransform() const
 {
 	return viewTransform;
 }

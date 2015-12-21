@@ -9,24 +9,24 @@ color(0, 0, 0, 1)
 	shaderProgram = GraphicsEngine::LoadShaderProgramFromFiles("SimpleColored_v.glsl", "SimpleColored_f.glsl");
 	shaderProgram.Use();
 
-	sh_MVP = gl::Uniform<gl::Mat4f>(shaderProgram, "MVP");
-	sh_color = gl::Uniform<gl::Vec4f>(shaderProgram, "color");
+	sh_MVP = gl::Uniform<glm::mat4>(shaderProgram, "MVP");
+	sh_color = gl::Uniform<glm::vec4>(shaderProgram, "color");
 }
 
 SimpleColoredMaterial::~SimpleColoredMaterial()
 {}
 
-gl::Vec4f SimpleColoredMaterial::GetColor() const
+glm::vec4 SimpleColoredMaterial::GetColor() const
 {
 	return color;
 }
 
-void SimpleColoredMaterial::SetColor(const gl::Vec4f& newColor)
+void SimpleColoredMaterial::SetColor(const glm::vec4& newColor)
 {
 	color = newColor;
 }
 
-void SimpleColoredMaterial::Prepare(Mesh::Submesh& submsh, const gl::Mat4f& modelTransform)
+void SimpleColoredMaterial::Prepare(Mesh::Submesh& submsh, const glm::mat4& modelTransform)
 {
 	Prepare(submsh);
 	SetTransform(modelTransform);
@@ -40,7 +40,7 @@ void SimpleColoredMaterial::Prepare(Mesh::Submesh& submsh)
 	sh_color.Set(color);
 }
 
-void SimpleColoredMaterial::SetTransform(const gl::Mat4f& modelTransform)
+void SimpleColoredMaterial::SetTransform(const glm::mat4& modelTransform)
 {
 	shaderProgram.Use();
 	sh_MVP.Set(pGraphicsEngine->GetActiveCamera()->GetViewProjectionTransform() * modelTransform);

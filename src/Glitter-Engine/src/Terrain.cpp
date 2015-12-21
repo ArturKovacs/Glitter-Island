@@ -6,6 +6,7 @@
 #include <exception>
 #include <cmath>
 #include <string>
+#include <iostream>
 
 #define IGNORE_TRY(x) try{x;}catch(std::exception&ex){std::cout<<ex.what()<<std::endl;}
 
@@ -17,11 +18,11 @@ Terrain::Terrain(GraphicsEngine* pGraphicsEngine) : pGraphicsEngine(pGraphicsEng
 	shaderProgram.Use();
 
 	try {
-		sh_sunDir = gl::Uniform<gl::Vec3f>(shaderProgram, "sunDir");
-		sh_sunColor = gl::Uniform<gl::Vec3f>(shaderProgram, "sunColor");
-		sh_modelTransform = gl::Uniform<gl::Mat4f>(shaderProgram, "modelTransform");
-		sh_MVP = gl::Uniform<gl::Mat4f>(shaderProgram, "MVP");
-		sh_modelTransposedInverse = gl::Uniform<gl::Mat4f>(shaderProgram, "model_transposed_inverse");
+		sh_sunDir = gl::Uniform<glm::vec3>(shaderProgram, "sunDir");
+		sh_sunColor = gl::Uniform<glm::vec3>(shaderProgram, "sunColor");
+		sh_modelTransform = gl::Uniform<glm::mat4>(shaderProgram, "modelTransform");
+		sh_MVP = gl::Uniform<glm::mat4>(shaderProgram, "MVP");
+		sh_modelTransposedInverse = gl::Uniform<glm::mat4>(shaderProgram, "model_transposed_inverse");
 		gl::UniformSampler(shaderProgram, "sandTexture").Set(0);
 		gl::UniformSampler(shaderProgram, "grassTexture").Set(1);
 		gl::UniformSampler(shaderProgram, "materialTexture").Set(2);
@@ -32,7 +33,7 @@ Terrain::Terrain(GraphicsEngine* pGraphicsEngine) : pGraphicsEngine(pGraphicsEng
 		int currTextureID = 3;
 		for (int i = 0; i < pGraphicsEngine->GetLightCascadeCount(); i++) {
 			IGNORE_TRY(gl::UniformSampler(shaderProgram, "cascadeShadowMaps[" + std::to_string(i) + "]").Set(currTextureID++));
-			IGNORE_TRY(sh_worldToShadowMap.at(i) = gl::Uniform<gl::Mat4f>(shaderProgram, "worldToShadowMap[" + std::to_string(i) + "]"));
+			IGNORE_TRY(sh_worldToShadowMap.at(i) = gl::Uniform<glm::mat4>(shaderProgram, "worldToShadowMap[" + std::to_string(i) + "]"));
 			IGNORE_TRY(sh_viewSubfrustumFarPlanesTexDepth.at(i) = gl::Uniform<float>(shaderProgram, "viewSubfrustumFarPlanesTexDepth[" + std::to_string(i) + "]"));
 		}
 	}
@@ -73,9 +74,9 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float 
 	const int pixelCount = imgWidth * imgHeight;
 	const int totalVertexCount = pixelCount;
 
-	std::vector<gl::Vec3f> positions(totalVertexCount);
-	std::vector<gl::Vec2f> texCoords(totalVertexCount);
-	std::vector<gl::Vec3f> normals(totalVertexCount);
+	std::vector<glm::vec3> positions(totalVertexCount);
+	std::vector<glm::vec2> texCoords(totalVertexCount);
+	std::vector<glm::vec3> normals(totalVertexCount);
 	CalculatePositionsAndTexCoords(&positions, &texCoords, image, scale, heightMultiplyer);
 	CalculateNormals(&normals, image, positions);
 
@@ -146,19 +147,6 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float 
 	seabottom.GetSubmeshes().push_back(std::move(seabottom_submsh));
 }
 
-static gl::Mat4f MyTranspose(const gl::Mat4f& input)
-{
-	gl::Mat4f result;
-
-	for (std::size_t i = 0; i != 4; ++i) {
-		for (std::size_t j = 0; j != 4; ++j) {
-			result.Set(i, j, input.At(j, i));
-		}
-	}
-
-	return result;
-}
-
 void Terrain::Draw()
 {
 	shaderProgram.Use();
@@ -188,8 +176,7 @@ void Terrain::Draw()
 	sh_sunColor.Set(pGraphicsEngine->GetSun().GetColor());
 	sh_modelTransform.Set(modelTransform);
 	sh_MVP.Set(pGraphicsEngine->GetActiveCamera()->GetViewProjectionTransform() * modelTransform);
-	sh_modelTransposedInverse.Set(MyTranspose(gl::Inverse(modelTransform)));
-	//sh_modelTransposedInverse.Set(gl::Transposed(gl::Inverse(modelTransform)));
+	sh_modelTransposedInverse.Set(glm::transpose(glm::inverse(modelTransform)));
 
 	pGraphicsEngine->GetGLContext().Enable(gl::Capability::CullFace);
 	pGraphicsEngine->GetGLContext().Enable(gl::Capability::DepthTest);
@@ -202,12 +189,12 @@ void Terrain::Draw()
 	pGraphicsEngine->GetGLContext().DrawElements(seabottom_submsh.GetPrimitiveType(), seabottom_submsh.GetNumOfIndices(), seabottom_submsh.indexTypeEnum);
 }
 
-void Terrain::SetTransform(const gl::Mat4f& transform)
+void Terrain::SetTransform(const glm::mat4& transform)
 {
 	modelTransform = transform;
 }
 
-gl::Mat4f Terrain::GetTransform() const
+glm::mat4 Terrain::GetTransform() const
 {
 	return modelTransform;
 }
@@ -217,13 +204,13 @@ sf::Image& Terrain::GetMaterialMap()
 	return materialMap;
 }
 
-gl::Vec2i Terrain::GetMaterialMapPos(const gl::Vec4f worldPos) const
+glm::ivec2 Terrain::GetMaterialMapPos(const glm::vec4 worldPos) const
 {
-	gl::Vec2i result;
-	gl::Vec4f normalizedTextureCoords = ((gl::Inverse(modelTransform) * worldPos)/terrainScale);
+	glm::ivec2 result;
+	glm::vec4 normalizedTextureCoords = ((glm::inverse(modelTransform) * worldPos)/terrainScale);
 	const sf::Vector2u imgSize = materialMap.getSize();
-	result[0] = std::floor(normalizedTextureCoords.x() * imgSize.x);
-	result[1] = std::floor(normalizedTextureCoords.y() * imgSize.y);
+	result[0] = std::floor(normalizedTextureCoords.x * imgSize.x);
+	result[1] = std::floor(normalizedTextureCoords.y * imgSize.y);
 	return result;
 }
 
@@ -286,7 +273,7 @@ void Terrain::LoadTexture(gl::Texture& target, const sf::Image& srcImg, bool dat
 	gl::Texture::GenerateMipmap(gl::Texture::Target::_2D);
 }
 
-gl::Vec3f Terrain::GetLowerTriangleNormalFromQuad(const int bottomLeftVertexPosX, const int bottomLeftVertexPosY, const std::vector<gl::Vec3f>& positions, const int numHorizontalVertices)
+glm::vec3 Terrain::GetLowerTriangleNormalFromQuad(const int bottomLeftVertexPosX, const int bottomLeftVertexPosY, const std::vector<glm::vec3>& positions, const int numHorizontalVertices)
 {
 	const int numVerticalVertices = positions.size()/numHorizontalVertices;
 
@@ -295,18 +282,18 @@ gl::Vec3f Terrain::GetLowerTriangleNormalFromQuad(const int bottomLeftVertexPosX
 
 	if (x + 1 < numHorizontalVertices && y + 1 < numVerticalVertices) {
 
-		const gl::Vec3f A = positions.at(GetVertexIndex(numHorizontalVertices, x+0, y+0));
-		const gl::Vec3f B = positions.at(GetVertexIndex(numHorizontalVertices, x+1, y+0));
-		const gl::Vec3f C = positions.at(GetVertexIndex(numHorizontalVertices, x+0, y+1));
+		const glm::vec3 A = positions.at(GetVertexIndex(numHorizontalVertices, x+0, y+0));
+		const glm::vec3 B = positions.at(GetVertexIndex(numHorizontalVertices, x+1, y+0));
+		const glm::vec3 C = positions.at(GetVertexIndex(numHorizontalVertices, x+0, y+1));
 
-		return gl::Normalized(gl::Cross(B-A, C-A));
+		return glm::normalize(glm::cross(B-A, C-A));
 	}
 	else {
-		return gl::Vec3f(0, 0, 0);
+		return glm::vec3(0, 0, 0);
 	}
 }
 
-gl::Vec3f Terrain::GetUpperTriangleNormalFromQuad(const int bottomLeftVertexPosX, const int bottomLeftVertexPosY, const std::vector<gl::Vec3f>& positions, const int numHorizontalVertices)
+glm::vec3 Terrain::GetUpperTriangleNormalFromQuad(const int bottomLeftVertexPosX, const int bottomLeftVertexPosY, const std::vector<glm::vec3>& positions, const int numHorizontalVertices)
 {
 	const int numVerticalVertices = positions.size()/numHorizontalVertices;
 
@@ -315,14 +302,14 @@ gl::Vec3f Terrain::GetUpperTriangleNormalFromQuad(const int bottomLeftVertexPosX
 
 	if (x + 1 < numHorizontalVertices && y + 1 < numVerticalVertices) {
 
-		const gl::Vec3f A = positions.at(GetVertexIndex(numHorizontalVertices, x+1, y+1));
-		const gl::Vec3f B = positions.at(GetVertexIndex(numHorizontalVertices, x+0, y+1));
-		const gl::Vec3f C = positions.at(GetVertexIndex(numHorizontalVertices, x+1, y+0));
+		const glm::vec3 A = positions.at(GetVertexIndex(numHorizontalVertices, x+1, y+1));
+		const glm::vec3 B = positions.at(GetVertexIndex(numHorizontalVertices, x+0, y+1));
+		const glm::vec3 C = positions.at(GetVertexIndex(numHorizontalVertices, x+1, y+0));
 
-		return gl::Normalized(gl::Cross(B-A, C-A));
+		return glm::normalize(glm::cross(B-A, C-A));
 	}
 	else {
-		return gl::Vec3f(0, 0, 0);
+		return glm::vec3(0, 0, 0);
 	}
 }
 
@@ -331,7 +318,7 @@ int Terrain::GetVertexIndex(const int width, const int x, const int y)
 	return y*width + x;
 }
 
-void Terrain::CalculatePositionsAndTexCoords(std::vector<gl::Vec3f>* positions, std::vector<gl::Vec2f>* texCoords, const sf::Image& image, const float scale, const float heightMultiplyer)
+void Terrain::CalculatePositionsAndTexCoords(std::vector<glm::vec3>* positions, std::vector<glm::vec2>* texCoords, const sf::Image& image, const float scale, const float heightMultiplyer)
 {
 	static const int maxHeight = 255;
 	static const bool fromSRGB = false;
@@ -344,18 +331,18 @@ void Terrain::CalculatePositionsAndTexCoords(std::vector<gl::Vec3f>* positions, 
 			float currHeight = image.getPixel(currX, currY).r;
 			if (fromSRGB) { currHeight = std::pow(currHeight/maxHeight, 2.2)*maxHeight; }
 
-			positions->at(GetVertexIndex(imgWidth, currX, currY)) = gl::Vec3f(float(currX)/(imgWidth-1), float(currY)/(imgHeight-1), (float(currHeight)/maxHeight)*heightMultiplyer)*scale;
-			texCoords->at(GetVertexIndex(imgWidth, currX, currY)) = gl::Vec2f(float(currX)/(imgWidth-1), float(currY)/(imgHeight-1));
+			positions->at(GetVertexIndex(imgWidth, currX, currY)) = glm::vec3(float(currX)/(imgWidth-1), float(currY)/(imgHeight-1), (float(currHeight)/maxHeight)*heightMultiplyer)*scale;
+			texCoords->at(GetVertexIndex(imgWidth, currX, currY)) = glm::vec2(float(currX)/(imgWidth-1), float(currY)/(imgHeight-1));
 		}
 	}
 
-	std::vector<gl::Vec3f> finalPositions(positions->size());
+	std::vector<glm::vec3> finalPositions(positions->size());
 
 	//average heights
 	for (int currY = 0; currY < imgHeight; currY++) {
 		for (int currX = 0; currX < imgWidth; currX++) {
-			gl::Vec2f currPlanePos = positions->at(GetVertexIndex(imgWidth, currX, currY)).xy();
-			float currHeight = positions->at(GetVertexIndex(imgWidth, currX, currY)).z();
+			glm::vec2 currPlanePos(positions->at(GetVertexIndex(imgWidth, currX, currY)));
+			float currHeight = positions->at(GetVertexIndex(imgWidth, currX, currY)).z;
 
 			float weightedHeightSum = 0;
 			float weightSum = 0;
@@ -367,43 +354,43 @@ void Terrain::CalculatePositionsAndTexCoords(std::vector<gl::Vec3f>* positions, 
 					const int neighbourIdY = currY+dy;
 					const int neighbourIdX = currX+dx;
 					if (neighbourIdX >= 0 && neighbourIdX < imgWidth && neighbourIdY >= 0 && neighbourIdY < imgHeight) {
-						gl::Vec3f neighbourPos = positions->at(GetVertexIndex(imgWidth, neighbourIdX, neighbourIdY));
+						glm::vec3 neighbourPos = positions->at(GetVertexIndex(imgWidth, neighbourIdX, neighbourIdY));
 						const float neighbourWeight = 1;
 						weightSum += neighbourWeight;
-						weightedHeightSum += neighbourPos.z()*neighbourWeight;
+						weightedHeightSum += neighbourPos.z*neighbourWeight;
 					}
 				}
 			}
 
-			finalPositions.at(GetVertexIndex(imgWidth, currX, currY)) = gl::Vec3f(currPlanePos, weightedHeightSum / weightSum);
+			finalPositions.at(GetVertexIndex(imgWidth, currX, currY)) = glm::vec3(currPlanePos, weightedHeightSum / weightSum);
 		}
 	}
 
 	*positions = std::move(finalPositions);
 }
 
-void Terrain::CalculateNormals(std::vector<gl::Vec3f>* normals, const sf::Image& image, const std::vector<gl::Vec3f>& positions)
+void Terrain::CalculateNormals(std::vector<glm::vec3>* normals, const sf::Image& image, const std::vector<glm::vec3>& positions)
 {
 	const int imgWidth = image.getSize().x;
 	const int imgHeight = image.getSize().y;
 
 	for (int currY = 0; currY < imgHeight; currY++) {
 		for (int currX = 0; currX < imgWidth; currX++) {
-			std::array<gl::Vec3f, 6> adjacentTriangleNormals = {
-				GetLowerTriangleNormalFromQuad(currX, currY, positions, imgWidth) * 90,
-				(currX - 1 >= 0 ? GetUpperTriangleNormalFromQuad(currX - 1, currY, positions, imgWidth) : gl::Vec3f(0, 0, 0))*45,
-				(currX - 1 >= 0 ? GetLowerTriangleNormalFromQuad(currX - 1, currY, positions, imgWidth) : gl::Vec3f(0, 0, 0))*45,
-				(currX - 1 >= 0 && currY - 1 >= 0 ? GetUpperTriangleNormalFromQuad(currX - 1, currY - 1, positions, imgWidth) : gl::Vec3f(0, 0, 0))*90,
-				(currY - 1 >= 0 ? GetLowerTriangleNormalFromQuad(currX, currY - 1, positions, imgWidth) : gl::Vec3f(0, 0, 0))*45,
-				(currY - 1 >= 0 ? GetUpperTriangleNormalFromQuad(currX, currY - 1, positions, imgWidth) : gl::Vec3f(0, 0, 0))*45,
+			std::array<glm::vec3, 6> adjacentTriangleNormals = {
+				GetLowerTriangleNormalFromQuad(currX, currY, positions, imgWidth) * 90.f,
+				(currX - 1 >= 0 ? GetUpperTriangleNormalFromQuad(currX - 1, currY, positions, imgWidth) : glm::vec3(0, 0, 0))*45.f,
+				(currX - 1 >= 0 ? GetLowerTriangleNormalFromQuad(currX - 1, currY, positions, imgWidth) : glm::vec3(0, 0, 0))*45.f,
+				(currX - 1 >= 0 && currY - 1 >= 0 ? GetUpperTriangleNormalFromQuad(currX - 1, currY - 1, positions, imgWidth) : glm::vec3(0, 0, 0))*90.f,
+				(currY - 1 >= 0 ? GetLowerTriangleNormalFromQuad(currX, currY - 1, positions, imgWidth) : glm::vec3(0, 0, 0))*45.f,
+				(currY - 1 >= 0 ? GetUpperTriangleNormalFromQuad(currX, currY - 1, positions, imgWidth) : glm::vec3(0, 0, 0))*45.f,
 			};
 
-			gl::Vec3f normal = gl::Vec3f(0, 0, 0);
+			glm::vec3 normal = glm::vec3(0, 0, 0);
 			for (auto& current : adjacentTriangleNormals) {
 				normal += current;
 			}
 
-			normal = gl::Normalized(normal);
+			normal = glm::normalize(normal);
 
 			normals->at(GetVertexIndex(imgWidth, currX, currY)) = normal;
 		}

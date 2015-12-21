@@ -1,8 +1,10 @@
 #include "EditorContext.hpp"
 
+#include <GE/SimpleColoredMaterial.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "DemoCore.hpp"
 #include "Utility.hpp"
-#include <GE/SimpleColoredMaterial.hpp>
 
 EditorContext::EditorToolType EditorContext::GetToolType(EditorContext::EditorTool tool)
 {
@@ -81,7 +83,7 @@ brushCircleMaterial(&(pCore->GetGraphicsEngine()))
 
 	brushCircleMesh = Mesh::GenerateCircle(1, 16);
 	assert(brushCircleMesh.GetSubmeshes().size() == 1);
-	brushCircleMaterial.SetColor(gl::Vec4f(1, 0.1, 0.5, 1));
+	brushCircleMaterial.SetColor(glm::vec4(1, 0.1, 0.5, 1));
 	brushCircleMesh.GetSubmeshes().at(0).SetMaterial(&brushCircleMaterial);
 	
 	brushCircle.SetMesh(&brushCircleMesh);
@@ -137,7 +139,7 @@ void EditorContext::Update(float deltaSec)
 		switch (GetToolType(selectedTool)) {
 		case EditorToolType::PAINT: {
 			
-			gl::Vec2i cursorPosOnMaterialMap = pCore->GetGraphicsEngine().GetTerrain().GetMaterialMapPos(pointPosAtCursor);
+			glm::ivec2 cursorPosOnMaterialMap = pCore->GetGraphicsEngine().GetTerrain().GetMaterialMapPos(pointPosAtCursor);
 			sf::Image& materialMap = pCore->GetGraphicsEngine().GetTerrain().GetMaterialMap();
 			sf::Color selectedMaterialColor;
 			if (selectedTool == EditorTool::PAINT_FLAT_SAND) {
@@ -150,7 +152,7 @@ void EditorContext::Update(float deltaSec)
 				selectedMaterialColor = sf::Color(0, 255, 0, 255);
 			}
 
-			const gl::Vec2f centerPos(cursorPosOnMaterialMap.x(), cursorPosOnMaterialMap.y());
+			const glm::vec2 centerPos(cursorPosOnMaterialMap.x, cursorPosOnMaterialMap.y);
 
 			auto weightFunc = [](float x_sq, float radius_sq){
 				return 1-(std::sqrt(x_sq)/std::sqrt(radius_sq));
@@ -158,23 +160,23 @@ void EditorContext::Update(float deltaSec)
 
 			for (int dy = -brushRadius; dy <= brushRadius; dy++) {
 				for (int dx = -brushRadius; dx <= brushRadius; dx++) {
-					gl::Vec2i currPosi(cursorPosOnMaterialMap.x() + dx, cursorPosOnMaterialMap.y() + dy);
+					glm::ivec2 currPosi(cursorPosOnMaterialMap.x + dx, cursorPosOnMaterialMap.y + dy);
 
-					if (currPosi.x() >= 0 && currPosi.x() < materialMap.getSize().x &&
-						currPosi.y() >= 0 && currPosi.y() < materialMap.getSize().y) {
+					if (currPosi.x >= 0 && currPosi.x < materialMap.getSize().x &&
+						currPosi.y >= 0 && currPosi.y < materialMap.getSize().y) {
 
-						const gl::Vec2f currPos(currPosi.x(), currPosi.y());
-						const gl::Vec2f posDiff = currPos - centerPos;
-						float weight = weightFunc(gl::Dot(posDiff, posDiff), brushRadius*brushRadius) * (1 - std::exp(-10.f*(deltaSec)));
+						const glm::vec2 currPos(currPosi.x, currPosi.y);
+						const glm::vec2 posDiff = currPos - centerPos;
+						float weight = weightFunc(glm::dot(posDiff, posDiff), brushRadius*brushRadius) * (1 - std::exp(-10.f*(deltaSec)));
 
 						if (weight > 0) {
-							const sf::Color originalColor = materialMap.getPixel(currPos.x(), currPos.y());
+							const sf::Color originalColor = materialMap.getPixel(currPos.x, currPos.y);
 							sf::Color finalColor(
 								selectedMaterialColor.r*weight + originalColor.r*(1 - weight),
 								selectedMaterialColor.g*weight + originalColor.g*(1 - weight),
 								selectedMaterialColor.b*weight + originalColor.b*(1 - weight));
 
-							materialMap.setPixel(currPosi.x(), currPosi.y(), finalColor);
+							materialMap.setPixel(currPosi.x, currPosi.y, finalColor);
 						}
 					}
 				}
@@ -253,9 +255,11 @@ void EditorContext::MouseButtonPressed(const sf::Event& event)
 
 		if (selectedTool == EditorTool::PLACE_MODEL) {
 			static float TMP_rot = 0;
-			TMP_rot += (double(std::rand())/RAND_MAX)*gl::math::Pi() + gl::math::Pi()*0.5;
+			TMP_rot += (double(std::rand())/RAND_MAX)*glm::pi<float>() + glm::pi<float>()*0.5;
 			GraphicalObject loadedObject = pCore->GetGraphicsEngine().LoadGraphicalObjectFromFile(modelSelectionContext.GetSelectedModelFilename());
-			loadedObject.SetTransform(gl::ModelMatrixf::Translation(0, -0.1, 0) * gl::ModelMatrixf::Translation(pointPosAtCursor) * gl::ModelMatrixf::RotationY(gl::Radians<float>(TMP_rot)));
+			glm::mat4 transform = glm::translate(glm::mat4(1.f), glm::vec3(pointPosAtCursor)+glm::vec3(0, -0.1, 0));
+			transform = glm::rotate(transform, TMP_rot, glm::vec3(0, 1, 0));
+			loadedObject.SetTransform(transform);
 
 			pCore->GetGraphicsEngine().AddGraphicalObject(std::move(loadedObject));
 		}
@@ -342,22 +346,21 @@ void EditorContext::UpdatePointPosAtCursor()
 	float depthAtPixel = pCore->GetGraphicsEngine().GetObjectsDepthBufferValue(cursorPos.x, cursorPos.y);
 	//pCore->GetGraphicsEngine().GetGLContext().ReadPixels(cursorPos.x, cursorPos.y, 1, 1, gl::enums::PixelDataFormat::DepthComponent, gl::PixelDataType::Float, &depthAtPixel);
 
-	pointPosAtCursor = gl::Inverse(pCore->GetGraphicsEngine().GetActiveCamera()->GetViewProjectionTransform()) * gl::Vec4f(
+	pointPosAtCursor = glm::inverse(pCore->GetGraphicsEngine().GetActiveCamera()->GetViewProjectionTransform()) * glm::vec4(
 		((float(cursorPos.x)/screenWidth)*2-1),
 		((float(cursorPos.y)/screenHeight)*2-1),
 		(depthAtPixel)*2-1,
 		1);
 
-	pointPosAtCursor = pointPosAtCursor / pointPosAtCursor.w();
+	pointPosAtCursor = pointPosAtCursor / pointPosAtCursor.w;
 }
 
 void EditorContext::UpdateBrushCirclePos()
 {
 	float meshScale = pCore->GetGraphicsEngine().GetTerrain().GetMaterialMapPixelSizeInWorldScale() * brushRadius;
-	gl::Mat4f modelMatrix =
-		gl::ModelMatrixf::Translation(pointPosAtCursor.xyz()) *
-		gl::ModelMatrixf::Scale(meshScale, meshScale, meshScale) *
-		gl::ModelMatrixf::RotationX(gl::Radians<float>(gl::math::Pi()*0.5));
+	glm::mat4 modelMatrix = glm::translate(glm::mat4(1.f), glm::vec3(pointPosAtCursor));
+	modelMatrix = glm::scale(modelMatrix, glm::vec3(meshScale, meshScale, meshScale));
+	modelMatrix = glm::rotate(modelMatrix, glm::pi<float>()*0.5f, glm::vec3(1, 0, 0));
 
 	brushCircle.SetTransform(modelMatrix);
 }

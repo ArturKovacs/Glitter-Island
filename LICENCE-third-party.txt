@@ -4,22 +4,29 @@ External Software
 ====================
 
 SFML:
-Licence is located at: extlibs/SFML
+Licence is located at: extlibs/SFML/LICENCE.txt
 -----------------------
 
 GLEW:
-Licence is located at: extlibs/GLEW
+Licence is located at: extlibs/GLEW/LICENSE.txt
 -----------------------
 
 oglplus:
-Licence is located at: extlibs/oglplus
+Licence is located at: extlibs/oglplus/LICENSE_1_0.txt
 -----------------------
+
+glm:
+Licence is located at: extlibs/glm/copying.txt
+-----------------------
+
+
+
 
 ====================
 Art Assets
 ====================
 
-I would like to give thanks for all the free content to those who made it.
+I would like to give thanks for all the free content to those who made them.
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 
 Skybox:

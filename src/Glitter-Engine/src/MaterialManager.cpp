@@ -2,6 +2,9 @@
 
 #include <GE/GraphicsEngine.hpp>
 
+#include <iostream>
+#include <fstream>
+
 Material* MaterialManager::LoadStandardMaterialFromFile(GraphicsEngine* pGraphicsEngine, const std::string& filename, const std::string& materialName)
 {
 	const std::string materialKey = filename + "?" + materialName;

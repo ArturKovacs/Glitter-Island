@@ -50,12 +50,12 @@ void GraphicalObject::Draw(GraphicsEngine* pGraphicsEngine)
 	glContext.Enable(gl::Capability::CullFace);
 }
 
-void GraphicalObject::SetTransform(const gl::Mat4f& transform)
+void GraphicalObject::SetTransform(const glm::mat4& transform)
 {
 	modelTransform = transform;
 }
 
-gl::Mat4f GraphicalObject::GetTransform() const
+glm::mat4 GraphicalObject::GetTransform() const
 {
 	return modelTransform;
 }

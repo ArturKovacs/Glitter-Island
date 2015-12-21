@@ -1,5 +1,7 @@
 #include <GE/Mesh.hpp>
 
+#include <glm/gtc/constants.hpp>
+
 #include <limits>
 #include <string>
 #include <sstream>
@@ -41,10 +43,10 @@ Mesh Mesh::GenerateCircle(float radius, int resolution)
 	Mesh result;
 	Submesh submsh;
 
-	std::vector<gl::Vec2f> vertexPosData(resolution);
+	std::vector<glm::vec2> vertexPosData(resolution);
 	for (int i = 0; i < resolution; i++) {
-		float currAngle = (float(i)/resolution)*2*gl::math::Pi();
-		vertexPosData.at(i) = gl::Vec2f(std::cos(currAngle)*radius, std::sin(currAngle)*radius);
+		float currAngle = (float(i)/resolution) * 2 * glm::pi<float>();
+		vertexPosData.at(i) = glm::vec2(std::cos(currAngle)*radius, std::sin(currAngle)*radius);
 	}
 	submsh.SetVertexAttributeElementDimensions(AttributeCategory::POSITION, 2);
 	submsh.SetVertexAttributeBuffer(AttributeCategory::POSITION, vertexPosData);
@@ -66,20 +68,20 @@ Mesh Mesh::GenerateRectangle(float sizeX, float sizeY)
 	Mesh result;
 	Submesh submsh;
 
-	std::vector<gl::Vec2f> vertexPos = {
-		gl::Vec2f(-sizeX*0.5f, -sizeY*0.5f),
-		gl::Vec2f(+sizeX*0.5f, -sizeY*0.5f),
-		gl::Vec2f(+sizeX*0.5f, +sizeY*0.5f),
-		gl::Vec2f(-sizeX*0.5f, +sizeY*0.5f),
+	std::vector<glm::vec2> vertexPos = {
+		glm::vec2(-sizeX*0.5f, -sizeY*0.5f),
+		glm::vec2(+sizeX*0.5f, -sizeY*0.5f),
+		glm::vec2(+sizeX*0.5f, +sizeY*0.5f),
+		glm::vec2(-sizeX*0.5f, +sizeY*0.5f),
 	};
 	submsh.SetVertexAttributeBuffer(AttributeCategory::POSITION, vertexPos);
 	submsh.SetVertexAttributeElementDimensions(AttributeCategory::POSITION, 2);
 
-	std::vector<gl::Vec3f> vertexNormal = {
-		gl::Vec3f(0, 0, 1),
-		gl::Vec3f(0, 0, 1),
-		gl::Vec3f(0, 0, 1),
-		gl::Vec3f(0, 0, 1),
+	std::vector<glm::vec3> vertexNormal = {
+		glm::vec3(0, 0, 1),
+		glm::vec3(0, 0, 1),
+		glm::vec3(0, 0, 1),
+		glm::vec3(0, 0, 1),
 	};
 	submsh.SetVertexAttributeBuffer(AttributeCategory::NORMAL, vertexNormal);
 	submsh.SetVertexAttributeElementDimensions(AttributeCategory::NORMAL, 3);
@@ -98,7 +100,7 @@ Mesh Mesh::GenerateFrustum(const Frustum& frustum)
 	Mesh result;
 	Submesh submsh;
 
-	std::vector<gl::Vec3f> vertexPos;
+	std::vector<glm::vec3> vertexPos;
 	vertexPos.reserve(frustum.nearPlane.size() + frustum.farPlane.size());
 	for (auto& currVert : frustum.nearPlane) {
 		vertexPos.push_back(currVert);

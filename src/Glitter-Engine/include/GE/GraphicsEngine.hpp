@@ -63,7 +63,7 @@ public:
 	
 	int GetLightCascadeCount() const;
 	const gl::Texture& GetCascadeShadowMap(int cascadeID) const;
-	gl::Mat4f GetCascadeViewProjectionTransform(int cascadeID) const;
+	glm::mat4 GetCascadeViewProjectionTransform(int cascadeID) const;
 	float GetViewSubfrustumFarPlaneInTexCoordZ(int subfrustumID) const;
 	
 	void AddGraphicalObject(GraphicalObject&& newObject);
@@ -136,12 +136,12 @@ private: //CSM
 	std::array<RawCamera, lightCascadeCount> lightCascadeCameras;
 	std::array<Framebuffer, lightCascadeCount> lightCascadeShadowMapFramebuffers;
 
-	gl::Mat4f lightViewTransform;
+	glm::mat4 lightViewTransform;
 	
 private: //Ambient Occlusion
 	gl::Program ssaoCalcProgram;
-	gl::Uniform<gl::Mat4f> ssaoCalc_viewProj;
-	gl::Uniform<gl::Mat4f> ssaoCalc_viewProjInv;
+	gl::Uniform<glm::mat4> ssaoCalc_viewProj;
+	gl::Uniform<glm::mat4> ssaoCalc_viewProjInv;
 	gl::Uniform<GLint> ssaoCalc_screenWidth;
 	gl::Uniform<GLint> ssaoCalc_screenHeight;
 

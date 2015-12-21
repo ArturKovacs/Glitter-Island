@@ -1,5 +1,7 @@
 #include <GE/OrthoCamera.hpp>
 
+#include <glm/gtc/matrix_transform.hpp>
+
 OrthoCamera::OrthoCamera() :
 xLeft(-1), xRight(1),
 yBottom(-1), yTop(1),
@@ -72,12 +74,12 @@ float OrthoCamera::GetZFar()
 	return zFar;
 }
 
-gl::Mat4f OrthoCamera::GetProjectionTransform() const
+glm::mat4 OrthoCamera::GetProjectionTransform() const
 {
-	return gl::CamMatrixf::Ortho(xLeft, xRight, yBottom, yTop, zNear, zFar);
+	return glm::ortho(xLeft, xRight, yBottom, yTop, zNear, zFar);
 }
 
-gl::Mat4f OrthoCamera::GetViewTransform() const
+glm::mat4 OrthoCamera::GetViewTransform() const
 {
-	return gl::Mat4f();
+	return glm::mat4();
 }

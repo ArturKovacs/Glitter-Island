@@ -7,11 +7,11 @@
 #include <SFML/OpenGL.hpp>
 
 #include <GE/SimpleColoredDrawer.hpp>
+#include <GE/GraphicsEngine.hpp>
 #include "TextDrawer.hpp"
 #include "BaseDemoContext.hpp"
 #include "EditorContext.hpp"
 #include "ContextManager.hpp"
-#include <GE/GraphicsEngine.hpp>
 
 class DemoCore
 {

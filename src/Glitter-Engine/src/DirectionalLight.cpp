@@ -1,27 +1,27 @@
 #include <GE/DirectionalLight.hpp>
 
 
-DirectionalLight::DirectionalLight(gl::Vec3f directionTowardsSource, gl::Vec3f color) :
+DirectionalLight::DirectionalLight(glm::vec3 directionTowardsSource, glm::vec3 color) :
 	directionTowardsSource(directionTowardsSource), color(color)
 {
 }
 
-void DirectionalLight::SetDirectionTowardsSource(const gl::Vec3f& directionTowardsSource)
+void DirectionalLight::SetDirectionTowardsSource(const glm::vec3& directionTowardsSource)
 {
-	this->directionTowardsSource = gl::Normalized(directionTowardsSource);
+	this->directionTowardsSource = glm::normalize(directionTowardsSource);
 }
 
-void DirectionalLight::SetColor(const gl::Vec3f& color)
+void DirectionalLight::SetColor(const glm::vec3& color)
 {
 	this->color = color;
 }
 
-gl::Vec3f DirectionalLight::GetDirectionTowardsSource() const
+glm::vec3 DirectionalLight::GetDirectionTowardsSource() const
 {
 	return directionTowardsSource;
 }
 
-gl::Vec3f DirectionalLight::GetColor() const
+glm::vec3 DirectionalLight::GetColor() const
 {
 	return color;
 }

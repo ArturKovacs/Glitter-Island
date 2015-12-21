@@ -16,8 +16,8 @@ public:
 
     void Draw(GraphicsEngine* pGraphicsEngine);
 
-    void SetTransform(const gl::Mat4f& transform);
-    gl::Mat4f GetTransform() const;
+    void SetTransform(const glm::mat4& transform);
+    glm::mat4 GetTransform() const;
     
     void SetVisible(bool value);
     bool IsVisible() const;
@@ -31,5 +31,5 @@ private:
     
     Mesh* pMesh;
     
-    gl::Mat4f modelTransform;
+    glm::mat4 modelTransform;
 };

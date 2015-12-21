@@ -28,9 +28,10 @@ ready to be used out-of-the-box for its compiler.
 In case of an _other compiler_ the following dependencies' dev packages are required to be installed:
 [SFML 2.1](http://www.sfml-dev.org/download/sfml/2.1/) (or higher) and [GLEW](http://glew.sourceforge.net/).
 
-A particular configuration of oglplus is provided, but it can be optionally used or 
-discarded by setting a cmake variable to the desired value. If the provided oglplus 
-is not used then oglplus is required to be installed.
+A particular instance of [glm](http://glm.g-truc.net), and [oglplus](http://oglplus.org/) is provided, but 
+they can be optionally used or discarded by setting the corresponding cmake variables to the desired value. 
+If any of the provided libraries is not used then it is required to be installed. 
+(Note: oglplus is configured for VS 2015, and should work on Linux too.)
 
 ### Use
 

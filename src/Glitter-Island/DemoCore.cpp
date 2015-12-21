@@ -3,6 +3,8 @@
 #include <SFML/Window.hpp>
 #include <SFML/OpenGL.hpp>
 #include <sstream>
+#include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
 
 //#include <GE/StandardMaterial.hpp>
 #include "Utility.hpp"
@@ -28,7 +30,7 @@ mouseSensitivity(0.005f)
 
 	graphicsEngine.Resize(pWindow->getSize().x, pWindow->getSize().y);
 
-	textDrawer.SetScreenResolution(gl::Vec2i(graphicsEngine.GetScreenWidth(),
+	textDrawer.SetScreenResolution(glm::ivec2(graphicsEngine.GetScreenWidth(),
                 graphicsEngine.GetScreenHeight()));
 
 	contextManager.PushContext(&baseDemoContext);
@@ -41,36 +43,36 @@ mouseSensitivity(0.005f)
 	//TEST
 	//////////////////////////////////////////////////
 
-	gl::Mat4f viewTransform = gl::ModelMatrixf::RotationY(gl::Degrees(32.1));
+	glm::mat4 viewTransform = glm::rotate(glm::mat4(1.f), glm::radians(32.1f), glm::vec3(0, 1, 0));
 	RawCamera testCam;
 	testCam.SetViewTransform(viewTransform);
-	testCam.SetProjectionTransform(gl::CamMatrixf::Ortho(-1, 1, -1, 1, 0, 1));
+	testCam.SetProjectionTransform(glm::ortho<float>(-1, 1, -1, 1, 0, 1));
 	Frustum frustum = testCam.GetFrustum();
 
 	std::stringstream ss1;
 	for (auto& currV : frustum.nearPlane) {
-		ss1 << currV.x() << ", ";
-		ss1 << currV.y() << ", ";
-		ss1 << currV.z() << std::endl;
+		ss1 << currV.x << ", ";
+		ss1 << currV.y << ", ";
+		ss1 << currV.z << std::endl;
 	}
 	for (auto& currV : frustum.farPlane) {
-		ss1 << currV.x() << ", ";
-		ss1 << currV.y() << ", ";
-		ss1 << currV.z() << std::endl;
+		ss1 << currV.x << ", ";
+		ss1 << currV.y << ", ";
+		ss1 << currV.z << std::endl;
 	}
 
 	std::stringstream ss2;
-	testCam.SetViewTransform(gl::Mat4f());
-	frustum = testCam.GetFrustum().Transformed(gl::Inverse(viewTransform));
+	testCam.SetViewTransform(glm::mat4());
+	frustum = testCam.GetFrustum().Transformed(glm::inverse(viewTransform));
 	for (auto& currV : frustum.nearPlane) {
-		ss2 << currV.x() << ", ";
-		ss2 << currV.y() << ", ";
-		ss2 << currV.z() << std::endl;
+		ss2 << currV.x << ", ";
+		ss2 << currV.y << ", ";
+		ss2 << currV.z << std::endl;
 	}
 	for (auto& currV : frustum.farPlane) {
-		ss2 << currV.x() << ", ";
-		ss2 << currV.y() << ", ";
-		ss2 << currV.z() << std::endl;
+		ss2 << currV.x << ", ";
+		ss2 << currV.y << ", ";
+		ss2 << currV.z << std::endl;
 	}
 
 	assert(ss1.str() == ss2.str());
@@ -117,7 +119,7 @@ int DemoCore::Start()
 
 			if (event.type == sf::Event::Resized) {
 				textDrawer.SetScreenResolution(
-				gl::Vec2i(event.size.width, event.size.height));
+				glm::ivec2(event.size.width, event.size.height));
 				
 				graphicsEngine.Resize(event.size.width, event.size.height);
 			}

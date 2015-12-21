@@ -9,11 +9,11 @@ class SimpleColoredDrawer
 public:
 	SimpleColoredDrawer();
 
-	void Draw(gl::Context& glContext, const Mesh& mesh, const gl::Mat4f& MVP, const gl::Vec4f& color);
+	void Draw(gl::Context& glContext, const Mesh& mesh, const glm::mat4& MVP, const glm::vec4& color);
 
 private:
-	gl::Uniform<gl::Vec4f> sh_color;
-	gl::Uniform<gl::Mat4f> sh_MVP;
+	gl::Uniform<glm::vec4> sh_color;
+	gl::Uniform<glm::mat4> sh_MVP;
 
 	gl::Program shaderProgram;
 };

@@ -7,11 +7,11 @@ SimpleColoredDrawer::SimpleColoredDrawer()
 	shaderProgram = GraphicsEngine::LoadShaderProgramFromFiles("SimpleColored_v.glsl", "SimpleColored_f.glsl");
 	shaderProgram.Use();
 
-	sh_MVP = gl::Uniform<gl::Mat4f>(shaderProgram, "MVP");
-	sh_color = gl::Uniform<gl::Vec4f>(shaderProgram, "color");
+	sh_MVP = gl::Uniform<glm::mat4>(shaderProgram, "MVP");
+	sh_color = gl::Uniform<glm::vec4>(shaderProgram, "color");
 }
 
-void SimpleColoredDrawer::Draw(gl::Context& glContext, const Mesh& mesh, const gl::Mat4f& MVP, const gl::Vec4f& color)
+void SimpleColoredDrawer::Draw(gl::Context& glContext, const Mesh& mesh, const glm::mat4& MVP, const glm::vec4& color)
 {
 	shaderProgram.Use();
 

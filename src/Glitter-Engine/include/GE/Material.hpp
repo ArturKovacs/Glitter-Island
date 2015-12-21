@@ -8,7 +8,7 @@ class Material
 public:
 	virtual ~Material();
 
-	virtual void Prepare(Mesh::Submesh& submsh, const gl::Mat4f& modelTransform) = 0;
+	virtual void Prepare(Mesh::Submesh& submsh, const glm::mat4& modelTransform) = 0;
 	virtual void Prepare(Mesh::Submesh& submsh) = 0;
-	virtual void SetTransform(const gl::Mat4f& modelTransform) = 0;
+	virtual void SetTransform(const glm::mat4& modelTransform) = 0;
 };

@@ -40,7 +40,6 @@
 #undef GL_VERSION_3_1
 #endif //GL_VERSION_3_1
 
-//Manually written
 #define GL_VERSION_3_3
 #define GL_VERSION_3_2
 #define GL_VERSION_3_1
