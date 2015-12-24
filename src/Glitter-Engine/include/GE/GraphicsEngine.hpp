@@ -4,7 +4,6 @@
 
 #include "Framebuffer.hpp"
 #include "DefaultFramebuffer.hpp"
-#include "GraphicalObject.hpp"
 #include "DirectionalLight.hpp"
 #include "Terrain.hpp"
 #include "Skybox.hpp"
@@ -13,11 +12,16 @@
 #include "RawCamera.hpp"
 #include "DebugDrawer.hpp"
 #include "SimpleColoredDrawer.hpp"
-#include "MeshManager.hpp"
-#include "MaterialManager.hpp"
+
+#include "Utility.hpp"
+
+#include "../../implementation/StandardGraphicalObject.hpp"
+#include "../../implementation/MeshManager.hpp"
+#include "../../implementation/MaterialManager.hpp"
 
 #include <string>
-#include <list>
+#include <deque>
+#include <unordered_set>
 
 class GraphicsEngine
 {
@@ -66,12 +70,9 @@ public:
 	glm::mat4 GetCascadeViewProjectionTransform(int cascadeID) const;
 	float GetViewSubfrustumFarPlaneInTexCoordZ(int subfrustumID) const;
 	
-	void AddGraphicalObject(GraphicalObject&& newObject);
-	void AddGraphicalObject(GraphicalObject* newObject);
-	
-	Mesh* LoadMeshFromFile(const std::string& filename);
-	Material* LoadStandardMaterialFromFile(const std::string& filename, const std::string& materialName);
-	GraphicalObject LoadGraphicalObjectFromFile(const std::string& filename);
+	util::managed_ptr<Mesh> LoadMeshFromFile(const std::string& filename);
+	util::managed_ptr<Material> LoadStandardMaterialFromFile(const std::string& filename, const std::string& materialName);
+	util::managed_ptr<GraphicalObject> CreateGraphicalObject();
 	
 	DebugDrawer& GetDebugDrawer();
 	SimpleColoredDrawer& GetSimpleColoredDrawer();
@@ -114,11 +115,9 @@ private: // objects
 	Water water;
 	//Fog fog;
 
-	//it is a list (not a std::vector) so that all Graphical Object pointers remain valid after a new Graphical Object is inserted
-	std::list<GraphicalObject> managedGraphicalObjects;
-	std::vector<GraphicalObject*> externalGraphicalObjects;
-
-	std::map<Mesh::Submesh*, std::vector<GraphicalObject*>> instancedGraphicalObjects;
+	//it is a deque so that all Graphical Object pointers remain valid after a new Graphical Object is inserted
+	std::deque<StandardGraphicalObject> managedGraphicalObjects;
+	std::map<Mesh::Submesh*, std::unordered_set<GraphicalObject*>> instancedGraphicalObjects;
 	
 	Camera* pActiveCam;
 	PerspectiveCamera* pActiveViewerCam;

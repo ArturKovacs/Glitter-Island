@@ -1,35 +1,21 @@
 #pragma once
 
-#include "all_gl_headers.hpp"
-#include "Mesh.hpp"
-#include "Material.hpp"
+#include <glm/glm.hpp>
 
-class GraphicsEngine;
+class Mesh;
 
 class GraphicalObject
 {
 public:
-    GraphicalObject();
+	virtual void SetMesh(Mesh* newMesh) = 0;
+	virtual Mesh* GetMesh() = 0;
 
-    void SetMesh(Mesh* newMesh);
-    Mesh* GetMesh();
+	virtual void SetTransform(const glm::mat4& transform) = 0;
+	virtual glm::mat4 GetTransform() const = 0;
 
-    void Draw(GraphicsEngine* pGraphicsEngine);
+	virtual void SetVisible(bool value) = 0;
+	virtual bool IsVisible() const = 0;
 
-    void SetTransform(const glm::mat4& transform);
-    glm::mat4 GetTransform() const;
-    
-    void SetVisible(bool value);
-    bool IsVisible() const;
-	
-	void SetDepthTestEnabled(bool enabled);
-	bool IsDepthTestEnabled() const;
-
-private:
-    bool visible;
-	bool depthTest;
-    
-    Mesh* pMesh;
-    
-    glm::mat4 modelTransform;
+	virtual void SetDepthTestEnabled(bool enabled) = 0;
+	virtual bool IsDepthTestEnabled() const = 0;
 };

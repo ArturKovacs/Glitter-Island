@@ -1,7 +1,7 @@
 #include "ModelSelectionContext.hpp"
 
 #include "DemoCore.hpp"
-#include "Utility.hpp"
+#include <GE/Utility.hpp>
 #include "ContextManager.hpp"
 
 
@@ -32,7 +32,7 @@ void ModelSelectionContext::HandleWindowEvent(const sf::Event& event)
 		case sf::Keyboard::F:
 		case sf::Keyboard::Down:
 			howeredModelID++;
-			howeredModelID = howeredModelID > modelFileList.size()-1 ? 0 : howeredModelID;
+			howeredModelID = static_cast<size_t>(howeredModelID) > modelFileList.size()-1 ? 0 : howeredModelID;
 			break;
 
 		case sf::Keyboard::Space:

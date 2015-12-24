@@ -24,8 +24,8 @@ editorContext(pContextManager, pCore)
 	cam.SetFovY(glm::radians(70.f));
 	cam.SetScreenWidth(pCore->GetScreenWidth());
 	cam.SetScreenHeight(pCore->GetScreenHeight());
-	cam.SetHorizontalRot(4.10499);
-	cam.SetVerticalRot(-0.275);
+	cam.SetHorizontalRot(4.10499f);
+	cam.SetVerticalRot(-0.275f);
 	cam.SetPosition(glm::vec3(-27.2224, 21.0493, 17.4667));
 
 	selectedCam = &cam;

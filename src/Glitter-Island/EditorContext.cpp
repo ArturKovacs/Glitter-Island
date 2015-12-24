@@ -4,7 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "DemoCore.hpp"
-#include "Utility.hpp"
+#include <GE/Utility.hpp>
 
 EditorContext::EditorToolType EditorContext::GetToolType(EditorContext::EditorTool tool)
 {
@@ -86,11 +86,13 @@ brushCircleMaterial(&(pCore->GetGraphicsEngine()))
 	brushCircleMaterial.SetColor(glm::vec4(1, 0.1, 0.5, 1));
 	brushCircleMesh.GetSubmeshes().at(0).SetMaterial(&brushCircleMaterial);
 	
-	brushCircle.SetMesh(&brushCircleMesh);
-	brushCircle.SetDepthTestEnabled(false);
-	brushCircle.SetVisible(false);
+	brushCircle = pCore->GetGraphicsEngine().CreateGraphicalObject();
+
+	brushCircle->SetMesh(&brushCircleMesh);
+	brushCircle->SetDepthTestEnabled(false);
+	brushCircle->SetVisible(false);
 	
-	pCore->GetGraphicsEngine().AddGraphicalObject(&brushCircle);
+	//pCore->GetGraphicsEngine().AddGraphicalObject(brushCircle.get_raw());
 }
 
 EditorContext::~EditorContext()
@@ -99,7 +101,7 @@ EditorContext::~EditorContext()
 void EditorContext::HandleWindowEvent(const sf::Event& event)
 {
 	if (event.type == sf::Event::MouseWheelMoved) {
-		brushRadius += -event.mouseWheel.delta*0.5;
+		brushRadius += -event.mouseWheel.delta*0.5f;
 		brushRadius = std::max(brushRadius, 0.5f);
 	}
 	else if (event.type == sf::Event::KeyPressed) {
@@ -122,14 +124,14 @@ void EditorContext::EnteringContext()
 void EditorContext::LeavingContext()
 {
 	//pCore->GetGraphicsEngine().GetDebugDrawer().SetEnabled(false);
-	brushCircle.SetVisible(false);
+	brushCircle->SetVisible(false);
 }
 
 void EditorContext::Update(float deltaSec)
 {
 	UpdatePointPosAtCursor();
 
-	brushCircle.SetVisible(GetToolType(selectedTool) == EditorToolType::PAINT);
+	brushCircle->SetVisible(GetToolType(selectedTool) == EditorToolType::PAINT);
 	
 	if (GetToolType(selectedTool) == EditorToolType::PAINT) {
 		UpdateBrushCirclePos();
@@ -158,8 +160,9 @@ void EditorContext::Update(float deltaSec)
 				return 1-(std::sqrt(x_sq)/std::sqrt(radius_sq));
 			};
 
-			for (int dy = -brushRadius; dy <= brushRadius; dy++) {
-				for (int dx = -brushRadius; dx <= brushRadius; dx++) {
+			int i_radius = static_cast<int>(brushRadius);
+			for (int dy = -i_radius; dy <= i_radius; dy++) {
+				for (int dx = -i_radius; dx <= i_radius; dx++) {
 					glm::ivec2 currPosi(cursorPosOnMaterialMap.x + dx, cursorPosOnMaterialMap.y + dy);
 
 					if (currPosi.x >= 0 && currPosi.x < materialMap.getSize().x &&
@@ -210,7 +213,7 @@ void EditorContext::DrawOverlayElements()
 {
 	gl::Context& glContext = pCore->GetGraphicsEngine().GetGLContext();
 
-	//TODO move overlay rendering to Core! Other obejcts should only be able to add overlay elements to core - review this statement!! -
+	//TODO move overlay rendering to Engine!
 
 	sf::Text text("Editor mode", pCore->overlayFont);
 	text.setPosition(sf::Vector2f(30, 25));
@@ -255,13 +258,13 @@ void EditorContext::MouseButtonPressed(const sf::Event& event)
 
 		if (selectedTool == EditorTool::PLACE_MODEL) {
 			static float TMP_rot = 0;
-			TMP_rot += (double(std::rand())/RAND_MAX)*glm::pi<float>() + glm::pi<float>()*0.5;
-			GraphicalObject loadedObject = pCore->GetGraphicsEngine().LoadGraphicalObjectFromFile(modelSelectionContext.GetSelectedModelFilename());
+			TMP_rot += float(double(std::rand())/RAND_MAX)*glm::pi<float>() + glm::pi<float>()*0.2;
+			//StandardGraphicalObject loadedObject = pCore->GetGraphicsEngine().LoadGraphicalObjectFromFile(modelSelectionContext.GetSelectedModelFilename());
+			auto object = pCore->GetGraphicsEngine().CreateGraphicalObject();
+			object->SetMesh(pCore->GetGraphicsEngine().LoadMeshFromFile(modelSelectionContext.GetSelectedModelFilename()).get_raw());
 			glm::mat4 transform = glm::translate(glm::mat4(1.f), glm::vec3(pointPosAtCursor)+glm::vec3(0, -0.1, 0));
 			transform = glm::rotate(transform, TMP_rot, glm::vec3(0, 1, 0));
-			loadedObject.SetTransform(transform);
-
-			pCore->GetGraphicsEngine().AddGraphicalObject(std::move(loadedObject));
+			object->SetTransform(transform);
 		}
 	}
 	else {
@@ -362,5 +365,5 @@ void EditorContext::UpdateBrushCirclePos()
 	modelMatrix = glm::scale(modelMatrix, glm::vec3(meshScale, meshScale, meshScale));
 	modelMatrix = glm::rotate(modelMatrix, glm::pi<float>()*0.5f, glm::vec3(1, 0, 0));
 
-	brushCircle.SetTransform(modelMatrix);
+	brushCircle->SetTransform(modelMatrix);
 }

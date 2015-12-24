@@ -1,5 +1,5 @@
 
-file(GLOB all_src_files "*.cpp" "../include/GE/*.hpp")
+file(GLOB all_src_files "*.cpp" "*.hpp" "../include/GE/*.hpp")
 
 add_library(${ENGINE_NAME} STATIC ${all_src_files})
 
@@ -18,19 +18,24 @@ RawCamera.cpp
 source_group(GraphicalObject FILES
 ../include/GE/AttributeCategory.hpp
 ../include/GE/GraphicalObject.hpp
-../include/GE/Material.hpp
-../include/GE/MaterialManager.hpp
 ../include/GE/Mesh.hpp
-../include/GE/MeshManager.hpp
-../include/GE/SimpleColoredMaterial.hpp
-../include/GE/StandardMaterial.hpp
+MeshManager.hpp
+StandardGraphicalObject.hpp
 
 AttributeCategory.cpp
-GraphicalObject.cpp
-Material.cpp
-MaterialManager.cpp
 Mesh.cpp
 MeshManager.cpp
+StandardGraphicalObject.cpp
+)
+
+source_group(Materials FILES
+../include/GE/Material.hpp
+../include/GE/SimpleColoredMaterial.hpp
+MaterialManager.hpp
+StandardMaterial.hpp
+
+Material.cpp
+MaterialManager.cpp
 SimpleColoredMaterial.cpp
 StandardMaterial.cpp
 )

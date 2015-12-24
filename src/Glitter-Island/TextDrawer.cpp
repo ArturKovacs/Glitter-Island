@@ -73,7 +73,7 @@ TextDrawer::TextDrawer()
 
 void TextDrawer::SetScreenResolution(glm::ivec2 res)
 {
-	projectionMatrix = glm::ortho<float>(0, res.x, res.y, 0, -1, 1);
+	projectionMatrix = glm::ortho<float>(0.f, float(res.x), float(res.y), 0.f, -1.f, 1.f);
 	//projectionMatrix = gl::CamMatrixf::Ortho(0, res.x(), 0, res.y(), -1, 1);
 }
 
@@ -104,7 +104,7 @@ void TextDrawer::Draw(gl::Context& glContext, const sf::Text& text)
 		ptr[8], ptr[9], ptr[10], ptr[11],
 		ptr[12], ptr[13], ptr[14], ptr[15]);
 
-	sf::Vector2f charOffset = sf::Vector2f(0, characterSize);
+	sf::Vector2f charOffset = sf::Vector2f(0.f, float(characterSize));
 
 	const sf::String& string = text.getString();
 
@@ -122,7 +122,7 @@ void TextDrawer::Draw(gl::Context& glContext, const sf::Text& text)
 
 			sf::Glyph glyph = font.getGlyph(currChar, characterSize, (text.getStyle() & sf::Text::Bold) != 0);
 
-			sf::Vector2f charPos = charOffset + sf::Vector2f(glyph.bounds.left, glyph.bounds.top);
+			sf::Vector2f charPos = charOffset + sf::Vector2f(float(glyph.bounds.left), float(glyph.bounds.top));
 			glm::mat4 MVP = glm::translate(glm::mat4(1.f), glm::vec3(charPos.x, charPos.y, 0));
 			MVP = glm::scale(MVP, glm::vec3(glyph.textureRect.width, glyph.textureRect.height, 0));
 			MVP = projectionMatrix * baseTransform * MVP;
@@ -147,16 +147,16 @@ void TextDrawer::DrawBackground(gl::Context& glContext, const sf::Text& text, co
 {
 	sf::IntRect bgRect;
 
-	bgRect.top = -border;
-	bgRect.left = -border;
+	bgRect.top = static_cast<int>(-border);
+	bgRect.left = static_cast<int>(-border);
 
 	unsigned int charSize = text.getCharacterSize();
 
 	float maxWidth = GetTextWidth(text);
 
 	const float lineSpacing = GetLineSpacing(*text.getFont(), charSize);
-	bgRect.height = GetTextHeight(text) + 2*border;
-	bgRect.width = maxWidth + 2*border;
+	bgRect.height = static_cast<int>(GetTextHeight(text) + 2*border);
+	bgRect.width = static_cast<int>(maxWidth + 2*border);
 
 	const float* ptr = text.getTransform().getMatrix();
 	glm::mat4 baseTransform = glm::mat4(
@@ -262,5 +262,5 @@ float TextDrawer::GetTextHeight(const sf::Text& text)
 
 float TextDrawer::GetLineSpacing(const sf::Font& font, unsigned int characterSize)
 {
-	return font.getLineSpacing(characterSize)*0.5;
+	return font.getLineSpacing(characterSize)*0.5f;
 }

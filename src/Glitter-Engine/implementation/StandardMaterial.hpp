@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Material.hpp"
-#include "all_gl_headers.hpp"
+#include <GE/Material.hpp>
+#include <GE/all_gl_headers.hpp>
 #include <SFML/Graphics.hpp>
 
 class GraphicsEngine;
@@ -20,14 +20,12 @@ public:
 	StandardMaterial(StandardMaterial&&) = default;
 	StandardMaterial& operator=(StandardMaterial&&) = default;
 
-	void Prepare(Mesh::Submesh& submsh, const glm::mat4& modelTransform) override;
-	void Prepare(Mesh::Submesh& submsh) override;
-	void SetTransform(const glm::mat4& modelTransform) override;
+	virtual void Prepare(Mesh::Submesh& submsh, const glm::mat4& modelTransform) override;
+	virtual void Prepare(Mesh::Submesh& submsh) override;
+	virtual void SetTransform(const glm::mat4& modelTransform) override;
 
-private:
+protected:
 	GraphicsEngine* pGraphicsEngine;
-
-	bool isTransparent;
 
 	gl::Texture albedoTexture;
 	gl::Texture normal_spec_rough_Texture;

@@ -35,4 +35,25 @@ namespace util
 	 * @throws std::runtime_error
 	 */
 	std::vector<std::string>  GetFileNamesInDirectory(const std::string& dirPath);
+
+	/**
+	 * \brief Class that holds a pointer thats memory is managed by some other facility.
+	 *
+	 * This class only indicates that lifetime of the object, that it points to, is managed
+	 * by some other unit. This class is meant to keep you away from trying to "delete" the
+	 * underlying pointer.
+	 */
+	template<typename T>
+	class managed_ptr
+	{
+	public:
+		managed_ptr(T* ptr = nullptr):ptr_(ptr) {}
+		T& operator*() {return *ptr_;}
+		T* operator->() {return ptr_;}
+
+		T* get_raw() {return ptr_;}
+
+	private:
+		T* ptr_;
+	};
 }

@@ -1,4 +1,4 @@
-#include <GE/MeshManager.hpp>
+#include "MeshManager.hpp"
 
 #include <cassert>
 #include <cctype>
@@ -7,7 +7,7 @@
 
 #include <GE/GraphicsEngine.hpp>
 
-Mesh* MeshManager::LoadMeshFromFile(GraphicsEngine* pGraphicsEngine, const std::string& filename)
+util::managed_ptr<Mesh> MeshManager::LoadMeshFromFile(GraphicsEngine* pGraphicsEngine, const std::string& filename)
 {
 	auto elementIter = meshes.find(filename);
 	if (elementIter != meshes.end()) {
@@ -202,9 +202,9 @@ Mesh* MeshManager::LoadFromOBJFile(GraphicsEngine* pGraphicsEngine, const std::s
 		float currentProgress = (currDiff / length)*displayRes;
 		while (currentProgress - displayedProgress > 0) {
 			std::cout << '-' << displayRes-displayedProgress;
-			std::cout.flush();
 			displayedProgress++;
 		}
+		std::cout.flush();
 	}
 
 	std::cout << std::endl;
@@ -246,7 +246,7 @@ Mesh* MeshManager::LoadFromOBJFile(GraphicsEngine* pGraphicsEngine, const std::s
 
 		Mesh::Submesh currDst;
 
-		currDst.SetMaterial(pGraphicsEngine->LoadStandardMaterialFromFile(mtllibFilename, currMaterialName));
+		currDst.SetMaterial(pGraphicsEngine->LoadStandardMaterialFromFile(mtllibFilename, currMaterialName).get_raw());
 		currDst.SetIndices(currOBJSubmesh.indices);
 
 		auto GetOBJVertexAttribute = [&](AttributeCategory target) {

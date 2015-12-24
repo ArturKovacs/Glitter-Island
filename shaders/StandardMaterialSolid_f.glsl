@@ -3,8 +3,6 @@
 uniform vec3 lightDir;
 uniform sampler2D albedoTexture;
 uniform sampler2D normal2_spec1_rough1_Tex;
-//uniform sampler2D specularTexture;
-//uniform sampler2D roughnessTexture;
 
 in vec2 texCoord_v;
 in vec3 normal_v;
@@ -27,8 +25,7 @@ vec3 UnpackNormal(in vec2 packed)
 
 void main(void) 
 {
-	vec4 kd = texture(albedoTexture, texCoord_v);
-	if(kd.a < 0.9) { discard; }
+	vec3 kd = texture(albedoTexture, texCoord_v).rgb;
 
 	vec4 normal2_spec1_rough1 = texture(normal2_spec1_rough1_Tex, texCoord_v);
 	
@@ -39,7 +36,6 @@ void main(void)
 	vec3 normal = normalize(normal_v);
 	vec3 tangent  = normalize(tangent_v);
 	tangent = normalize(tangent - normal * dot(normal, tangent));
-	//vec3 bitangent = cross(normal, tangent);
 	vec3 bitangent = cross(tangent, normal);
 	
 	mat3 textureToWorld = mat3(tangent, bitangent, normal);
@@ -51,5 +47,4 @@ void main(void)
 	
 	gl_FragData[0] = vec4(kd.xyz*max(dot(lightDir, normal), 0) + ks*PhongBlinn(lightDir, normalize(viewerDir_v), normal, shininess) + ambient, 1);
 	gl_FragData[1] = vec4(normal, 1);
-	//fragColor = vec4((kd.xyz + ks*PhongBlinn(lightDir, normalize(viewerDir_v), normal, shininess)) * max(dot(lightDir, normal), 0) + ambient, kd.a);
 } 

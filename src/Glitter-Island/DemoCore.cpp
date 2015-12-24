@@ -7,7 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 //#include <GE/StandardMaterial.hpp>
-#include "Utility.hpp"
+#include <GE/Utility.hpp>
 
 const std::string DemoCore::shadersFolderPath = "../shaders/";
 const std::string DemoCore::imgFolderPath = "../img/";
@@ -104,11 +104,11 @@ int DemoCore::Start()
 	double lastMinResetSec = 0;
 	double longestMinKeepSec = 7;
 
-	double lastUpdateSec = 0;
+	float lastUpdateSec = 0;
 
 	while (running) {
 		elapsedSec = clock.getElapsedTime().asSeconds();
-		double deltaSec = elapsedSec - lastUpdateSec;
+		float deltaSec = elapsedSec - lastUpdateSec;
 		lastUpdateSec = elapsedSec;
 
 		sf::Event event;

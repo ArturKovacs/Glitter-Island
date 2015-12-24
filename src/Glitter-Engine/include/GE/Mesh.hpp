@@ -26,8 +26,8 @@ public:
 	Mesh(const Mesh&) = delete;
 	Mesh& operator=(const Mesh&) = delete;
 
-	Mesh(Mesh&&);
-	Mesh& operator=(Mesh&&);
+	Mesh(Mesh&&) = default;
+	Mesh& operator=(Mesh&&) = default;
 
 	std::vector<Submesh>& GetSubmeshes();
 	const std::vector<Submesh>& GetSubmeshes() const;
@@ -48,8 +48,8 @@ public:
 	Submesh(const Submesh&) = delete;
 	Submesh& operator=(const Submesh&) = delete;
 
-	Submesh(Submesh&&);
-	Submesh& operator=(Submesh&&);
+	Submesh(Submesh&&) = default;
+	Submesh& operator=(Submesh&&) = default;
 
 	void SetIndices(const std::vector<IndexType>& indexArray);
 	void SetPrimitiveType(gl::enums::PrimitiveType type);

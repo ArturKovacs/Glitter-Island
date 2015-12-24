@@ -53,7 +53,7 @@ private: // graphical state
 private: // misc
 	bool running;
 	sf::Clock clock;
-	double elapsedSec;
+	float elapsedSec;
 	float currFPS;
 	ContextManager contextManager;
 	BaseDemoContext baseDemoContext;

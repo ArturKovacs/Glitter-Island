@@ -136,17 +136,6 @@ Mesh Mesh::GenerateFrustum(const Frustum& frustum)
 	return std::move(result);
 }
 
-Mesh::Mesh(Mesh&& r) :
-submeshes(std::move(r.submeshes))
-{}
-
-Mesh& Mesh::operator=(Mesh&& r)
-{
-	submeshes = std::move(r.submeshes);
-
-	return *this;
-}
-
 std::vector<Mesh::Submesh>& Mesh::GetSubmeshes()
 {
 	return submeshes;
@@ -168,25 +157,6 @@ Mesh::Submesh::Submesh() : pMaterial(nullptr), primitiveType(gl::enums::Primitiv
 	ForEachAttribute([&](AttributeCategory current){
 		vertexAttributes.insert(std::make_pair(current, VertexAttributeContainer(std::move(gl::Buffer()), GetAttributeCategoryInfo(current).defaultElementDimensions)));
 	});
-}
-
-Mesh::Submesh::Submesh(Submesh&& r) :
-pMaterial(r.pMaterial),
-VAO(std::move(r.VAO)),
-indices(std::move(r.indices)),
-vertexAttributes(std::move(r.vertexAttributes)),
-primitiveType(r.primitiveType)
-{}
-
-Mesh::Submesh& Mesh::Submesh::operator=(Submesh&& r)
-{
-	pMaterial = r.pMaterial;
-	VAO = std::move(r.VAO);
-	indices = std::move(r.indices);
-	vertexAttributes = std::move(r.vertexAttributes);
-	primitiveType = r.primitiveType;
-
-	return *this;
 }
 
 void Mesh::Submesh::SetIndices(const std::vector<IndexType>& indexArray)

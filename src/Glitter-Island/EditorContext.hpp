@@ -6,6 +6,7 @@
 //WARNING assuming that model selection won't include this file!
 #include "ModelSelectionContext.hpp"
 #include <GE/GraphicalObject.hpp>
+#include <GE/Utility.hpp>
 #include <GE/SimpleColoredMaterial.hpp>
 
 class EditorContext : public GUIContext
@@ -51,7 +52,7 @@ private:
 	float brushRadius;
 	Mesh brushCircleMesh;
 	SimpleColoredMaterial brushCircleMaterial;
-	GraphicalObject brushCircle;
+	util::managed_ptr<GraphicalObject> brushCircle;
 
 	ModelSelectionContext modelSelectionContext;
 

@@ -1,13 +1,14 @@
-#include <GE/MaterialManager.hpp>
+#include "MaterialManager.hpp"
 
 #include <GE/GraphicsEngine.hpp>
+#include "StandardMaterial.hpp"
 
 #include <iostream>
 #include <fstream>
 
-Material* MaterialManager::LoadStandardMaterialFromFile(GraphicsEngine* pGraphicsEngine, const std::string& filename, const std::string& materialName)
+util::managed_ptr<Material> MaterialManager::LoadFromFile(GraphicsEngine* pGraphicsEngine, const std::string& filename, const std::string& materialName)
 {
-	const std::string materialKey = filename + "?" + materialName;
+	auto materialKey = std::make_pair(filename, materialName);
 
 	auto elementIter = materials.find(materialKey);
 	if (elementIter != materials.end()) {
@@ -16,19 +17,17 @@ Material* MaterialManager::LoadStandardMaterialFromFile(GraphicsEngine* pGraphic
 
 	std::cout << "Loading material..." << std::endl;
 
-	StandardMaterial *pResult  = LoadFromMTLFile(pGraphicsEngine, filename, materialName);
+	Material *pResult  = LoadFromMTLFile(pGraphicsEngine, filename, materialName);
 
 	std::cout << "Material loaded!" << std::endl;
 
-	materials[filename] = pResult;
+	materials[materialKey] = pResult;
 
 	return pResult;
 }
 
-StandardMaterial* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngine, const std::string& filename, const std::string& materialName)
+Material* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngine, const std::string& filename, const std::string& materialName)
 {
-	StandardMaterial *pResult = new StandardMaterial(pGraphicsEngine);
-
 	std::ifstream file(filename);
 
 	if (!file.is_open()) {
@@ -44,7 +43,6 @@ StandardMaterial* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngi
 	while (file >> read && !found) {
 		if (read == "newmtl") {
 			file >> currMaterial;
-			//std::getline(file, currMaterial);
 			if (currMaterial == materialName) {
 				found = true;
 			}
@@ -61,14 +59,13 @@ StandardMaterial* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngi
 	sf::Image normalImg;
 	sf::Image specularImg;
 	sf::Image roughnessImg;
+	sf::Image albedoImg;
+	bool isTransparent;
 
 	//Initialize normal map
 	{
 		std::vector<sf::Uint8> pixelData = { 128, 128, 255, 255 };
-		sf::Image img;
-		img.create(1, 1, pixelData.data());
-
-		normalImg = std::move(img);
+		normalImg.create(1, 1, pixelData.data());
 	}
 
 	bool readingTargetMaterial = true;
@@ -76,43 +73,36 @@ StandardMaterial* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngi
 		if (read == "map_Kd") {
 			file >> texFilename;
 
-			sf::Image img;
-			if (!img.loadFromFile(GraphicsEngine::GetImgFolderPath() + texFilename)) {
+			if (!albedoImg.loadFromFile(GraphicsEngine::GetImgFolderPath() + texFilename)) {
 				throw std::runtime_error(filename);
 			}
-			img.flipVertically();
+			albedoImg.flipVertically();
 
 			const sf::Uint8 treshold = 250;
-			bool &transparent = pResult->isTransparent;
-			transparent = false;
-			for (size_t x = 0; x < img.getSize().x && !transparent; x++) {
-				for (size_t y = 0; y < img.getSize().y && !transparent; y++) {
-					if (img.getPixel(x, y).a < treshold) {
-						pResult->isTransparent = true;
+			isTransparent = false;
+			for (size_t x = 0; x < albedoImg.getSize().x && !isTransparent; x++) {
+				for (size_t y = 0; y < albedoImg.getSize().y && !isTransparent; y++) {
+					if (albedoImg.getPixel(x, y).a < treshold) {
+						isTransparent = true;
 					}
 				}
 			}
-
-			LoadTexture(pResult->albedoTexture, img, TextureType::COLOR);
 		}
 		else if (read == "map_Ks") {
 			file >> texFilename;
 
 			specularImg = LoadImage(GraphicsEngine::GetImgFolderPath() + texFilename);
-			//LoadTexture(pResult->specularTexture, GraphicsEngine::GetImgFolderPath() + texFilename, TextureType::COLOR);
 		}
 		else if (read == "map_Ns") {
 			file >> texFilename;
 
 			//TODO map_Ns is the the inverse of roughness!!
 			roughnessImg = LoadImage(GraphicsEngine::GetImgFolderPath() + texFilename);
-			//LoadTexture(pResult->roughnessTexture, GraphicsEngine::GetImgFolderPath() + texFilename, TextureType::COLOR);
 		}
 		else if (read == "map_Bump" || read == "map_bump" || read == "bump") {
 			file >> texFilename;
 
 			normalImg = LoadImage(GraphicsEngine::GetImgFolderPath() + texFilename);
-			//LoadTexture(pResult->normalMap, GraphicsEngine::GetImgFolderPath() + texFilename, TextureType::DATA);
 		}
 		else if (read == "newmtl") {
 			readingTargetMaterial = false;
@@ -122,35 +112,64 @@ StandardMaterial* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngi
 		}
 	}
 
-	//merge the normal, specular, and roughness together!
-	const int normalW = normalImg.getSize().x;
-	const int normalH = normalImg.getSize().y;
-
-	if (specularImg.getSize() == sf::Vector2u(0, 0)) {
-		specularImg.create(normalW, normalH);
-	}
-	if (roughnessImg.getSize() == sf::Vector2u(0, 0)) {
-		roughnessImg.create(normalW, normalH);
-	}
-
-	const bool sizes_match = (normalImg.getSize() == specularImg.getSize()) && (normalImg.getSize() == roughnessImg.getSize());
-	if (!sizes_match) {
-		throw std::runtime_error("Normal map, specular map, and roughness map must have the same size. ("+filename+")");
-	}
-
-	sf::Image normal_spec_rough_img;
-	normal_spec_rough_img.create(normalW, normalH);
-
-	for (size_t x = 0; x < normal_spec_rough_img.getSize().x; x++) {
-		for (size_t y = 0; y < normal_spec_rough_img.getSize().y; y++) {
-			sf::Color normal = normalImg.getPixel(x, y);
-			sf::Uint8 spec = specularImg.getPixel(x, y).r;
-			sf::Uint8 roughness = roughnessImg.getPixel(x, y).r;
-			normal_spec_rough_img.setPixel(x, y, sf::Color(normal.r, normal.g, spec, roughness));
+	StandardMaterial *pResult = new StandardMaterial(pGraphicsEngine);
+	try {
+		gl::Program &shader = pResult->shaderProgram;
+		if (isTransparent) {
+			shader = GraphicsEngine::LoadShaderProgramFromFiles("StandardMaterialTransparent_v.glsl", "StandardMaterialTransparent_f.glsl");
 		}
-	}
+		else {
+			shader = GraphicsEngine::LoadShaderProgramFromFiles("StandardMaterialSolid_v.glsl", "StandardMaterialSolid_f.glsl");
+		}
+		shader.Use();
 
-	LoadTexture(pResult->normal_spec_rough_Texture, normal_spec_rough_img, TextureType::DATA);
+		try {
+			pResult->sh_MVP = gl::Uniform<glm::mat4>(shader, "MVP");
+			pResult->sh_MODELVIEW = gl::Uniform<glm::mat4>(shader, "MODELVIEW");
+			pResult->sh_modelTransposedInverse = gl::Uniform<glm::mat4>(shader, "model_transposed_inverse");
+			pResult->sh_lightDir = gl::Uniform<glm::vec3>(shader, "lightDir");
+			gl::UniformSampler(shader, "albedoTexture").Set(0);
+			gl::UniformSampler(shader, "normal2_spec1_rough1_Tex").Set(1);
+		}
+		catch (gl::Error& err) {
+			std::cout << err.what() << std::endl;
+		}
+
+		//merge the normal, specular, and roughness together!
+		const int normalW = normalImg.getSize().x;
+		const int normalH = normalImg.getSize().y;
+
+		if (specularImg.getSize() == sf::Vector2u(0, 0)) {
+			specularImg.create(normalW, normalH);
+		}
+		if (roughnessImg.getSize() == sf::Vector2u(0, 0)) {
+			roughnessImg.create(normalW, normalH);
+		}
+
+		const bool sizes_match = (normalImg.getSize() == specularImg.getSize()) && (normalImg.getSize() == roughnessImg.getSize());
+		if (!sizes_match) {
+			throw std::runtime_error("Normal map, specular map, and roughness map must have the same size. ("+filename+")");
+		}
+
+		sf::Image normal_spec_rough_img;
+		normal_spec_rough_img.create(normalW, normalH);
+
+		for (size_t x = 0; x < normal_spec_rough_img.getSize().x; x++) {
+			for (size_t y = 0; y < normal_spec_rough_img.getSize().y; y++) {
+				sf::Color normal = normalImg.getPixel(x, y);
+				sf::Uint8 spec = specularImg.getPixel(x, y).r;
+				sf::Uint8 roughness = roughnessImg.getPixel(x, y).r;
+				normal_spec_rough_img.setPixel(x, y, sf::Color(normal.r, normal.g, spec, roughness));
+			}
+		}
+
+		LoadTexture(pResult->normal_spec_rough_Texture, normal_spec_rough_img, TextureType::DATA);
+		LoadTexture(pResult->albedoTexture, albedoImg, TextureType::COLOR);
+	}
+	catch (...) {
+		delete pResult;
+		throw;
+	}
 
 	return pResult;
 }

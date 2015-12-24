@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Material.hpp"
-#include "all_gl_headers.hpp"
+#include <GE/Material.hpp>
+#include <GE/all_gl_headers.hpp>
 
 class GraphicsEngine;
 

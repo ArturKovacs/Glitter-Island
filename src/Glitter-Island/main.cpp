@@ -4,7 +4,7 @@
 #include <functional>
 
 #include "DemoCore.hpp"
-#include "Utility.hpp"
+#include <GE/Utility.hpp>
 
 void CustomPause()
 {

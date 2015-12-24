@@ -2,8 +2,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-//TODO this shouldnt be included like this
-#include "../../Glitter-Island/Utility.hpp"
+#include <GE/Utility.hpp>
 #include <stdexcept>
 #include <iostream>
 
@@ -305,43 +304,22 @@ float GraphicsEngine::GetViewSubfrustumFarPlaneInTexCoordZ(int subfrustumID) con
 	return (transformResult.z / transformResult.w)*0.5f + 0.5f;
 }
 
-void GraphicsEngine::AddGraphicalObject(GraphicalObject&& newObject)
-{
-	managedGraphicalObjects.push_back(std::move(newObject));
-	GraphicalObject& moved = managedGraphicalObjects.back();
-
-	for (auto& currSubmesh : moved.GetMesh()->GetSubmeshes()) {
-		instancedGraphicalObjects[&currSubmesh].push_back(&moved);
-		std::cout << "count: " << instancedGraphicalObjects[&currSubmesh].size() << std::endl;
-	}
-}
-
-void GraphicsEngine::AddGraphicalObject(GraphicalObject* newObject)
-{
-	externalGraphicalObjects.push_back(newObject);
-}
-
-Mesh* GraphicsEngine::LoadMeshFromFile(const std::string& filename)
+util::managed_ptr<Mesh> GraphicsEngine::LoadMeshFromFile(const std::string& filename)
 {
 	return meshManager.LoadMeshFromFile(this, GraphicsEngine::modelsFolderPath + filename);
 }
 
-Material* GraphicsEngine::LoadStandardMaterialFromFile(const std::string& filename, const std::string& materialName)
+util::managed_ptr<Material> GraphicsEngine::LoadStandardMaterialFromFile(const std::string& filename, const std::string& materialName)
 {
-	return materialManager.LoadStandardMaterialFromFile(this, GraphicsEngine::modelsFolderPath + filename, materialName);
+	return materialManager.LoadFromFile(this, GraphicsEngine::modelsFolderPath + filename, materialName);
 }
 
-GraphicalObject GraphicsEngine::LoadGraphicalObjectFromFile(const std::string& filename)
+util::managed_ptr<GraphicalObject> GraphicsEngine::CreateGraphicalObject()
 {
-	GraphicalObject result;
+	managedGraphicalObjects.push_back(StandardGraphicalObject());
+	GraphicalObject* pResult = &managedGraphicalObjects.back();
 
-	{
-		Mesh* pMesh = LoadMeshFromFile(filename);
-
-		result.SetMesh(pMesh);
-	}
-
-	return std::move(result);
+	return pResult;
 }
 
 DebugDrawer& GraphicsEngine::GetDebugDrawer()
@@ -438,26 +416,22 @@ void GraphicsEngine::DrawShadowMap(int cascadeID)
 	glContext.Viewport(0, 0, shadowMapResX, shadowMapResY);
 	glContext.Clear().DepthBuffer();
 	glContext.CullFace(gl::enums::Face::Front);
-	for (auto& current : managedGraphicalObjects) {
-		current.Draw(this);
-	}
-	for (auto current : externalGraphicalObjects) {
-		//current->Draw(this);
-	}
+
+	DrawObjects();
+
 	glContext.CullFace(gl::enums::Face::Back);
 }
 
 void GraphicsEngine::DrawObjects()
 {
-	terrain.Draw();
-
-	//for (auto& current : managedGraphicalObjects) {
-	//	current.Draw(this);
-	//}
+	//Update instanced object list
+	for (auto& currObject : managedGraphicalObjects) {
+		for (auto& currSubmesh : currObject.GetMesh()->GetSubmeshes()) {
+			instancedGraphicalObjects[&currSubmesh].insert(&currObject);
+		}
+	}
 
 	glContext.Disable(gl::Capability::CullFace);
-	//glContext.Enable(gl::Capability::Blend);
-	//glContext.BlendFunc(gl::enums::BlendFunction::SrcAlpha, gl::enums::BlendFunction::OneMinusSrcAlpha);
 	glContext.Disable(gl::Capability::Blend);
 
 	for (auto& currAssociation : instancedGraphicalObjects) {
@@ -483,10 +457,6 @@ void GraphicsEngine::DrawObjects()
 
 	glContext.Disable(gl::Capability::Blend);
 	glContext.Enable(gl::Capability::CullFace);
-
-	for (auto current : externalGraphicalObjects) {
-		current->Draw(this);
-	}
 }
 
 void GraphicsEngine::DrawScene()
@@ -521,6 +491,7 @@ void GraphicsEngine::DrawScene()
 	glContext.Viewport(0, 0, screenWidth, screenHeight);
 	glContext.ClearColor(0, 0, 0, 1);
 	glContext.Clear().ColorBuffer().DepthBuffer();
+	terrain.Draw();
 	DrawObjects();
 
 	selectedBuffers.pop_back();

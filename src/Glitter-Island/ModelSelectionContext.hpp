@@ -27,7 +27,7 @@ private:
 	Mesh screenRectangle;
 
 	int howeredModelID;
-	int selectedModelID;
+	size_t selectedModelID;
 	std::vector<std::string> modelFileList;
 
 private:

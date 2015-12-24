@@ -1,4 +1,4 @@
-#include "Utility.hpp"
+#include <GE/Utility.hpp>
 
 #include <stdexcept>
 #include <string>
