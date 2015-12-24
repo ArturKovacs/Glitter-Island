@@ -1,4 +1,4 @@
-#include "StandardGraphicalObject.hpp"
+#include <GE/StandardGraphicalObject.hpp>
 
 #include <GE/GraphicsEngine.hpp>
 

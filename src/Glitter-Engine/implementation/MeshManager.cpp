@@ -1,4 +1,4 @@
-#include "MeshManager.hpp"
+#include <GE/MeshManager.hpp>
 
 #include <cassert>
 #include <cctype>

@@ -3,7 +3,7 @@
 #include "all_gl_headers.hpp"
 
 #include "Framebuffer.hpp"
-#include "DefaultFramebuffer.hpp"
+//#include "DefaultFramebuffer.hpp"
 #include "DirectionalLight.hpp"
 #include "Terrain.hpp"
 #include "Skybox.hpp"
@@ -12,12 +12,10 @@
 #include "RawCamera.hpp"
 #include "DebugDrawer.hpp"
 #include "SimpleColoredDrawer.hpp"
-
+#include "StandardGraphicalObject.hpp"
+#include "MeshManager.hpp"
+#include "MaterialManager.hpp"
 #include "Utility.hpp"
-
-#include "../../implementation/StandardGraphicalObject.hpp"
-#include "../../implementation/MeshManager.hpp"
-#include "../../implementation/MaterialManager.hpp"
 
 #include <string>
 #include <deque>
@@ -83,7 +81,7 @@ private:
 	static std::string modelsFolderPath;
 	
 private: //misc
-	double elapsedSec; //Seconds elapsed from an arbitrary moment in the past to present. (The actual value does not matter, only requirement is to increase continously, and one unit by a second)
+	double elapsedSec; //Seconds elapsed from an arbitrary moment in the past to present. (The actual value does not matter, only requirement is to increase continously, one unit by a second)
 
 private: // graphical state
 	int screenWidth;
@@ -154,7 +152,6 @@ private: //resources
 	MaterialManager materialManager;
 	
 private:
-	
 	void UpdateLightViewTransform();
 	float GetSubfrustumZNear(int cascadeID) const;
 	void UpdateLightCascadeCamera(int cascadeID);

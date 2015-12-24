@@ -1,4 +1,4 @@
-#include "StandardMaterial.hpp"
+#include <GE/StandardMaterial.hpp>
 
 #include <GE/GraphicsEngine.hpp>
 #include <iostream>

@@ -1,5 +1,5 @@
 
-file(GLOB all_src_files "*.cpp" "*.hpp" "../include/GE/*.hpp")
+file(GLOB all_src_files "*.cpp" "../include/GE/*.hpp")
 
 add_library(${ENGINE_NAME} STATIC ${all_src_files})
 
@@ -19,8 +19,8 @@ source_group(GraphicalObject FILES
 ../include/GE/AttributeCategory.hpp
 ../include/GE/GraphicalObject.hpp
 ../include/GE/Mesh.hpp
-MeshManager.hpp
-StandardGraphicalObject.hpp
+../include/GE/MeshManager.hpp
+../include/GE/StandardGraphicalObject.hpp
 
 AttributeCategory.cpp
 Mesh.cpp
@@ -31,8 +31,8 @@ StandardGraphicalObject.cpp
 source_group(Materials FILES
 ../include/GE/Material.hpp
 ../include/GE/SimpleColoredMaterial.hpp
-MaterialManager.hpp
-StandardMaterial.hpp
+../include/GE/MaterialManager.hpp
+../include/GE/StandardMaterial.hpp
 
 Material.cpp
 MaterialManager.cpp

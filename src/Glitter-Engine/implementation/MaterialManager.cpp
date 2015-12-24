@@ -1,7 +1,7 @@
-#include "MaterialManager.hpp"
+#include <GE/MaterialManager.hpp>
 
 #include <GE/GraphicsEngine.hpp>
-#include "StandardMaterial.hpp"
+#include <GE/StandardMaterial.hpp>
 
 #include <iostream>
 #include <fstream>
