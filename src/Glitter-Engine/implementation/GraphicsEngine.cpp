@@ -154,14 +154,14 @@ skybox(this)
 
 	std::array<glm::vec2, 4*4> noiseArray;
 	for (auto& curr : noiseArray) {
-		curr = glm::vec2(RAND_01, RAND_01);
+		curr = glm::vec2(RAND_01*2-1, RAND_01*2-1);
 	}
 	noise4.Bind(gl::TextureTarget::_2D);
 	gl::Texture::Image2D(gl::TextureTarget::_2D, 0, gl::PixelDataInternalFormat::RG16F, 4, 4, 0, gl::PixelDataFormat::RG, gl::DataType::Float, noiseArray.data());
-	gl::Texture::WrapS(gl::TextureTarget::_2D, gl::enums::TextureWrap::Repeat);
-	gl::Texture::WrapT(gl::TextureTarget::_2D, gl::enums::TextureWrap::Repeat);
 	gl::Texture::MinFilter(gl::TextureTarget::_2D, gl::enums::TextureMinFilter::Nearest);
 	gl::Texture::MagFilter(gl::TextureTarget::_2D, gl::enums::TextureMagFilter::Nearest);
+	gl::Texture::WrapS(gl::TextureTarget::_2D, gl::enums::TextureWrap::Repeat);
+	gl::Texture::WrapT(gl::TextureTarget::_2D, gl::enums::TextureWrap::Repeat);
 
 	debugDrawer.SetEnabled(false);
 	wireframeModeEnabled = false;

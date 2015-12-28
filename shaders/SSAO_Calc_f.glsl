@@ -53,7 +53,10 @@ void main()
 	vec4 posView = projInv * vec4(vec3(gl_FragCoord.xy/screenDimensions, depth)*2 - vec3(1), 1);
 	posView /= posView.w;
 	
-	float aoFactor = clamp(calculateAOFactor(posView.xyz, normalView.xyz, vec3(texture(noiseTex, posView.xy*64+posView.zx*128).xy, 0))*2, 0, 1);
+	//float aoFactor = clamp(calculateAOFactor(posView.xyz, normalView.xyz, vec3(texture(noiseTex, posView.xy*64+posView.zx*83).xy, 0))*2, 0, 1);
+	float aoFactor = clamp(calculateAOFactor(posView.xyz, normalView.xyz, vec3(texture(noiseTex, gl_FragCoord.xy*0.25).xy, 0))*2, 0, 1);
+	
+	//aoFactor = aoFactor*0 + floor(mod(gl_FragCoord.x/10, 2));
 	
 	gl_FragColor = vec4(vec3(aoFactor), 1);
 }
