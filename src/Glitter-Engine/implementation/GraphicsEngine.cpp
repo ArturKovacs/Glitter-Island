@@ -15,6 +15,7 @@ std::string GraphicsEngine::modelsFolderPath = "../models/";
 //std::string GraphicsEngine::shadersFolderPath;
 
 #define IGNORE_TRY(x) try{x;}catch(std::exception&ex){std::cout<<ex.what()<<std::endl;}
+#define RAND_01 (double(std::rand())/RAND_MAX)
 
 std::string& GraphicsEngine::GetShadersFolderPath()
 {
@@ -68,7 +69,7 @@ debugDrawer(this),
 skybox(this)
 {
 	//terrain.LoadFromHeightMap(DemoCore::imgFolderPath + "heightMap.png", terrainSize, 0.06);
-	terrain.LoadFromHeightMap(GetImgFolderPath() + "heightMap.png", terrainSize, 0.2);
+	terrain.LoadFromHeightMap(GetImgFolderPath() + "heightMap.png", terrainSize, 0.2f);
 
 	//NOTE: rotation angle does intentionally differ from exactly pi/2.
 	//Reason: oglplus's matrix inversion function doesn't invert correctly for some transforms.
@@ -84,13 +85,18 @@ skybox(this)
 
 	sun.SetColor(glm::vec3(1, 1, 1));
 	
+	reducedSizeFramebufferScale = 0.75;
+
 	intermediateFramebuffer = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
 	aoResultFB = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
-	objectsFB = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH | Framebuffer::ATTACHMENT_NORMAL);
-	halfSizedIntermFramebuffer = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
+	objectsFB = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH | Framebuffer::ATTACHMENT_NORMAL | Framebuffer::ATTACHMENT_VIEW_DEPTH);
+	reducedSizeIntermFramebuffer1 = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
+	reducedSizeIntermFramebuffer2 = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
 	AddFramebufferForManagment(intermediateFramebuffer);
 	AddFramebufferForManagment(aoResultFB);
 	AddFramebufferForManagment(objectsFB);
+	AddFramebufferForManagment(reducedSizeIntermFramebuffer1, reducedSizeFramebufferScale, reducedSizeFramebufferScale);
+	AddFramebufferForManagment(reducedSizeIntermFramebuffer2, reducedSizeFramebufferScale, reducedSizeFramebufferScale);
 
 	finalFramebufferCopy = LoadShaderProgramFromFiles("FinalFramebufferCopy_v.glsl", "FinalFramebufferCopy_f.glsl");
 	finalFramebufferCopy.Use();
@@ -101,21 +107,63 @@ skybox(this)
 
 	ssaoCalcProgram = LoadShaderProgramFromFiles("Passthrough2_v.glsl", "SSAO_Calc_f.glsl");
 	ssaoCalcProgram.Use();
-	IGNORE_TRY(ssaoCalc_viewProj = gl::Uniform<glm::mat4>(ssaoCalcProgram, "viewProj"));
-	IGNORE_TRY(ssaoCalc_viewProjInv = gl::Uniform<glm::mat4>(ssaoCalcProgram, "viewProjInv"));
+	ssaoCalc_proj = gl::Uniform<glm::mat4>(ssaoCalcProgram, "proj");
+	ssaoCalc_projInv = gl::Uniform<glm::mat4>(ssaoCalcProgram, "projInv");
+	IGNORE_TRY( ssaoCalc_viewTrInv = gl::Uniform<glm::mat4>(ssaoCalcProgram, "viewTrInv") );
+	
 	IGNORE_TRY(ssaoCalc_screenWidth = gl::Uniform<GLint>(ssaoCalcProgram, "screenWidth"));
 	IGNORE_TRY(ssaoCalc_screenHeight = gl::Uniform<GLint>(ssaoCalcProgram, "screenHeight"));
 
+	ssaoBlurHorProg = LoadShaderProgramFromFiles("Passthrough2_v.glsl", "SSAO_BlurHor_f.glsl");
+	ssaoBlurHorProg.Use();
+	IGNORE_TRY(ssaoBlurHor_screenWidth = gl::Uniform<GLint>(ssaoBlurHorProg, "screenWidth"));
+	IGNORE_TRY(ssaoBlurHor_screenHeight = gl::Uniform<GLint>(ssaoBlurHorProg, "screenHeight"));
+
+	ssaoBlurVerProg = LoadShaderProgramFromFiles("Passthrough2_v.glsl", "SSAO_BlurVer_f.glsl");
+	ssaoBlurVerProg.Use();
+	IGNORE_TRY(ssaoBlurVer_screenWidth = gl::Uniform<GLint>(ssaoBlurVerProg, "screenWidth"));
+	IGNORE_TRY(ssaoBlurVer_screenHeight = gl::Uniform<GLint>(ssaoBlurVerProg, "screenHeight"));
 
 	ssaoDrawProgram = LoadShaderProgramFromFiles("Passthrough2_v.glsl", "SSAO_Draw_f.glsl");
 	ssaoDrawProgram.Use();
-	//IGNORE_TRY(ssaoCalc_viewProj = gl::Uniform<glm::mat4>(ssaoDrawProgram, "viewProj"));
-	//IGNORE_TRY(ssaoCalc_viewProjInv = gl::Uniform<glm::mat4>(ssaoDrawProgram, "viewProjInv"));
 	IGNORE_TRY(ssaoDraw_screenWidth = gl::Uniform<GLint>(ssaoDrawProgram, "screenWidth"));
 	IGNORE_TRY(ssaoDraw_screenHeight = gl::Uniform<GLint>(ssaoDrawProgram, "screenHeight"));
 
+	constexpr double aoRadius = 0.25;
+	for (auto& currSample : sampleVecs) {
+		bool valid;
+		const double PI = glm::pi<double>();
+		do {
+			double theta = RAND_01 * 2 * PI;
+			double phi = RAND_01 * PI - PI/2;
+			currSample = glm::vec3(sin(theta)*cos(phi), sin(theta)*sin(phi), cos(theta));
+			valid = glm::dot(currSample, glm::vec3(1, 0, 0)) > 0.01f;
+			if (valid) {
+				double radiusFactor = std::max(RAND_01, 0.2);
+				radiusFactor = std::pow(radiusFactor, 3);
+				currSample *= aoRadius * radiusFactor;
+			}
+		} while (!valid);
+	}
+
+	ssaoCalcProgram.Use();
+	for (size_t i = 0; i < ssaoCalc_sampleVecs.size(); i++) {
+		IGNORE_TRY( ssaoCalc_sampleVecs[i] = gl::Uniform<glm::vec3>(ssaoCalcProgram, "sampleVecs["+std::to_string(i)+"]") );
+		IGNORE_TRY( ssaoCalc_sampleVecs[i].Set(sampleVecs[i]) );
+	}
+
+	std::array<glm::vec2, 4*4> noiseArray;
+	for (auto& curr : noiseArray) {
+		curr = glm::vec2(RAND_01, RAND_01);
+	}
+	noise4.Bind(gl::TextureTarget::_2D);
+	gl::Texture::Image2D(gl::TextureTarget::_2D, 0, gl::PixelDataInternalFormat::RG16F, 4, 4, 0, gl::PixelDataFormat::RG, gl::DataType::Float, noiseArray.data());
+	gl::Texture::WrapS(gl::TextureTarget::_2D, gl::enums::TextureWrap::Repeat);
+	gl::Texture::WrapT(gl::TextureTarget::_2D, gl::enums::TextureWrap::Repeat);
+	gl::Texture::MinFilter(gl::TextureTarget::_2D, gl::enums::TextureMinFilter::Nearest);
+	gl::Texture::MagFilter(gl::TextureTarget::_2D, gl::enums::TextureMagFilter::Nearest);
+
 	debugDrawer.SetEnabled(false);
-	
 	wireframeModeEnabled = false;
 	
 	//1 = x + x^2 + x^4 + x^16
@@ -125,11 +173,11 @@ skybox(this)
 	//subfrustumFarPlanePositionRatios[2] = 0.430201759;
 	//subfrustumFarPlanePositionRatios[3] = 1;
 	
-	subfrustumFarPlanePositionRatios[0] = 0.01;
-	subfrustumFarPlanePositionRatios[1] = 0.04;
-	subfrustumFarPlanePositionRatios[2] = 0.1;
-	subfrustumFarPlanePositionRatios[3] = 0.3;
-	subfrustumFarPlanePositionRatios[4] = 1;
+	subfrustumFarPlanePositionRatios[0] = 0.01f;
+	subfrustumFarPlanePositionRatios[1] = 0.04f;
+	subfrustumFarPlanePositionRatios[2] = 0.1f;
+	subfrustumFarPlanePositionRatios[3] = 0.3f;
+	subfrustumFarPlanePositionRatios[4] = 1.f;
 	
 	for (auto& currFramebuffer : lightCascadeShadowMapFramebuffers) {
 		currFramebuffer = std::move(Framebuffer{shadowMapResX, shadowMapResY, Framebuffer::ATTACHMENT_DEPTH});
@@ -145,9 +193,9 @@ void GraphicsEngine::Update(double elapsedSeconds)
 void GraphicsEngine::Draw()
 {
 	glContext.Viewport(0, 0, screenWidth, screenHeight);
-	intermediateFramebuffer.Bind(gl::Framebuffer::Target::Draw);
-	glContext.Disable(gl::Capability::Blend);
-	glContext.Enable(gl::Capability::DepthTest);
+	//intermediateFramebuffer.Bind(gl::Framebuffer::Target::Draw);
+	//glContext.Disable(gl::Capability::Blend);
+	//glContext.Enable(gl::Capability::DepthTest);
 	DrawScene();
 
 	//draw current framebuffer to screen
@@ -185,11 +233,12 @@ void GraphicsEngine::Resize(const int width, const int height)
 	framebufferCopy_ScreenWidth.Set(screenWidth);
 	framebufferCopy_ScreenHeight.Set(screenHeight);
 
-	for (auto current : managedFramebuffers) {
-		current->SetResolution(width, height);
+	for (const auto& current : managedFramebuffers) {
+		current.pFramebuffer->SetResolution(int(width*current.scaleX), int(height*current.scaleY));
 	}
 
-	halfSizedIntermFramebuffer.SetResolution(width/2, height/2);
+	//halfSizedIntermFramebuffer1.SetResolution(width/2, height/2);
+	//halfSizedIntermFramebuffer2.SetResolution(width/2, height/2);
 }
 
 int GraphicsEngine::GetScreenWidth() const
@@ -220,7 +269,16 @@ Framebuffer& GraphicsEngine::GetIntermediateFramebuffer()
 
 void GraphicsEngine::AddFramebufferForManagment(Framebuffer& framebuffer)
 {
-	managedFramebuffers.push_back(&framebuffer);
+	AddFramebufferForManagment(framebuffer, 1, 1);
+}
+
+void GraphicsEngine::AddFramebufferForManagment(Framebuffer& framebuffer, float scaleX, float scaleY)
+{
+	FramebufferRegister newRegister;
+	newRegister.pFramebuffer = &framebuffer;
+	newRegister.scaleX = scaleX;
+	newRegister.scaleY = scaleY;
+	managedFramebuffers.push_back(newRegister);
 }
 
 float GraphicsEngine::GetObjectsDepthBufferValue(int x, int y)
@@ -266,19 +324,19 @@ Water& GraphicsEngine::GetWater()
 	return water;
 }
 
-void GraphicsEngine::SetActiveCamera(Camera* cam)
+void GraphicsEngine::SetActiveViewerCamera(PerspectiveCamera* cam)
 {
-	pActiveCam = cam;
+	pActiveViewerCam = cam;
+}
+
+PerspectiveCamera* GraphicsEngine::GetActiveViewerCamera()
+{
+	return pActiveViewerCam;
 }
 
 Camera* GraphicsEngine::GetActiveCamera()
 {
 	return pActiveCam;
-}
-
-void GraphicsEngine::SetActiveViewerCamera(PerspectiveCamera* cam)
-{
-	pActiveViewerCam = cam;
 }
 
 int GraphicsEngine::GetLightCascadeCount() const
@@ -338,6 +396,10 @@ SimpleColoredDrawer& GraphicsEngine::GetSimpleColoredDrawer()
 //
 ////////////////////////////////////////////
 
+void GraphicsEngine::SetActiveCamera(Camera* cam)
+{
+	pActiveCam = cam;
+}
 
 void GraphicsEngine::UpdateLightViewTransform()
 {
@@ -408,7 +470,9 @@ void GraphicsEngine::UpdateLightCascadeCamera(int cascadeID)
 
 void GraphicsEngine::DrawShadowMap(int cascadeID)
 {
-	lightCascadeShadowMapFramebuffers[cascadeID].Bind(gl::enums::FramebufferTarget::Draw);
+	//lightCascadeShadowMapFramebuffers[cascadeID].Bind(gl::enums::FramebufferTarget::Draw);
+	SetCurrentFramebuffer(lightCascadeShadowMapFramebuffers[cascadeID]);
+
 	//Draw depth only!
 	glContext.DrawBuffer(gl::enums::ColorBuffer::None);
 
@@ -431,8 +495,8 @@ void GraphicsEngine::DrawObjects()
 		}
 	}
 
-	glContext.Disable(gl::Capability::CullFace);
-	glContext.Disable(gl::Capability::Blend);
+	//glContext.Disable(gl::Capability::CullFace);
+	//glContext.Disable(gl::Capability::Blend);
 
 	for (auto& currAssociation : instancedGraphicalObjects) {
 		Mesh::Submesh* submesh = currAssociation.first;
@@ -455,8 +519,8 @@ void GraphicsEngine::DrawObjects()
 		}
 	}
 
-	glContext.Disable(gl::Capability::Blend);
-	glContext.Enable(gl::Capability::CullFace);
+	//glContext.Disable(gl::Capability::Blend);
+	//glContext.Enable(gl::Capability::CullFace);
 }
 
 void GraphicsEngine::DrawScene()
@@ -483,10 +547,12 @@ void GraphicsEngine::DrawScene()
 	//GetCurrentFramebuffer().Bind(gl::enums::FramebufferTarget::Draw);
 	//PushFramebuffer(Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH | Framebuffer::ATTACHMENT_NORMAL);
 	SetCurrentFramebuffer(objectsFB);
-	std::vector<gl::context::BufferSelection::ColorBuffer> selectedBuffers = {
-		gl::enums::FramebufferColorAttachment::_0, gl::enums::FramebufferColorAttachment::_1
+
+	std::array<gl::context::BufferSelection::ColorBuffer, 3> allBuffers = {
+		gl::enums::FramebufferColorAttachment::_0, gl::enums::FramebufferColorAttachment::_1, gl::enums::FramebufferColorAttachment::_2
 	};
-	glContext.DrawBuffers(selectedBuffers);
+
+	glContext.DrawBuffers(allBuffers.size(), allBuffers.data());
 	SetActiveCamera(pActiveViewerCam);
 	glContext.Viewport(0, 0, screenWidth, screenHeight);
 	glContext.ClearColor(0, 0, 0, 1);
@@ -494,8 +560,10 @@ void GraphicsEngine::DrawScene()
 	terrain.Draw();
 	DrawObjects();
 
-	selectedBuffers.pop_back();
-	glContext.DrawBuffers(selectedBuffers);
+	std::array<gl::context::BufferSelection::ColorBuffer, 1> colorBuffer = {
+		gl::enums::FramebufferColorAttachment::_0
+	};
+	glContext.DrawBuffers(colorBuffer.size(), colorBuffer.data());
 
 	DrawAmbientOcclusion();
 
@@ -512,33 +580,61 @@ void GraphicsEngine::DrawScene()
 
 void GraphicsEngine::DrawAmbientOcclusion()
 {
-	const int targetW = screenWidth/2;
-	const int targetH = screenHeight/2;
+	const int targetW = int(screenWidth * reducedSizeFramebufferScale);
+	const int targetH = int(screenHeight * reducedSizeFramebufferScale);
 
 	//TODO enable framebuffer to use a chosen number of color channels
 	//so framebuffer texture reads, and writes might be optimized
-	SetCurrentFramebuffer(halfSizedIntermFramebuffer);
+	SetCurrentFramebuffer(reducedSizeIntermFramebuffer1);
 	glContext.Clear().ColorBuffer();
 
 	objectsFB.SetTextureShaderID(Framebuffer::ATTACHMENT_NORMAL, "objectNormal", 0);
-	objectsFB.SetTextureShaderID(Framebuffer::ATTACHMENT_DEPTH, "objectDepth", 1);
-	objectsFB.SetShaderProgram(&ssaoCalcProgram, Framebuffer::ATTACHMENT_NORMAL | Framebuffer::ATTACHMENT_DEPTH);
+	objectsFB.SetTextureShaderID(Framebuffer::ATTACHMENT_VIEW_DEPTH, "objectViewDepth", 1);
+	objectsFB.SetTextureShaderID(Framebuffer::ATTACHMENT_DEPTH, "objectDepth", 2);
+	objectsFB.SetShaderProgram(&ssaoCalcProgram, Framebuffer::ATTACHMENT_NORMAL | Framebuffer::ATTACHMENT_DEPTH | Framebuffer::ATTACHMENT_VIEW_DEPTH);
 	ssaoCalcProgram.Use();
 
-	ssaoCalc_viewProj.Set(pActiveViewerCam->GetViewProjectionTransform());
-	ssaoCalc_viewProjInv.Set(glm::inverse(pActiveViewerCam->GetViewProjectionTransform()));
-	IGNORE_TRY( ssaoCalc_screenWidth.Set(targetW) );
-	IGNORE_TRY( ssaoCalc_screenHeight.Set(targetH) );
+	gl::UniformSampler(ssaoCalcProgram, "noiseTex").Set(3);
+	gl::Texture::Active(3);
+	noise4.Bind(gl::Texture::Target::_2D);
+
+	ssaoCalc_proj.Set(pActiveViewerCam->GetProjectionTransform());
+	ssaoCalc_projInv.Set(glm::inverse(pActiveViewerCam->GetProjectionTransform()));
+	IGNORE_TRY( ssaoCalc_viewTrInv.Set(glm::transpose(glm::inverse(pActiveViewerCam->GetViewTransform()))) );
+	ssaoCalc_screenWidth.Set(targetW);
+	ssaoCalc_screenHeight.Set(targetH);
 
 	objectsFB.Draw(*this);
+
+	
+	//lets blur ao
+	SetCurrentFramebuffer(reducedSizeIntermFramebuffer2);
+	glContext.Clear().ColorBuffer();
+	reducedSizeIntermFramebuffer1.SetTextureShaderID(Framebuffer::ATTACHMENT_COLOR, "aoValue", 0);
+	reducedSizeIntermFramebuffer1.SetShaderProgram(&ssaoBlurHorProg, Framebuffer::ATTACHMENT_COLOR);
+	ssaoBlurHorProg.Use();
+
+	ssaoBlurHor_screenWidth.Set(targetW);
+	ssaoBlurHor_screenHeight.Set(targetH);
+	reducedSizeIntermFramebuffer1.Draw(*this);
+
+	SetCurrentFramebuffer(reducedSizeIntermFramebuffer1);
+	glContext.Clear().ColorBuffer();
+	reducedSizeIntermFramebuffer2.SetTextureShaderID(Framebuffer::ATTACHMENT_COLOR, "aoValue", 0);
+	reducedSizeIntermFramebuffer2.SetShaderProgram(&ssaoBlurVerProg, Framebuffer::ATTACHMENT_COLOR);
+	ssaoBlurVerProg.Use();
+
+	ssaoBlurVer_screenWidth.Set(targetW);
+	ssaoBlurVer_screenHeight.Set(targetH);
+	reducedSizeIntermFramebuffer2.Draw(*this);
 	
 
 	//ao is drawn to the target, lets draw it on screen
 	SetCurrentFramebuffer(aoResultFB);
 	glContext.Clear().ColorBuffer().DepthBuffer();
 
-	halfSizedIntermFramebuffer.SetTextureShaderID(Framebuffer::ATTACHMENT_COLOR, "aoValue", 2);
-	halfSizedIntermFramebuffer.SetShaderProgram(&ssaoDrawProgram, Framebuffer::ATTACHMENT_COLOR);
+	reducedSizeIntermFramebuffer1.SetTextureShaderID(Framebuffer::ATTACHMENT_COLOR, "aoValue", 2);
+	reducedSizeIntermFramebuffer1.SetShaderProgram(&ssaoDrawProgram, Framebuffer::ATTACHMENT_COLOR);
 	
 	gl::UniformSampler(ssaoDrawProgram, "objectColor").Set(0);
 	gl::Texture::Active(0);
@@ -547,7 +643,7 @@ void GraphicsEngine::DrawAmbientOcclusion()
 	gl::Texture::Active(1);
 	objectsFB.GetTexture(Framebuffer::ATTACHMENT_DEPTH).Bind(gl::Texture::Target::_2D);
 
-	IGNORE_TRY( ssaoDraw_screenWidth.Set(screenWidth) );
-	IGNORE_TRY( ssaoDraw_screenHeight.Set(screenHeight) );
-	halfSizedIntermFramebuffer.Draw(*this);
+	ssaoDraw_screenWidth.Set(screenWidth);
+	ssaoDraw_screenHeight.Set(screenHeight);
+	reducedSizeIntermFramebuffer1.Draw(*this);
 }

@@ -73,20 +73,7 @@ Material* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngine, cons
 		if (read == "map_Kd") {
 			file >> texFilename;
 
-			if (!albedoImg.loadFromFile(GraphicsEngine::GetImgFolderPath() + texFilename)) {
-				throw std::runtime_error(filename);
-			}
-			albedoImg.flipVertically();
-
-			const sf::Uint8 treshold = 250;
-			isTransparent = false;
-			for (size_t x = 0; x < albedoImg.getSize().x && !isTransparent; x++) {
-				for (size_t y = 0; y < albedoImg.getSize().y && !isTransparent; y++) {
-					if (albedoImg.getPixel(x, y).a < treshold) {
-						isTransparent = true;
-					}
-				}
-			}
+			albedoImg = LoadImage(GraphicsEngine::GetImgFolderPath() + texFilename);
 		}
 		else if (read == "map_Ks") {
 			file >> texFilename;
@@ -112,21 +99,35 @@ Material* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngine, cons
 		}
 	}
 
+	const sf::Uint8 treshold = 250;
+	isTransparent = false;
+
+	//step by a greater amount, assuming that a transparent texture will contain a continous line of some transparent pixels.
+	const int stepSize = 3;
+	for (size_t x = 0; x < albedoImg.getSize().x && !isTransparent; x += stepSize) {
+		for (size_t y = 0; y < albedoImg.getSize().y && !isTransparent; y += stepSize) {
+			if (albedoImg.getPixel(x, y).a < treshold) {
+				isTransparent = true;
+			}
+		}
+	}
+
 	StandardMaterial *pResult = new StandardMaterial(pGraphicsEngine);
+	pResult->isTransparent = isTransparent;
 	try {
 		gl::Program &shader = pResult->shaderProgram;
 		if (isTransparent) {
-			shader = GraphicsEngine::LoadShaderProgramFromFiles("StandardMaterialTransparent_v.glsl", "StandardMaterialTransparent_f.glsl");
+			shader = GraphicsEngine::LoadShaderProgramFromFiles("StandardMaterial_v.glsl", "StandardMaterialTransparent_f.glsl");
 		}
 		else {
-			shader = GraphicsEngine::LoadShaderProgramFromFiles("StandardMaterialSolid_v.glsl", "StandardMaterialSolid_f.glsl");
+			shader = GraphicsEngine::LoadShaderProgramFromFiles("StandardMaterial_v.glsl", "StandardMaterialSolid_f.glsl");
 		}
 		shader.Use();
 
 		try {
 			pResult->sh_MVP = gl::Uniform<glm::mat4>(shader, "MVP");
 			pResult->sh_MODELVIEW = gl::Uniform<glm::mat4>(shader, "MODELVIEW");
-			pResult->sh_modelTransposedInverse = gl::Uniform<glm::mat4>(shader, "model_transposed_inverse");
+			pResult->sh_modelTrInv = gl::Uniform<glm::mat4>(shader, "MODEL_tr_inv");
 			pResult->sh_lightDir = gl::Uniform<glm::vec3>(shader, "lightDir");
 			gl::UniformSampler(shader, "albedoTexture").Set(0);
 			gl::UniformSampler(shader, "normal2_spec1_rough1_Tex").Set(1);

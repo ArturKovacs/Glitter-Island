@@ -43,8 +43,9 @@ private:
 	std::vector<gl::Uniform<glm::mat4>> sh_worldToShadowMap;
 	std::vector<gl::Uniform<float>> sh_viewSubfrustumFarPlanesTexDepth;
 	gl::Uniform<glm::mat4> sh_modelTransform;
+	gl::Uniform<glm::mat4> sh_modelViewTransform;
 	gl::Uniform<glm::mat4> sh_MVP;
-	gl::Uniform<glm::mat4> sh_modelTransposedInverse;
+	gl::Uniform<glm::mat4> sh_modelTrInv;
 	gl::Uniform<glm::vec3> sh_sunDir;
 	gl::Uniform<glm::vec3> sh_sunColor;
 

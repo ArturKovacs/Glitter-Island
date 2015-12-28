@@ -7,8 +7,8 @@ uniform sampler2D normal2_spec1_rough1_Tex;
 in vec2 texCoord_v;
 in vec3 normal_v;
 in vec3 tangent_v;
-
 in vec3 viewerDir_v;
+in float viewZ_v;
 
 float PhongBlinn(const in vec3 lightSourceDir, const in vec3 viewerDir, const in vec3 normal, const in float shininess)
 {
@@ -47,4 +47,5 @@ void main(void)
 	
 	gl_FragData[0] = vec4(kd.xyz*max(dot(lightDir, normal), 0) + ks*PhongBlinn(lightDir, normalize(viewerDir_v), normal, shininess) + ambient, 1);
 	gl_FragData[1] = vec4(normal, 1);
+	gl_FragData[2] = vec4(vec3(viewZ_v), 1);
 } 

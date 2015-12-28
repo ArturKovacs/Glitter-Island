@@ -123,7 +123,7 @@ Mesh* MeshManager::LoadFromOBJFile(GraphicsEngine* pGraphicsEngine, const std::s
 
 	auto start = objFile.tellg();
 	objFile.seekg(0, std::ios::end);
-	float length = objFile.tellg() - start;
+	double length = double(objFile.tellg() - start);
 	objFile.seekg(start);
 
 	int displayRes = 10;
@@ -137,7 +137,7 @@ Mesh* MeshManager::LoadFromOBJFile(GraphicsEngine* pGraphicsEngine, const std::s
 
 		assert(coordinates.size() <= numComponents);
 
-		for (int i = 0; i < coordinates.size(); i++) {
+		for (size_t i = 0; i < coordinates.size(); i++) {
 			attribData[i] = coordinates[i];
 		}
 		attribLists.at(attrib).push_back(attribData);
@@ -181,7 +181,7 @@ Mesh* MeshManager::LoadFromOBJFile(GraphicsEngine* pGraphicsEngine, const std::s
 						CopyAttributeFromListToActualData(currSubmesh, AttributeCategory::NORMAL, normalListIndex);
 					}
 				}
-				catch (std::out_of_range& ex){}
+				catch (std::out_of_range&){}
 			}
 		}
 		else if (read == "usemtl") {
@@ -198,8 +198,8 @@ Mesh* MeshManager::LoadFromOBJFile(GraphicsEngine* pGraphicsEngine, const std::s
 			objFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		}
 
-		float currDiff = objFile.tellg() - start;
-		float currentProgress = (currDiff / length)*displayRes;
+		double currDiff = double(objFile.tellg() - start);
+		double currentProgress = double((currDiff / length)*displayRes);
 		while (currentProgress - displayedProgress > 0) {
 			std::cout << '-' << displayRes-displayedProgress;
 			displayedProgress++;
@@ -215,7 +215,7 @@ Mesh* MeshManager::LoadFromOBJFile(GraphicsEngine* pGraphicsEngine, const std::s
 		if (currentMesh.vertexAttributes.at(AttributeCategory::TEX_COORD).size() > 0) {
 			const auto& actualPosData = currentMesh.vertexAttributes.at(AttributeCategory::POSITION);
 			const auto& actualTexCoordData = currentMesh.vertexAttributes.at(AttributeCategory::TEX_COORD);
-			for (int i = 0; i < actualPosData.size(); i += 3) {
+			for (size_t i = 0; i < actualPosData.size(); i += 3) {
 				const auto& curr = actualPosData.at(i);
 				const auto& next = actualPosData.at(i + 1);
 				const auto& nextnext = actualPosData.at(i + 2);

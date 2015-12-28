@@ -16,4 +16,5 @@ void main()
 	float aoFactor = texture(aoValue, gl_FragCoord.xy/screenDimensions).x;
 	
 	gl_FragColor = vec4(texelFetch(objectColor, ivec2(gl_FragCoord.xy), 0).xyz * (1-aoFactor), 1);
+	//gl_FragColor = vec4(vec3(1-aoFactor), 1);
 }

@@ -20,9 +20,11 @@ Terrain::Terrain(GraphicsEngine* pGraphicsEngine) : pGraphicsEngine(pGraphicsEng
 	try {
 		sh_sunDir = gl::Uniform<glm::vec3>(shaderProgram, "sunDir");
 		sh_sunColor = gl::Uniform<glm::vec3>(shaderProgram, "sunColor");
-		sh_modelTransform = gl::Uniform<glm::mat4>(shaderProgram, "modelTransform");
+		sh_modelTransform = gl::Uniform<glm::mat4>(shaderProgram, "MODEL");
 		sh_MVP = gl::Uniform<glm::mat4>(shaderProgram, "MVP");
-		sh_modelTransposedInverse = gl::Uniform<glm::mat4>(shaderProgram, "model_transposed_inverse");
+		sh_modelTrInv = gl::Uniform<glm::mat4>(shaderProgram, "MODEL_tr_inv");
+		sh_modelViewTransform = gl::Uniform<glm::mat4>(shaderProgram, "MODELVIEW");
+
 		gl::UniformSampler(shaderProgram, "sandTexture").Set(0);
 		gl::UniformSampler(shaderProgram, "grassTexture").Set(1);
 		gl::UniformSampler(shaderProgram, "materialTexture").Set(2);
@@ -176,7 +178,9 @@ void Terrain::Draw()
 	sh_sunColor.Set(pGraphicsEngine->GetSun().GetColor());
 	sh_modelTransform.Set(modelTransform);
 	sh_MVP.Set(pGraphicsEngine->GetActiveCamera()->GetViewProjectionTransform() * modelTransform);
-	sh_modelTransposedInverse.Set(glm::transpose(glm::inverse(modelTransform)));
+	glm::mat4 modelView = pGraphicsEngine->GetActiveCamera()->GetViewTransform() * modelTransform;
+	sh_modelViewTransform.Set(modelView);
+	sh_modelTrInv.Set(glm::transpose(glm::inverse(modelTransform)));
 
 	pGraphicsEngine->GetGLContext().Enable(gl::Capability::CullFace);
 	pGraphicsEngine->GetGLContext().Enable(gl::Capability::DepthTest);
@@ -209,8 +213,8 @@ glm::ivec2 Terrain::GetMaterialMapPos(const glm::vec4 worldPos) const
 	glm::ivec2 result;
 	glm::vec4 normalizedTextureCoords = ((glm::inverse(modelTransform) * worldPos)/terrainScale);
 	const sf::Vector2u imgSize = materialMap.getSize();
-	result[0] = std::floor(normalizedTextureCoords.x * imgSize.x);
-	result[1] = std::floor(normalizedTextureCoords.y * imgSize.y);
+	result[0] = int(std::floor(normalizedTextureCoords.x * imgSize.x));
+	result[1] = int(std::floor(normalizedTextureCoords.y * imgSize.y));
 	return result;
 }
 
@@ -329,7 +333,7 @@ void Terrain::CalculatePositionsAndTexCoords(std::vector<glm::vec3>* positions, 
 	for (int currY = 0; currY < imgHeight; currY++) {
 		for (int currX = 0; currX < imgWidth; currX++) {
 			float currHeight = image.getPixel(currX, currY).r;
-			if (fromSRGB) { currHeight = std::pow(currHeight/maxHeight, 2.2)*maxHeight; }
+			if (fromSRGB) { currHeight = std::pow(currHeight/maxHeight, 2.2f)*maxHeight; }
 
 			positions->at(GetVertexIndex(imgWidth, currX, currY)) = glm::vec3(float(currX)/(imgWidth-1), float(currY)/(imgHeight-1), (float(currHeight)/maxHeight)*heightMultiplyer)*scale;
 			texCoords->at(GetVertexIndex(imgWidth, currX, currY)) = glm::vec2(float(currX)/(imgWidth-1), float(currY)/(imgHeight-1));
@@ -349,8 +353,8 @@ void Terrain::CalculatePositionsAndTexCoords(std::vector<glm::vec3>* positions, 
 
 			const float radius = 1;
 
-			for (int dy = -radius; dy <= radius; dy++) {
-				for (int dx = -radius; dx <= radius; dx++) {
+			for (int dy = int(-radius); dy <= radius+0.01; dy++) {
+				for (int dx = int(-radius); dx <= radius+0.01; dx++) {
 					const int neighbourIdY = currY+dy;
 					const int neighbourIdX = currX+dx;
 					if (neighbourIdX >= 0 && neighbourIdX < imgWidth && neighbourIdY >= 0 && neighbourIdY < imgHeight) {

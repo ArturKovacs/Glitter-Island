@@ -47,6 +47,7 @@ public:
 	Framebuffer& GetCurrentFramebuffer();
 	Framebuffer& GetIntermediateFramebuffer();
 	void AddFramebufferForManagment(Framebuffer& framebuffer);
+	void AddFramebufferForManagment(Framebuffer& framebuffer, float scaleX, float scaleY);
 	
 	float GetObjectsDepthBufferValue(int x, int y);
 	
@@ -59,9 +60,9 @@ public:
 	Terrain& GetTerrain();
 	Water& GetWater();
 	
-	void SetActiveCamera(Camera* cam);
-	Camera* GetActiveCamera();
 	void SetActiveViewerCamera(PerspectiveCamera* cam);
+	PerspectiveCamera* GetActiveViewerCamera();
+	Camera* GetActiveCamera();
 	
 	int GetLightCascadeCount() const;
 	const gl::Texture& GetCascadeShadowMap(int cascadeID) const;
@@ -76,6 +77,12 @@ public:
 	SimpleColoredDrawer& GetSimpleColoredDrawer();
 	
 private:
+	struct FramebufferRegister {
+		Framebuffer* pFramebuffer;
+		float scaleX, scaleY;
+	};
+
+private:
 	static std::string shadersFolderPath;
 	static std::string imgFolderPath;
 	static std::string modelsFolderPath;
@@ -89,12 +96,15 @@ private: // graphical state
 	
 	gl::Context glContext;
 	
+	float reducedSizeFramebufferScale;
+
 	Framebuffer aoResultFB;
 	Framebuffer objectsFB;
-	Framebuffer halfSizedIntermFramebuffer;
+	Framebuffer reducedSizeIntermFramebuffer1;
+	Framebuffer reducedSizeIntermFramebuffer2;
 	Framebuffer intermediateFramebuffer;
 	Framebuffer* pCurrentFramebuffer;
-	std::vector<Framebuffer*> managedFramebuffers;
+	std::vector<FramebufferRegister> managedFramebuffers;
 	gl::DefaultFramebuffer defaultFBO;
 
 	gl::Program finalFramebufferCopy;
@@ -138,10 +148,25 @@ private: //CSM
 	
 private: //Ambient Occlusion
 	gl::Program ssaoCalcProgram;
-	gl::Uniform<glm::mat4> ssaoCalc_viewProj;
-	gl::Uniform<glm::mat4> ssaoCalc_viewProjInv;
+	gl::Uniform<glm::mat4> ssaoCalc_proj;
+	gl::Uniform<glm::mat4> ssaoCalc_projInv;
+	gl::Uniform<glm::mat4> ssaoCalc_viewTrInv;
 	gl::Uniform<GLint> ssaoCalc_screenWidth;
 	gl::Uniform<GLint> ssaoCalc_screenHeight;
+
+	static constexpr int ssaoNumSamples = 48;
+	std::array<glm::vec3, ssaoNumSamples> sampleVecs;
+	std::array<gl::Uniform<glm::vec3>, ssaoNumSamples> ssaoCalc_sampleVecs;
+
+	gl::Texture noise4;
+
+	gl::Program ssaoBlurHorProg;
+	gl::Uniform<GLint> ssaoBlurHor_screenWidth;
+	gl::Uniform<GLint> ssaoBlurHor_screenHeight;
+
+	gl::Program ssaoBlurVerProg;
+	gl::Uniform<GLint> ssaoBlurVer_screenWidth;
+	gl::Uniform<GLint> ssaoBlurVer_screenHeight;
 
 	gl::Program ssaoDrawProgram;
 	gl::Uniform<GLint> ssaoDraw_screenWidth;
@@ -152,6 +177,8 @@ private: //resources
 	MaterialManager materialManager;
 	
 private:
+	void SetActiveCamera(Camera* cam);
+
 	void UpdateLightViewTransform();
 	float GetSubfrustumZNear(int cascadeID) const;
 	void UpdateLightCascadeCamera(int cascadeID);

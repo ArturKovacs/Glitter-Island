@@ -22,7 +22,7 @@ namespace util
 		std::string result;
 
 		file.seekg(0, file.end);
-		int size = file.tellg();
+		size_t size = static_cast<size_t>(file.tellg());
 		result.resize(size);
 
 		file.seekg(0, file.beg);

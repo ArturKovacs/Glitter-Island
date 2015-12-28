@@ -89,7 +89,7 @@ void ModelSelectionContext::DrawOverlayElements()
 
 		const int listFirstElementID = howeredModelID - howeredModelID % columnElementCount;
 
-		for (int i = 0; i < columnElementCount && (listFirstElementID + i < modelFileList.size()); i++) {
+		for (size_t i = 0; i < columnElementCount && (listFirstElementID + i < modelFileList.size()); i++) {
 			visibleList += modelFileList.at(listFirstElementID + i) + '\n';
 		}
 		visibleList.pop_back(); // Remove last line feed
@@ -98,8 +98,8 @@ void ModelSelectionContext::DrawOverlayElements()
 		text.setCharacterSize(16);
 		float textWidth = TextDrawer::GetTextWidth(text);
 		text.setColor(sf::Color::Black);
-		text.setOrigin(std::floor(textWidth*0.5), 0);
-		text.setPosition(std::floor(pCore->GetScreenWidth()*0.5), 50);
+		text.setOrigin(std::floor(textWidth*0.5f), 0);
+		text.setPosition(std::floor(pCore->GetScreenWidth()*0.5f), 50);
 		pCore->textDrawer.DrawBackground(glContext, text, sf::Color(230, 230, 230, 255), 5);
 		pCore->textDrawer.DrawAsList(glContext, text, howeredModelID - listFirstElementID, sf::Color(40, 180, 40, 255));
 	}
@@ -128,10 +128,10 @@ void ModelSelectionContext::UpdateModelFileList()
 	modelFileList.clear();
 
 	// only keep supported model files!
-	for (int i = 0; i < tmpList.size(); i++) {
-		const auto& current = tmpList[i];
+	for (const auto& current : tmpList) {
+		//const auto& current = tmpList[i];
 		const std::string extention = ".obj";
-		const bool correctExtension = current.rfind(extention) == current.length() - extention.length();
+		const bool correctExtension = current.rfind(extention) == (current.length() - extention.length());
 		if (correctExtension) {
 			modelFileList.push_back(current);
 		}

@@ -27,6 +27,8 @@ public:
 protected:
 	GraphicsEngine* pGraphicsEngine;
 
+	bool isTransparent;
+
 	gl::Texture albedoTexture;
 	gl::Texture normal_spec_rough_Texture;
 	//gl::Texture normalMap;
@@ -36,7 +38,7 @@ protected:
 	gl::Uniform<glm::vec3> sh_lightDir;
 	gl::Uniform<glm::mat4> sh_MVP;
 	gl::Uniform<glm::mat4> sh_MODELVIEW;
-	gl::Uniform<glm::mat4> sh_modelTransposedInverse;
+	gl::Uniform<glm::mat4> sh_modelTrInv;
 
 	gl::Program shaderProgram;
 };

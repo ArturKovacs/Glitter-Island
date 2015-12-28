@@ -34,7 +34,6 @@ editorContext(pContextManager, pCore)
 	sunAngleRad = 2 * (15.f/180)*glm::pi<float>();
 	
 	pCore->GetGraphicsEngine().GetDebugDrawer().SetActiveCam(&debugCam);
-	pCore->GetGraphicsEngine().SetActiveCamera(&cam);
 	pCore->GetGraphicsEngine().SetActiveViewerCamera(&cam);
 }
 
@@ -77,7 +76,9 @@ void BaseDemoContext::EnteringContext()
 	cam.SetScreenHeight(pCore->GetScreenHeight());
 	debugCam.SetScreenWidth(pCore->GetScreenWidth());
 	debugCam.SetScreenHeight(pCore->GetScreenHeight());
-	pCore->GetGraphicsEngine().SetActiveCamera(&cam);
+
+	//TODO do i really need this:
+	pCore->GetGraphicsEngine().SetActiveViewerCamera(&cam);
 }
 
 void BaseDemoContext::LeavingContext()

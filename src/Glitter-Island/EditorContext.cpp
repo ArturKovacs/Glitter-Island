@@ -163,23 +163,22 @@ void EditorContext::Update(float deltaSec)
 			int i_radius = static_cast<int>(brushRadius);
 			for (int dy = -i_radius; dy <= i_radius; dy++) {
 				for (int dx = -i_radius; dx <= i_radius; dx++) {
-					glm::ivec2 currPosi(cursorPosOnMaterialMap.x + dx, cursorPosOnMaterialMap.y + dy);
+					glm::uvec2 currPos_u(cursorPosOnMaterialMap.x + dx, cursorPosOnMaterialMap.y + dy);
 
-					if (currPosi.x >= 0 && currPosi.x < materialMap.getSize().x &&
-						currPosi.y >= 0 && currPosi.y < materialMap.getSize().y) {
+					if (currPos_u.x < materialMap.getSize().x && currPos_u.y < materialMap.getSize().y) {
 
-						const glm::vec2 currPos(currPosi.x, currPosi.y);
+						const glm::vec2 currPos(currPos_u.x, currPos_u.y);
 						const glm::vec2 posDiff = currPos - centerPos;
 						float weight = weightFunc(glm::dot(posDiff, posDiff), brushRadius*brushRadius) * (1 - std::exp(-10.f*(deltaSec)));
 
 						if (weight > 0) {
-							const sf::Color originalColor = materialMap.getPixel(currPos.x, currPos.y);
+							const sf::Color originalColor = materialMap.getPixel(currPos_u.x, currPos_u.y);
 							sf::Color finalColor(
-								selectedMaterialColor.r*weight + originalColor.r*(1 - weight),
-								selectedMaterialColor.g*weight + originalColor.g*(1 - weight),
-								selectedMaterialColor.b*weight + originalColor.b*(1 - weight));
+								sf::Uint8(selectedMaterialColor.r*weight + originalColor.r*(1 - weight)),
+								sf::Uint8(selectedMaterialColor.g*weight + originalColor.g*(1 - weight)),
+								sf::Uint8(selectedMaterialColor.b*weight + originalColor.b*(1 - weight)));
 
-							materialMap.setPixel(currPosi.x, currPosi.y, finalColor);
+							materialMap.setPixel(currPos_u.x, currPos_u.y, finalColor);
 						}
 					}
 				}
@@ -258,7 +257,7 @@ void EditorContext::MouseButtonPressed(const sf::Event& event)
 
 		if (selectedTool == EditorTool::PLACE_MODEL) {
 			static float TMP_rot = 0;
-			TMP_rot += float(double(std::rand())/RAND_MAX)*glm::pi<float>() + glm::pi<float>()*0.2;
+			TMP_rot += float(double(std::rand())/RAND_MAX)*glm::pi<float>() + glm::pi<float>()*0.2f;
 			//StandardGraphicalObject loadedObject = pCore->GetGraphicsEngine().LoadGraphicalObjectFromFile(modelSelectionContext.GetSelectedModelFilename());
 			auto object = pCore->GetGraphicsEngine().CreateGraphicalObject();
 			object->SetMesh(pCore->GetGraphicsEngine().LoadMeshFromFile(modelSelectionContext.GetSelectedModelFilename()).get_raw());
@@ -349,7 +348,7 @@ void EditorContext::UpdatePointPosAtCursor()
 	float depthAtPixel = pCore->GetGraphicsEngine().GetObjectsDepthBufferValue(cursorPos.x, cursorPos.y);
 	//pCore->GetGraphicsEngine().GetGLContext().ReadPixels(cursorPos.x, cursorPos.y, 1, 1, gl::enums::PixelDataFormat::DepthComponent, gl::PixelDataType::Float, &depthAtPixel);
 
-	pointPosAtCursor = glm::inverse(pCore->GetGraphicsEngine().GetActiveCamera()->GetViewProjectionTransform()) * glm::vec4(
+	pointPosAtCursor = glm::inverse(pCore->GetGraphicsEngine().GetActiveViewerCamera()->GetViewProjectionTransform()) * glm::vec4(
 		((float(cursorPos.x)/screenWidth)*2-1),
 		((float(cursorPos.y)/screenHeight)*2-1),
 		(depthAtPixel)*2-1,

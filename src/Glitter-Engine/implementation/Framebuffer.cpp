@@ -50,33 +50,6 @@ vertexPosName("vertexPos"), pShaderProgram(nullptr), w(width), h(height)
 	gl::Buffer::Data(gl::Buffer::Target::ElementArray, indexData);
 }
 
-Framebuffer::Framebuffer(Framebuffer&& other) :
-fbo(std::move(other.fbo)),
-textures(std::move(other.textures)),
-VAO(std::move(other.VAO)),
-vertexPos(std::move(other.vertexPos)),
-indices(std::move(other.indices)),
-vertexPosName(std::move(other.vertexPosName)),
-pShaderProgram(other.pShaderProgram),
-w(other.w),
-h(other.h)
-{}
-
-Framebuffer& Framebuffer::operator=(Framebuffer&& other)
-{
-	fbo = std::move(other.fbo);
-	textures = std::move(other.textures);
-	VAO = std::move(other.VAO);
-	vertexPos = std::move(other.vertexPos);
-	indices = std::move(other.indices);
-	vertexPosName = std::move(other.vertexPosName);
-	pShaderProgram = other.pShaderProgram;
-	w = other.w;
-	h = other.h;
-
-	return *this;
-}
-
 void Framebuffer::CopyFramebufferContents(const Framebuffer& source)
 {
 	this->Bind(gl::Framebuffer::Target::Draw);
@@ -108,7 +81,7 @@ void Framebuffer::Draw(GraphicsEngine& graphicsEngine)
 					gl::Texture::Active(textureShaderIDs.at(current.first).index);
 					gl::Texture::Bind(gl::Texture::Target::_2D, current.second);
 				}
-				catch (std::out_of_range& e) {
+				catch (std::out_of_range&) {
 					throw std::out_of_range("Framebuffer was tried to be drawn with unknown attachments. Call SetTextureShaderID for the desired attachemnt before setting the shader.");
 				}
 			}
@@ -180,6 +153,10 @@ void Framebuffer::SetResolution(const int width, const int height)
 			internalFormat = gl::PixelDataInternalFormat::RGB16F;
 			format = gl::PixelDataFormat::RGB;
 			break;
+		case ATTACHMENT_VIEW_DEPTH:
+			internalFormat = gl::PixelDataInternalFormat::R32F;
+			format = gl::PixelDataFormat::Red;
+			break;
 		case ATTACHMENT_DEPTH:
 			internalFormat = gl::PixelDataInternalFormat::DepthComponent32;
 			format = gl::PixelDataFormat::DepthComponent;
@@ -210,6 +187,9 @@ gl::FramebufferAttachment Framebuffer::GetGLAttachmentFromFlag(AttachmentFlag fl
 		break;
 	case ATTACHMENT_NORMAL:
 		result = gl::FramebufferAttachment::Color1;
+		break;
+	case ATTACHMENT_VIEW_DEPTH:
+		result = gl::FramebufferAttachment::Color2;
 		break;
 	case ATTACHMENT_DEPTH:
 		result = gl::FramebufferAttachment::Depth;

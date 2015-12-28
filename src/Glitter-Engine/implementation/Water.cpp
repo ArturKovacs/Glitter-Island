@@ -71,18 +71,18 @@ void Water::Draw()
 	sh_screenWidth.Set(pGraphEngine->GetScreenWidth());
 	sh_screenHeight.Set(pGraphEngine->GetScreenHeight());
 
-	sh_MVP.Set(pGraphEngine->GetActiveCamera()->GetViewProjectionTransform());
-	sh_viewProj.Set(pGraphEngine->GetActiveCamera()->GetViewProjectionTransform());
+	sh_MVP.Set(pGraphEngine->GetActiveViewerCamera()->GetViewProjectionTransform());
+	sh_viewProj.Set(pGraphEngine->GetActiveViewerCamera()->GetViewProjectionTransform());
 	//sh_invMVP.Set(gl::Inverse(core.GetCamera().GetViewProjectionTransform()));
 
-	PerspectiveCamera* pActivePerspectiveCam = dynamic_cast<PerspectiveCamera*>(pGraphEngine->GetActiveCamera());
+	PerspectiveCamera* pActivePerspectiveCam = dynamic_cast<PerspectiveCamera*>(pGraphEngine->GetActiveViewerCamera());
 	if (pActivePerspectiveCam == nullptr) {
 		throw std::runtime_error("Active camera was not a PerspectiveCamera when rendering water.");
 	}
 
 	sh_camPos.Set(pActivePerspectiveCam->GetPosition());
 	sh_sunDir.Set(pGraphEngine->GetSun().GetDirectionTowardsSource());
-	sh_time.Set(pGraphEngine->GetElapsedSeconds());
+	sh_time.Set(static_cast<float>(pGraphEngine->GetElapsedSeconds()));
 
 	VAO.Bind();
 

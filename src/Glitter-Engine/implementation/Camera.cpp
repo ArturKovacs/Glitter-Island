@@ -7,12 +7,12 @@ Frustum Frustum::Transformed(const glm::mat4& transform)
 {
 	Frustum result;
 	
-	for (int i = 0; i < nearPlane.size(); i++) {
+	for (size_t i = 0; i < nearPlane.size(); i++) {
 		auto transformed = transform * glm::vec4(nearPlane[i], 1);
 		result.nearPlane[i] = glm::vec3(transformed / transformed.w);
 	}
 	
-	for (int i = 0; i < farPlane.size(); i++) {
+	for (size_t i = 0; i < farPlane.size(); i++) {
 		auto transformed = transform * glm::vec4(farPlane[i], 1);
 		result.farPlane[i] = glm::vec3(transformed / transformed.w);
 	}

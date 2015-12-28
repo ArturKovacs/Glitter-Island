@@ -13,6 +13,7 @@ public:
 		ATTACHMENT_COLOR = 1,
 		ATTACHMENT_DEPTH = 2,
 		ATTACHMENT_NORMAL = 4,
+		ATTACHMENT_VIEW_DEPTH = 8,
 		_ATTACHMENT_END_
 	};
 	
@@ -28,11 +29,11 @@ private:
 public:
 	Framebuffer();
 	Framebuffer(const int width, const int height, uint8_t attachmentFlags = ATTACHMENT_COLOR | ATTACHMENT_DEPTH);
-	Framebuffer(Framebuffer&&);
+	Framebuffer(Framebuffer&&) = default;
+	Framebuffer& operator=(Framebuffer&&) = default;
 
 	Framebuffer(const Framebuffer&) = delete;
 	Framebuffer& operator=(const Framebuffer&) = delete;
-	Framebuffer& operator=(Framebuffer&&);
 	
 	void CopyFramebufferContents(const Framebuffer& source);
 

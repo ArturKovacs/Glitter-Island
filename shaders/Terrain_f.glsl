@@ -16,6 +16,7 @@ uniform vec3 sunColor;
 in vec3 normal_v;
 in vec2 texCoord_v;
 in vec3 worldPos_v;
+in float viewZ_v;
 
 float checkerTex(const in vec2 pos)
 {
@@ -98,6 +99,9 @@ void main(void)
 	
 	diffuseColor *= shadowFactor;
 	
-	gl_FragData[0] = vec4((diffuseColor + ambientColor) * (flatSandSample + sandTexSample + grassTexSample) * checkerTex(texPos), 1.0);
+	gl_FragData[0] = vec4((diffuseColor + ambientColor) * 
+		(flatSandSample + sandTexSample + grassTexSample) * checkerTex(texPos), 1.0);
+		
 	gl_FragData[1] = vec4(normal, 1);
+	gl_FragData[2] = vec4(vec3(viewZ_v), 1);
 }
