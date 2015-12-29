@@ -28,6 +28,7 @@ private:
 	gl::Uniform<glm::mat4> sh_invMVP;
 	gl::UniformSampler sh_screen;
 	gl::UniformSampler sh_screenDepth;
+	gl::UniformSampler sh_skybox;
 	gl::Uniform<GLint> sh_screenWidth;
 	gl::Uniform<GLint> sh_screenHeight;
 	gl::Uniform<glm::vec3> sh_camPos;

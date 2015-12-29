@@ -13,6 +13,7 @@ pGraphEngine(pGraphicsEngine), visible(true)
 	//sh_invMVP = gl::Uniform<glm::mat4>(waterShader, "invMVP");
 	sh_screen = gl::UniformSampler(waterShader, "screen");
 	sh_screenDepth = gl::UniformSampler(waterShader, "screenDepth");
+	sh_skybox = gl::UniformSampler(waterShader, "skybox");
 	sh_screenWidth = gl::Uniform<GLint>(waterShader, "screenWidth");
 	sh_screenHeight = gl::Uniform<GLint>(waterShader, "screenHeight");
 	sh_camPos = gl::Uniform<glm::vec3>(waterShader, "campos");
@@ -68,6 +69,10 @@ void Water::Draw()
 	sh_screenDepth.Set(1);
 	gl::Texture::Active(1);
 	screenFB.GetTexture(Framebuffer::ATTACHMENT_DEPTH).Bind(gl::Texture::Target::_2D);
+
+	sh_skybox.Set(2);
+	gl::Texture::Active(2);
+	pGraphEngine->GetSkybox().BindCubemap();
 
 	sh_screenWidth.Set(pGraphEngine->GetScreenWidth());
 	sh_screenHeight.Set(pGraphEngine->GetScreenHeight());

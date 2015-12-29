@@ -165,3 +165,8 @@ void Skybox::Draw()
 	//Problem is the fadeout shader writes 1 where the skybox is. So its color will be ignored due to depth testing at .
 	screenFB.Draw(*pGraphEngine);
 }
+
+void Skybox::BindCubemap()
+{
+	cubeMap.Bind(gl::Texture::Target::CubeMap);
+}

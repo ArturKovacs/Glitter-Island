@@ -8,8 +8,8 @@ uniform sampler2D skyboxColor;
 
 vec4 fogFunction(const in vec4 originalColor, const in vec4 fogColor, const in float depth)
 {
-	float weight = clamp(depth*pow(depth, pow(1024, depth)), 0, 1);
-	weight *= fogColor.w;
+	float weight = clamp(depth*pow(depth, pow(2048, depth)), 0, 1);
+	weight *= fogColor.a;
 	return mix(originalColor, fogColor, weight);
 }
 

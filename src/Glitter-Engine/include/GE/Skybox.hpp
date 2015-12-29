@@ -21,6 +21,8 @@ public:
 
 	void Draw();
 	
+	void BindCubemap();
+
 private:
 	GraphicsEngine* pGraphEngine;
 	

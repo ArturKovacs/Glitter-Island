@@ -76,7 +76,10 @@ skybox(this)
 	//terrain.LoadFromHeightMap(DemoCore::imgFolderPath + "heightMap.png", terrainSize, 0.06);
 	terrain.LoadFromHeightMap(GetImgFolderPath() + "heightMap.png", terrainSize, 0.2f);
 
-	terrain.SetTransform(glm::rotate(glm::translate(glm::mat4(1.f), glm::vec3(-terrainSize*0.5, -waterLevel, terrainSize*0.5)), -glm::pi<float>() / 2.f, glm::vec3(1, 0, 0)));
+	glm::mat4 transform = glm::rotate(glm::mat4(1), glm::half_pi<float>(), glm::vec3(0, 1, 0));
+	transform = glm::rotate(glm::translate(transform, glm::vec3(-terrainSize*0.5, -waterLevel, terrainSize*0.5)), -glm::pi<float>() / 2.f, glm::vec3(1, 0, 0));
+	terrain.SetTransform(transform);
+	
 
 	skybox.LoadTextureFromFiles(
 		GetImgFolderPath() + "sb4-x.bmp",
@@ -325,6 +328,11 @@ Terrain& GraphicsEngine::GetTerrain()
 Water& GraphicsEngine::GetWater()
 {
 	return water;
+}
+
+Skybox& GraphicsEngine::GetSkybox()
+{
+	return skybox;
 }
 
 void GraphicsEngine::SetActiveViewerCamera(PerspectiveCamera* cam)

@@ -2,6 +2,7 @@
 
 uniform sampler2D screen;
 uniform sampler2D screenDepth;
+uniform samplerCube skybox;
 
 uniform int screenWidth;
 uniform int screenHeight;
@@ -69,6 +70,9 @@ vec3 getWaveNormal(vec2 xy, float t)
 
 const vec3 waterColor = vec3(0.8, 0.88, 0.95);
 const float shininess = 256;
+const float n = 1.335;
+const float k = 0;
+const float F0 = ((n-1)*(n-1)+k*k)/((n+1)*(n+1)+k*k);
 
 void main(void)
 {
@@ -99,7 +103,7 @@ void main(void)
 	}
 	
 	vec3 fromCam = -viewDir;
-	vec3 refractedDir = refract(fromCam, normal, 1/1.36);
+	vec3 refractedDir = refract(fromCam, normal, 1/n);
 	vec3 fakeHitPos = posFromVert+refractedDir*min(screenDistInWater, 0.25);
 	vec4 ClipSpacePos = MVP * vec4(fakeHitPos, 1);
 	vec2 hitPosOnScreen = (ClipSpacePos.xy/ClipSpacePos.w) * 0.5 + vec2(0.5);
@@ -128,13 +132,18 @@ void main(void)
 	float waterDepth = max(posFromVert.y - refractedSurfacePos.y, 0);
 	////////
 	
-	//vec3 reflectedDir = reflect(fromCam, normal);
+	vec3 reflectedDir = reflect(fromCam, normalize(vec3(0, 2, 0)+normal));
 	//fakeHitPos = posFromVert+reflectedDir;
 	//ClipSpacePos = MVP * vec4(fakeHitPos, 1);
 	//hitPosOnScreen = ((ClipSpacePos/ClipSpacePos.w).xy * 0.5) + vec2(0.5);
-	//vec3 reflectedColor = texture2D(screen, hitPosOnScreen.xy).rgb;
+	vec3 reflectedColor = texture(skybox, reflectedDir).rgb;
+	
+	float fresnel = clamp(F0 + (1-F0)*pow(1-dot(vec3(0, 1, 0), viewDir), 5), 0, 1);
+	
+	refractedColor *= 1-fresnel;
+	reflectedColor *= fresnel;
 	
 	//distanceInWater = mix(0, distanceInWater, -(exp(-waterDepth)-1));
 	distanceInWater = mix(0, distanceInWater, clamp(waterDepth, 0, 1)); 
-	fragColor = vec4(pow(waterColor, vec3(clamp(distanceInWater*0.4, 0, 25)))*(refractedColor /*+ reflectedColor*/)+(sunColor*specularIntensity), 1);
+	fragColor = vec4(pow(waterColor, vec3(clamp(distanceInWater*0.4, 0, 25)))*refractedColor + reflectedColor + sunColor*specularIntensity, 1);
 }

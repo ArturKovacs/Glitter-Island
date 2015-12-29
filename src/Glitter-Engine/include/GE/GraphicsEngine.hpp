@@ -59,7 +59,8 @@ public:
 	DirectionalLight& GetSun();
 	Terrain& GetTerrain();
 	Water& GetWater();
-	
+	Skybox& GetSkybox();
+
 	void SetActiveViewerCamera(PerspectiveCamera* cam);
 	PerspectiveCamera* GetActiveViewerCamera();
 	Camera* GetActiveCamera();

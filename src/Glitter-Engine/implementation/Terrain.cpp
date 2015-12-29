@@ -188,9 +188,11 @@ void Terrain::Draw()
 	terrain_submsh.BindVAO();
 	pGraphicsEngine->GetGLContext().DrawElements(terrain_submsh.GetPrimitiveType(), terrain_submsh.GetNumOfIndices(), terrain_submsh.indexTypeEnum);
 
+	/*
 	Mesh::Submesh& seabottom_submsh = seabottom.GetSubmeshes().at(0);
 	seabottom_submsh.BindVAO();
 	pGraphicsEngine->GetGLContext().DrawElements(seabottom_submsh.GetPrimitiveType(), seabottom_submsh.GetNumOfIndices(), seabottom_submsh.indexTypeEnum);
+	*/
 }
 
 void Terrain::SetTransform(const glm::mat4& transform)
