@@ -5,6 +5,7 @@
 #include <GE/Utility.hpp>
 #include <stdexcept>
 #include <iostream>
+#include <sstream>
 
 std::string GraphicsEngine::shadersFolderPath = "../shaders/";
 std::string GraphicsEngine::imgFolderPath = "../img/";
@@ -32,22 +33,26 @@ std::string& GraphicsEngine::GetModelsFolderPath()
 	return modelsFolderPath;
 }
 
-gl::Program GraphicsEngine::LoadShaderProgramFromFiles(const std::string& vs_name, const std::string& fs_name)
+gl::Program GraphicsEngine::LoadShaderProgramFromFiles(const std::string& vs_name, const std::string& fs_name, const std::map<std::string, std::string>& host_defined)
 {
 	gl::Program result;
 
+	std::string fileContent = util::LoadFileAsString(shadersFolderPath + vs_name);
 	gl::VertexShader vs;
-	vs.Source(util::LoadFileAsString(shadersFolderPath + vs_name));
 	try {
+		ParseHostDefinitions(fileContent, host_defined);
+		vs.Source(fileContent);
 		vs.Compile();
 	}
 	catch (gl::Error& err) {
 		throw std::runtime_error(std::string(err.what()) + "\n\nIn file: " + vs_name + "\n\nLog:\n" + err.Log());
 	}
 
+	fileContent = util::LoadFileAsString(shadersFolderPath + fs_name);
 	gl::FragmentShader fs;
-	fs.Source(util::LoadFileAsString(shadersFolderPath + fs_name));
 	try {
+		ParseHostDefinitions(fileContent, host_defined);
+		fs.Source(fileContent);
 		fs.Compile();
 	}
 	catch (gl::Error& err) {
@@ -71,8 +76,6 @@ skybox(this)
 	//terrain.LoadFromHeightMap(DemoCore::imgFolderPath + "heightMap.png", terrainSize, 0.06);
 	terrain.LoadFromHeightMap(GetImgFolderPath() + "heightMap.png", terrainSize, 0.2f);
 
-	//NOTE: rotation angle does intentionally differ from exactly pi/2.
-	//Reason: oglplus's matrix inversion function doesn't invert correctly for some transforms.
 	terrain.SetTransform(glm::rotate(glm::translate(glm::mat4(1.f), glm::vec3(-terrainSize*0.5, -waterLevel, terrainSize*0.5)), -glm::pi<float>() / 2.f, glm::vec3(1, 0, 0)));
 
 	skybox.LoadTextureFromFiles(
@@ -395,6 +398,31 @@ SimpleColoredDrawer& GraphicsEngine::GetSimpleColoredDrawer()
 // Private functions
 //
 ////////////////////////////////////////////
+
+void GraphicsEngine::ParseHostDefinitions(std::string& shader_src, const std::map<std::string, std::string>& host_defined)
+{
+	bool found;
+	do {
+		const std::string prefix = "\n+host_defined";
+		size_t expr_start = shader_src.find(prefix);
+		found = expr_start != std::string::npos;
+		if (found) {
+			size_t begin = shader_src.find_first_not_of(" \t", expr_start + prefix.length());
+			std::string identifier = shader_src.substr(begin, shader_src.find('\n', begin) - begin);
+			std::string value;
+			try {
+				value = host_defined.at(identifier);
+			}
+			catch (std::out_of_range&) {
+				throw std::runtime_error("Could not find " + identifier + " among given host definitions while parsing shader");
+			}
+
+			std::string replacement = "\n#define " + identifier + " " + value;
+			size_t expr_end = shader_src.find('\n', expr_start+1);
+			shader_src.replace(expr_start, expr_end-expr_start, replacement);
+		}
+	} while (found);
+}
 
 void GraphicsEngine::SetActiveCamera(Camera* cam)
 {

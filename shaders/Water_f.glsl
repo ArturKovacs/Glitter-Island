@@ -8,11 +8,12 @@ uniform int screenHeight;
 
 uniform mat4 MVP;
 //uniform mat4 invMVP;
-flat in mat4 invViewProj;
+uniform mat4 invViewProj;
 
 uniform vec3 campos;
 uniform float time;
 uniform vec3 sunDir;
+uniform vec3 sunColor;
 
 in vec3 posFromVert;
 out vec4 fragColor;
@@ -21,32 +22,80 @@ float rand2(const in float seed){return cos(seed*14142.135623);}
 //float rand(const in float seed){return (rand2(seed)+1)*0.5;} //1,4142135623730950488016887242097
 float rand(const in float seed){return abs(rand2(seed));}
 
-float smoothNoise(const in vec2 pos, const in vec2 seed)
+const int waveCount = 16;
+
+//wave directions
+/*
+vec2 D[waveCount] = vec2[waveCount](
+	vec2(1.00, 0.25), vec2(0.75, 1.00), vec2(0.50, -1.0), vec2(-1.0, 1.00), 
+	vec2(0.33, -1.0), vec2(0.43, -1.0), vec2(0.85, 1.00), vec2(0.85, -1.0), 
+	vec2(1.00, 0.33), vec2(-1.0, 0.43), vec2(1.00, 0.85), vec2(-1.0, 0.75), 
+	vec2(1.00, -0.9), vec2(0.80, 0.70), vec2(-0.6, 0.50), vec2(0.40, 0.30)
+);*/
+vec2 D[waveCount] = vec2[waveCount](
+	vec2(-0.1659, 0.01467), vec2(0.501922, 0.52597), vec2(0.33277,-0.741945), vec2(-0.00580, -0.3592166),
+	vec2(-0.3790,-0.92000), vec2(0.580932,-0.00818), vec2(0.18854,-0.422864), vec2(-0.32435, -0.9239267),
+	vec2(-0.4968, 0.14807), vec2(0.196723, 0.44489), vec2(0.26122, 0.888485), vec2(0.963021, -0.5696051),
+	vec2( 0.0422, 0.74602), vec2(0.487431, 0.10474), vec2(-0.5004, 0.990681), vec2(-0.72560, -0.0265197)
+);
+
+//wave frequencies
+float w[waveCount] = float[waveCount](
+	float(4.3), float(9.8), float(6.9), float(6.0),
+	float(7.2), float(4.7), float(9.9), float(5.9),
+	float(5.1), float(5.6), float(4.8), float(7.8),
+	float(6.0), float(10.5), float(8.7), float(5.7)
+);
+
+//wave frequencies*speeds packed in phi
+float phi[waveCount] = float[waveCount](
+	w[ 0]*0.31, w[ 1]*0.52, w[ 2]*0.52, w[ 3]*0.52,
+	w[ 4]*0.24, w[ 5]*0.34, w[ 6]*0.64, w[ 7]*0.64,
+	w[ 8]*0.36, w[ 9]*0.46, w[10]*0.56, w[11]*0.46,
+	w[12]*0.28, w[13]*0.23, w[14]*0.48, w[15]*0.30
+);
+
+//amplitudes
+/*
+float A[waveCount] = float[waveCount](
+	float(.03), float(.04), float(.03), float(.03),
+	float(.02), float(.03), float(.02), float(.03),
+	float(.04), float(.02), float(.04), float(.03),
+	float(.02), float(.03), float(.03), float(.04)
+);
+*/
+float A[waveCount] = float[waveCount](
+	float(.005), float(.006), float(.004), float(.005),
+	float(.003), float(.006), float(.003), float(.005),
+	float(.006), float(.003), float(.006), float(.006),
+	float(.005), float(.004), float(.005), float(.006)
+);
+
+vec3 getWaveNormal(vec2 xy, float t)
 {
-	const int randomness = 20;
+	vec2 sum_d = vec2(0);
 	
-	const float freq = 50;
-	const float amp = 2;
-	
-	float result = 0;
-	for (int i = 0; i < randomness; i++){
-		result += (pow((cos(pos.x*rand(i*3)*freq + seed.x*rand2(i*3+5))*cos(pos.y*rand(i*3+2)*freq + seed.y*rand2(i*3+6)))*0.5+0.5, 1)*2-1)*((rand(i*3+1)*0.9+0.1)*amp);
+	const float k = 3;
+	for (int i = 0; i < waveCount; i++) {
+		vec2 D_i = normalize(xy-D[i]*1000);
+		sum_d += A[i]*pow(sin(dot(D_i, xy)*w[i]+t*phi[i])*0.5+0.5, k-1)*
+		             k*cos(dot(D_i, xy)*w[i]+t*phi[i])*
+		             w[i]*D_i;
 	}
-
-	result *= 1.f/randomness;
-
-	return result;
+	
+	
+	return normalize(vec3(-sum_d.x, -sum_d.y, 1.0));
 }
 
 const vec3 waterColor = vec3(0.8, 0.88, 0.95);
-const vec3 specColor = vec3(0.94, 0.94, 1);
+//const vec3 specColor = vec3(0.94, 0.94, 1);
 const float shininess = 200;
 
 void main(void)
 {
 	const float modulationStrength = 0.8;
 	
-	vec3 normal = normalize(vec3(0, 1, 0) + vec3(smoothNoise(posFromVert.xz+vec2(500), vec2(time*4)), smoothNoise(posFromVert.xz+vec2(100), vec2(time*6)), smoothNoise(posFromVert.xz+vec2(200), vec2(time*6)))*modulationStrength);
+	vec3 normal = getWaveNormal(posFromVert.xz, time).xzy;
 	vec3 viewDir = normalize(campos - posFromVert);
 	vec3 halfway = normalize(sunDir + viewDir);
 	
@@ -55,10 +104,10 @@ void main(void)
 	vec2 fragCoordTex = vec2(float(gl_FragCoord.x)/screenWidth, float(gl_FragCoord.y)/screenHeight);
 	
 	vec4 screenSurfacePos = (invViewProj * vec4(
-											(fragCoordTex.x*2-1),
-											(fragCoordTex.y*2-1),
-											(texelFetch(screenDepth, ivec2(gl_FragCoord.xy), 0).x)*2-1,
-											1));
+	                              (fragCoordTex.x*2-1),
+	                              (fragCoordTex.y*2-1),
+	                              (texelFetch(screenDepth, ivec2(gl_FragCoord.xy), 0).x)*2-1,
+	                              1));
 	
 	screenSurfacePos = screenSurfacePos/screenSurfacePos.w;
 	
@@ -88,10 +137,10 @@ void main(void)
 	
 	////////
 	vec4 refractedSurfacePos = (invViewProj * vec4(
-											(fragCoordTex.x*2-1),
-											(fragCoordTex.y*2-1),
-											(refractedDepth)*2-1,
-											1));
+	                              (fragCoordTex.x*2-1),
+	                              (fragCoordTex.y*2-1),
+	                              (refractedDepth)*2-1,
+	                              1));
 	
 	refractedSurfacePos = refractedSurfacePos/refractedSurfacePos.w;
 	
@@ -108,5 +157,5 @@ void main(void)
 	
 	//distanceInWater = mix(0, distanceInWater, -(exp(-waterDepth)-1));
 	distanceInWater = mix(0, distanceInWater, clamp(waterDepth, 0, 1)); 
-	fragColor = vec4(pow(waterColor, vec3(clamp(distanceInWater*0.4, 0, 25)))*(refractedColor /*+ reflectedColor*/)+(specColor*specularIntensity), 1);
+	fragColor = vec4(pow(waterColor, vec3(clamp(distanceInWater*0.4, 0, 25)))*(refractedColor /*+ reflectedColor*/)+(sunColor*specularIntensity), 1);
 }

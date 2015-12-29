@@ -28,8 +28,8 @@ public:
 	static std::string& GetImgFolderPath();
 	static std::string& GetModelsFolderPath();
 	
-	static gl::Program LoadShaderProgramFromFiles(const std::string& vs_name, const std::string& fs_name);
-	
+	static gl::Program LoadShaderProgramFromFiles(const std::string& vs_name, const std::string& fs_name, const std::map<std::string, std::string>& host_defined = {});
+
 public:
 	GraphicsEngine();
 	
@@ -87,6 +87,9 @@ private:
 	static std::string imgFolderPath;
 	static std::string modelsFolderPath;
 	
+private:
+	static void ParseHostDefinitions(std::string& shader_src, const std::map<std::string, std::string>& host_defined);
+
 private: //misc
 	double elapsedSec; //Seconds elapsed from an arbitrary moment in the past to present. (The actual value does not matter, only requirement is to increase continously, one unit by a second)
 

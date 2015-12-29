@@ -59,7 +59,7 @@ void main(void)
 	float flatSandValue = max(1-(materialValue.r+materialValue.g+materialValue.b), 0);
 	vec3 flatSandSample = sandColor * flatSandValue;
 	
-	const vec3 ambientColor = vec3(0.04);
+	const vec3 ambientColor = vec3(0.03);
 	vec3 diffuseColor = sunColor * max(dot(sunDir, normal), 0);
 	
 	//Select cascade

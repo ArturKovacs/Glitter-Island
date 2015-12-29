@@ -27,6 +27,7 @@ void StandardMaterial::Prepare(Mesh::Submesh& submsh)
 	shaderProgram.Use();
 
 	sh_lightDir.Set(pGraphicsEngine->GetSun().GetDirectionTowardsSource());
+	sh_lightColor.Set(pGraphicsEngine->GetSun().GetColor());
 
 	gl::Texture::Active(0);
 	albedoTexture.Bind(gl::Texture::Target::_2D);

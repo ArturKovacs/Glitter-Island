@@ -36,6 +36,7 @@ protected:
 	//gl::Texture roughnessTexture;
 
 	gl::Uniform<glm::vec3> sh_lightDir;
+	gl::Uniform<glm::vec3> sh_lightColor;
 	gl::Uniform<glm::mat4> sh_MVP;
 	gl::Uniform<glm::mat4> sh_MODELVIEW;
 	gl::Uniform<glm::mat4> sh_modelTrInv;

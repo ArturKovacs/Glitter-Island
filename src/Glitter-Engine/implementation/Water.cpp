@@ -9,7 +9,7 @@ pGraphEngine(pGraphicsEngine), visible(true)
 	waterShader.Use();
 
 	sh_MVP = gl::Uniform<glm::mat4>(waterShader, "MVP");
-	sh_viewProj = gl::Uniform<glm::mat4>(waterShader, "viewProj");
+	sh_invViewProj = gl::Uniform<glm::mat4>(waterShader, "invViewProj");
 	//sh_invMVP = gl::Uniform<glm::mat4>(waterShader, "invMVP");
 	sh_screen = gl::UniformSampler(waterShader, "screen");
 	sh_screenDepth = gl::UniformSampler(waterShader, "screenDepth");
@@ -17,6 +17,7 @@ pGraphEngine(pGraphicsEngine), visible(true)
 	sh_screenHeight = gl::Uniform<GLint>(waterShader, "screenHeight");
 	sh_camPos = gl::Uniform<glm::vec3>(waterShader, "campos");
 	sh_sunDir = gl::Uniform<glm::vec3>(waterShader, "sunDir");
+	sh_sunColor = gl::Uniform<glm::vec3>(waterShader, "sunColor");
 	sh_time = gl::Uniform<GLfloat>(waterShader, "time");
 
 	VAO.Bind();
@@ -72,7 +73,7 @@ void Water::Draw()
 	sh_screenHeight.Set(pGraphEngine->GetScreenHeight());
 
 	sh_MVP.Set(pGraphEngine->GetActiveViewerCamera()->GetViewProjectionTransform());
-	sh_viewProj.Set(pGraphEngine->GetActiveViewerCamera()->GetViewProjectionTransform());
+	sh_invViewProj.Set(glm::inverse(pGraphEngine->GetActiveViewerCamera()->GetViewProjectionTransform()));
 	//sh_invMVP.Set(gl::Inverse(core.GetCamera().GetViewProjectionTransform()));
 
 	PerspectiveCamera* pActivePerspectiveCam = dynamic_cast<PerspectiveCamera*>(pGraphEngine->GetActiveViewerCamera());
@@ -82,6 +83,7 @@ void Water::Draw()
 
 	sh_camPos.Set(pActivePerspectiveCam->GetPosition());
 	sh_sunDir.Set(pGraphEngine->GetSun().GetDirectionTowardsSource());
+	sh_sunColor.Set(pGraphEngine->GetSun().GetColor());
 	sh_time.Set(static_cast<float>(pGraphEngine->GetElapsedSeconds()));
 
 	VAO.Bind();

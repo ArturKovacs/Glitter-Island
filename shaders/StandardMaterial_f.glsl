@@ -1,6 +1,9 @@
 #version 330
 
++host_defined IS_TRANSPARENT
+
 uniform vec3 lightDir;
+uniform vec3 lightColor;
 uniform sampler2D albedoTexture;
 uniform sampler2D normal2_spec1_rough1_Tex;
 
@@ -25,9 +28,13 @@ vec3 UnpackNormal(in vec2 packed)
 
 void main(void) 
 {
+#if IS_TRANSPARENT
 	vec4 kd = texture(albedoTexture, texCoord_v);
 	if(kd.a < 0.9) { discard; }
-
+#else
+	vec3 kd = texture(albedoTexture, texCoord_v).rgb;
+#endif
+	
 	vec4 normal2_spec1_rough1 = texture(normal2_spec1_rough1_Tex, texCoord_v);
 	
 	float ks = normal2_spec1_rough1.z;
@@ -46,7 +53,7 @@ void main(void)
 	const float maxShininess = 256;
 	float shininess = (1 - normal2_spec1_rough1.w) * maxShininess;
 	
-	gl_FragData[0] = vec4(kd.xyz*max(dot(lightDir, normal), 0) + ks*PhongBlinn(lightDir, normalize(viewerDir_v), normal, shininess) + ambient, 1);
+	gl_FragData[0] = vec4(kd.rgb*lightColor*max(dot(lightDir, normal), 0) + ks*PhongBlinn(lightDir, normalize(viewerDir_v), normal, shininess) + ambient, 1);
 	gl_FragData[1] = vec4(normal, 1);
 	gl_FragData[2] = vec4(vec3(viewZ_v), 1);
 } 

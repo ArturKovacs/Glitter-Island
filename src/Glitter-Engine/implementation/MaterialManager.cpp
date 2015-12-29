@@ -116,12 +116,8 @@ Material* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngine, cons
 	pResult->isTransparent = isTransparent;
 	try {
 		gl::Program &shader = pResult->shaderProgram;
-		if (isTransparent) {
-			shader = GraphicsEngine::LoadShaderProgramFromFiles("StandardMaterial_v.glsl", "StandardMaterialTransparent_f.glsl");
-		}
-		else {
-			shader = GraphicsEngine::LoadShaderProgramFromFiles("StandardMaterial_v.glsl", "StandardMaterialSolid_f.glsl");
-		}
+		std::string isTransparentStr = isTransparent ? "1" : "0";
+		pResult->shaderProgram = GraphicsEngine::LoadShaderProgramFromFiles("StandardMaterial_v.glsl", "StandardMaterial_f.glsl", {std::pair<std::string, std::string>("IS_TRANSPARENT", isTransparentStr)});
 		shader.Use();
 
 		try {
@@ -129,6 +125,7 @@ Material* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngine, cons
 			pResult->sh_MODELVIEW = gl::Uniform<glm::mat4>(shader, "MODELVIEW");
 			pResult->sh_modelTrInv = gl::Uniform<glm::mat4>(shader, "MODEL_tr_inv");
 			pResult->sh_lightDir = gl::Uniform<glm::vec3>(shader, "lightDir");
+			pResult->sh_lightColor = gl::Uniform<glm::vec3>(shader, "lightColor");
 			gl::UniformSampler(shader, "albedoTexture").Set(0);
 			gl::UniformSampler(shader, "normal2_spec1_rough1_Tex").Set(1);
 		}

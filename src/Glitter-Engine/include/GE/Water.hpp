@@ -24,7 +24,7 @@ private:
 
 	gl::Program waterShader;
 	gl::Uniform<glm::mat4> sh_MVP;
-	gl::Uniform<glm::mat4> sh_viewProj;
+	gl::Uniform<glm::mat4> sh_invViewProj;
 	gl::Uniform<glm::mat4> sh_invMVP;
 	gl::UniformSampler sh_screen;
 	gl::UniformSampler sh_screenDepth;
@@ -32,6 +32,7 @@ private:
 	gl::Uniform<GLint> sh_screenHeight;
 	gl::Uniform<glm::vec3> sh_camPos;
 	gl::Uniform<glm::vec3> sh_sunDir;
+	gl::Uniform<glm::vec3> sh_sunColor;
 	gl::Uniform<GLfloat> sh_time;
 
 	gl::Program geometryOnlyShader;
