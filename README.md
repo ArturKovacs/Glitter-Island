@@ -10,6 +10,8 @@ keeping real-time performance on medium range computers. However this goal
 sometimes gets put aside to invest in code quality, portability, and 
 occasionally for other regards.
 
+![screenshot](island-2015-12-29.png)
+
 ## How to
 
 This section contains some useful information for those who wants to 
@@ -58,6 +60,8 @@ Table of available controlls:
 | Right click | Capture mouse                         | All                     |
 | E           | Toggle "Editor mode"                  | All                     |
 | H           | Toggle wireframe display              | All                     |
+| Up Arrow    | Change sun elevation                  | All                     |
+| Down Arrow  | Change sun elevation                  | All                     |
 | 0-9         | Tool selection                        | Editor                  |
 | R           | Move selection up                     | Editor, Model selection |
 | F           | Move selection down                   | Editor, Model selection |

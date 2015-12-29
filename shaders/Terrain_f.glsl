@@ -3,7 +3,6 @@
 #define LIGHT_CASCADE_COUNT 5
 
 uniform sampler2DShadow cascadeShadowMaps[LIGHT_CASCADE_COUNT];
-//uniform sampler2D cascadeShadowMaps[LIGHT_CASCADE_COUNT];
 uniform mat4 worldToShadowMap[LIGHT_CASCADE_COUNT];
 uniform float viewSubfrustumFarPlanesTexDepth[LIGHT_CASCADE_COUNT];
 

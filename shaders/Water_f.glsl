@@ -7,7 +7,6 @@ uniform int screenWidth;
 uniform int screenHeight;
 
 uniform mat4 MVP;
-//uniform mat4 invMVP;
 uniform mat4 invViewProj;
 
 uniform vec3 campos;
@@ -18,20 +17,9 @@ uniform vec3 sunColor;
 in vec3 posFromVert;
 out vec4 fragColor;
 
-float rand2(const in float seed){return cos(seed*14142.135623);}
-//float rand(const in float seed){return (rand2(seed)+1)*0.5;} //1,4142135623730950488016887242097
-float rand(const in float seed){return abs(rand2(seed));}
-
 const int waveCount = 16;
 
 //wave directions
-/*
-vec2 D[waveCount] = vec2[waveCount](
-	vec2(1.00, 0.25), vec2(0.75, 1.00), vec2(0.50, -1.0), vec2(-1.0, 1.00), 
-	vec2(0.33, -1.0), vec2(0.43, -1.0), vec2(0.85, 1.00), vec2(0.85, -1.0), 
-	vec2(1.00, 0.33), vec2(-1.0, 0.43), vec2(1.00, 0.85), vec2(-1.0, 0.75), 
-	vec2(1.00, -0.9), vec2(0.80, 0.70), vec2(-0.6, 0.50), vec2(0.40, 0.30)
-);*/
 vec2 D[waveCount] = vec2[waveCount](
 	vec2(-0.1659, 0.01467), vec2(0.501922, 0.52597), vec2(0.33277,-0.741945), vec2(-0.00580, -0.3592166),
 	vec2(-0.3790,-0.92000), vec2(0.580932,-0.00818), vec2(0.18854,-0.422864), vec2(-0.32435, -0.9239267),
@@ -56,14 +44,6 @@ float phi[waveCount] = float[waveCount](
 );
 
 //amplitudes
-/*
-float A[waveCount] = float[waveCount](
-	float(.03), float(.04), float(.03), float(.03),
-	float(.02), float(.03), float(.02), float(.03),
-	float(.04), float(.02), float(.04), float(.03),
-	float(.02), float(.03), float(.03), float(.04)
-);
-*/
 float A[waveCount] = float[waveCount](
 	float(.005), float(.006), float(.004), float(.005),
 	float(.003), float(.006), float(.003), float(.005),
@@ -88,8 +68,7 @@ vec3 getWaveNormal(vec2 xy, float t)
 }
 
 const vec3 waterColor = vec3(0.8, 0.88, 0.95);
-//const vec3 specColor = vec3(0.94, 0.94, 1);
-const float shininess = 200;
+const float shininess = 256;
 
 void main(void)
 {
@@ -101,7 +80,8 @@ void main(void)
 	
 	float specularIntensity = pow(max(dot(normal, halfway), 0), shininess);
 	
-	vec2 fragCoordTex = vec2(float(gl_FragCoord.x)/screenWidth, float(gl_FragCoord.y)/screenHeight);
+	vec2 screenDimensions = vec2(screenWidth, screenHeight);
+	vec2 fragCoordTex = vec2(gl_FragCoord.xy/screenDimensions);
 	
 	vec4 screenSurfacePos = (invViewProj * vec4(
 	                              (fragCoordTex.x*2-1),
@@ -109,7 +89,7 @@ void main(void)
 	                              (texelFetch(screenDepth, ivec2(gl_FragCoord.xy), 0).x)*2-1,
 	                              1));
 	
-	screenSurfacePos = screenSurfacePos/screenSurfacePos.w;
+	screenSurfacePos.xyz /= screenSurfacePos.w;
 	
 	float screenDistInWater = distance(screenSurfacePos.xyz, posFromVert);
 	float screenDistInWaterSqr;
@@ -120,20 +100,19 @@ void main(void)
 	
 	vec3 fromCam = -viewDir;
 	vec3 refractedDir = refract(fromCam, normal, 1/1.36);
-	vec3 fakeHitPos = posFromVert+refractedDir*min(screenDistInWater, 1);
-	//vec3 fakeHitPos = posFromVert+refractedDir;
+	vec3 fakeHitPos = posFromVert+refractedDir*min(screenDistInWater, 0.25);
 	vec4 ClipSpacePos = MVP * vec4(fakeHitPos, 1);
-	vec2 hitPosOnScreen = ((ClipSpacePos/ClipSpacePos.w).xy * 0.5) + vec2(0.5);
-	float hitPosDepth = texture2D(screenDepth, hitPosOnScreen).x;
+	vec2 hitPosOnScreen = (ClipSpacePos.xy/ClipSpacePos.w) * 0.5 + vec2(0.5);
+	float hitPosDepth = texelFetch(screenDepth, ivec2(hitPosOnScreen*screenDimensions), 0).x;
 	
 	vec3 refractedColor;
 	float refractedDepth;
-	if (hitPosDepth < gl_FragCoord.z-0.01) {
+	if (hitPosDepth < gl_FragCoord.z) {
 		hitPosOnScreen = fragCoordTex;
 	}
 	
-	refractedColor = texture2D(screen, hitPosOnScreen).rgb;
-	refractedDepth = texture2D(screenDepth, hitPosOnScreen).x;
+	refractedColor = texture(screen, hitPosOnScreen).rgb;
+	refractedDepth = texelFetch(screenDepth, ivec2(hitPosOnScreen*screenDimensions), 0).x;
 	
 	////////
 	vec4 refractedSurfacePos = (invViewProj * vec4(
@@ -142,7 +121,7 @@ void main(void)
 	                              (refractedDepth)*2-1,
 	                              1));
 	
-	refractedSurfacePos = refractedSurfacePos/refractedSurfacePos.w;
+	refractedSurfacePos.xyz /= refractedSurfacePos.w;
 	
 	float distanceInWater = distance(refractedSurfacePos.xyz, posFromVert);
 	//TODO: this is not the actual water depth
