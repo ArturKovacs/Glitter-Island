@@ -117,7 +117,7 @@ void BaseDemoContext::Update(float deltaSec)
 	float sunHeightFactor = std::max(1-(std::sin(sunAngleRad)-0.05f), 0.f);
 	sunHeightFactor = std::exp2(-std::pow(sunHeightFactor, 8.f)*8);
 	float sunGBcolorValue = 0.65f*sunHeightFactor+0.3f;
-	pCore->GetGraphicsEngine().GetSun().SetColor(glm::vec3(.95f, sunGBcolorValue, sunGBcolorValue*0.9f));
+	pCore->GetGraphicsEngine().GetSun().SetColor(glm::vec3(.95f, sunGBcolorValue, sunGBcolorValue*0.85f));
 }
 
 void BaseDemoContext::Draw()

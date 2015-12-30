@@ -15,9 +15,10 @@ Terrain::Terrain(GraphicsEngine* pGraphicsEngine) : pGraphicsEngine(pGraphicsEng
 	terrainScale = 0;
 
 	shaderProgram = GraphicsEngine::LoadShaderProgramFromFiles("Terrain_v.glsl", "Terrain_f.glsl");
-	shaderProgram.Use();
+	seabottomProgram = GraphicsEngine::LoadShaderProgramFromFiles("SimpleColored_v.glsl", "SimpleColored_f.glsl");
 
 	try {
+		shaderProgram.Use();
 		sh_sunDir = gl::Uniform<glm::vec3>(shaderProgram, "sunDir");
 		sh_sunColor = gl::Uniform<glm::vec3>(shaderProgram, "sunColor");
 		sh_modelTransform = gl::Uniform<glm::mat4>(shaderProgram, "MODEL");
@@ -38,6 +39,11 @@ Terrain::Terrain(GraphicsEngine* pGraphicsEngine) : pGraphicsEngine(pGraphicsEng
 			IGNORE_TRY(sh_worldToShadowMap.at(i) = gl::Uniform<glm::mat4>(shaderProgram, "worldToShadowMap[" + std::to_string(i) + "]"));
 			IGNORE_TRY(sh_viewSubfrustumFarPlanesTexDepth.at(i) = gl::Uniform<float>(shaderProgram, "viewSubfrustumFarPlanesTexDepth[" + std::to_string(i) + "]"));
 		}
+
+		seabottomProgram.Use();
+		seabottom_MVP = gl::Uniform<glm::mat4>(seabottomProgram, "MVP");
+		seabottom_color = gl::Uniform<glm::vec4>(seabottomProgram, "color");
+		seabottom_color.Set(glm::vec4(0.78f, 0.78f, 0.66f, 1.0f));
 	}
 	catch (gl::Error& err) {
 		std::cout << err.what() << std::endl;
@@ -129,6 +135,7 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float 
 		0, 1, 2, 3
 	};
 
+	seabottomProgram.Use();
 	Mesh::Submesh seabottom_submsh;
 
 	seabottom_submsh.SetVertexAttributeBuffer(AttributeCategory::POSITION, seaBottomVertPos);
@@ -137,8 +144,8 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float 
 	seabottom_submsh.SetIndices(seaBottomIndices);
 
 	try {
-		seabottom_submsh.AttachVertexAttribute(AttributeCategory::POSITION, shaderProgram, "vertexPos");
-		seabottom_submsh.AttachVertexAttribute(AttributeCategory::NORMAL, shaderProgram, "vertexNormal");
+		seabottom_submsh.AttachVertexAttribute(AttributeCategory::POSITION, seabottomProgram, "vertexPos");
+		//seabottom_submsh.AttachVertexAttribute(AttributeCategory::NORMAL, shaderProgram, "vertexNormal");
 	}
 	catch (gl::Error& err) {
 		std::cout << err.what() << std::endl;
@@ -177,7 +184,8 @@ void Terrain::Draw()
 	sh_sunDir.Set(pGraphicsEngine->GetSun().GetDirectionTowardsSource());
 	sh_sunColor.Set(pGraphicsEngine->GetSun().GetColor());
 	sh_modelTransform.Set(modelTransform);
-	sh_MVP.Set(pGraphicsEngine->GetActiveCamera()->GetViewProjectionTransform() * modelTransform);
+	glm::mat4 MVP = pGraphicsEngine->GetActiveCamera()->GetViewProjectionTransform() * modelTransform;
+	sh_MVP.Set(MVP);
 	glm::mat4 modelView = pGraphicsEngine->GetActiveCamera()->GetViewTransform() * modelTransform;
 	sh_modelViewTransform.Set(modelView);
 	sh_modelTrInv.Set(glm::transpose(glm::inverse(modelTransform)));
@@ -188,11 +196,11 @@ void Terrain::Draw()
 	terrain_submsh.BindVAO();
 	pGraphicsEngine->GetGLContext().DrawElements(terrain_submsh.GetPrimitiveType(), terrain_submsh.GetNumOfIndices(), terrain_submsh.indexTypeEnum);
 
-	/*
+	seabottomProgram.Use();
+	seabottom_MVP.Set(MVP);
 	Mesh::Submesh& seabottom_submsh = seabottom.GetSubmeshes().at(0);
 	seabottom_submsh.BindVAO();
 	pGraphicsEngine->GetGLContext().DrawElements(seabottom_submsh.GetPrimitiveType(), seabottom_submsh.GetNumOfIndices(), seabottom_submsh.indexTypeEnum);
-	*/
 }
 
 void Terrain::SetTransform(const glm::mat4& transform)

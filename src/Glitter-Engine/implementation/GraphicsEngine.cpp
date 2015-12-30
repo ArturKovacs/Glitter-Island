@@ -542,7 +542,7 @@ void GraphicsEngine::DrawObjects()
 			auto& objectsWithThisSubmesh = currAssociation.second;
 			pMaterial->Prepare(*submesh);
 			for(auto currentObject : objectsWithThisSubmesh) {
-				if (currentObject->IsVisible()){
+				if (currentObject->IsVisible()) {
 					if (currentObject->IsDepthTestEnabled()) {
 						glContext.Enable(gl::Capability::DepthTest);
 					} else {

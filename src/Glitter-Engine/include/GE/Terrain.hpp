@@ -42,6 +42,8 @@ private:
 	glm::mat4 modelTransform;
 	std::vector<gl::Uniform<glm::mat4>> sh_worldToShadowMap;
 	std::vector<gl::Uniform<float>> sh_viewSubfrustumFarPlanesTexDepth;
+
+	gl::Program shaderProgram;
 	gl::Uniform<glm::mat4> sh_modelTransform;
 	gl::Uniform<glm::mat4> sh_modelViewTransform;
 	gl::Uniform<glm::mat4> sh_MVP;
@@ -49,7 +51,9 @@ private:
 	gl::Uniform<glm::vec3> sh_sunDir;
 	gl::Uniform<glm::vec3> sh_sunColor;
 
-	gl::Program shaderProgram;
+	gl::Program seabottomProgram;
+	gl::Uniform<glm::mat4> seabottom_MVP;
+	gl::Uniform<glm::vec4> seabottom_color;
 
 private:
 	static void LoadTexture(gl::Texture& target, sf::Image& srcImg, const std::string& filename, bool data, float anisotropy = 0);
