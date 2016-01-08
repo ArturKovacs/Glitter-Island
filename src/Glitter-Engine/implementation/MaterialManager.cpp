@@ -162,7 +162,7 @@ Material* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngine, cons
 		}
 
 		LoadTexture(pResult->normal_spec_rough_Texture, normal_spec_rough_img, TextureType::DATA);
-		LoadTexture(pResult->albedoTexture, albedoImg, TextureType::COLOR);
+		LoadTexture(pResult->albedoTexture, albedoImg, TextureType::COLOR, isTransparent);
 	}
 	catch (...) {
 		delete pResult;
@@ -172,7 +172,7 @@ Material* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngine, cons
 	return pResult;
 }
 
-void MaterialManager::LoadTexture(gl::Texture& target, const std::string& filename, TextureType type)
+void MaterialManager::LoadTexture(gl::Texture& target, const std::string& filename, TextureType type, bool transparent)
 {
 	sf::Image img;
 
@@ -182,13 +182,19 @@ void MaterialManager::LoadTexture(gl::Texture& target, const std::string& filena
 
 	img.flipVertically();
 
-	LoadTexture(target, img, type);
+	LoadTexture(target, img, type, transparent);
 }
 
-void MaterialManager::LoadTexture(gl::Texture& target, const sf::Image& img, TextureType type)
+void MaterialManager::LoadTexture(gl::Texture& target, const sf::Image& img, TextureType type, bool transparent)
 {
 	target.Bind(gl::Texture::Target::_2D);
-	gl::Texture::MinFilter(gl::Texture::Target::_2D, gl::TextureMinFilter::Linear);
+	if (!transparent) {
+		gl::Texture::MinFilter(gl::Texture::Target::_2D, gl::TextureMinFilter::LinearMipmapLinear);
+	}
+	else {
+		gl::Texture::MinFilter(gl::Texture::Target::_2D, gl::TextureMinFilter::Linear);
+	}
+	
 	gl::Texture::MagFilter(gl::Texture::Target::_2D, gl::TextureMagFilter::Linear);
 	gl::Texture::WrapS(gl::Texture::Target::_2D, gl::TextureWrap::Repeat);
 	gl::Texture::WrapT(gl::Texture::Target::_2D, gl::TextureWrap::Repeat);
@@ -202,6 +208,10 @@ void MaterialManager::LoadTexture(gl::Texture& target, const sf::Image& img, Tex
 		gl::enums::PixelDataFormat::RGBA,
 		gl::DataType::UnsignedByte,
 		img.getPixelsPtr());
+
+	if (!transparent) {
+		gl::Texture::GenerateMipmap(gl::Texture::Target::_2D);
+	}
 }
 
 sf::Image MaterialManager::LoadImage(const std::string& filename)

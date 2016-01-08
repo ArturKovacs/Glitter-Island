@@ -6,13 +6,16 @@ uniform sampler2DShadow cascadeShadowMaps[LIGHT_CASCADE_COUNT];
 uniform mat4 worldToShadowMap[LIGHT_CASCADE_COUNT];
 uniform float viewSubfrustumFarPlanesTexDepth[LIGHT_CASCADE_COUNT];
 
-uniform sampler2D materialTexture;
 uniform sampler2D sandTexture;
+uniform sampler2D sandNormalMap;
 uniform sampler2D grassTexture;
+uniform sampler2D grassNormalMap;
+uniform sampler2D materialTexture;
 uniform vec3 sunDir;
 uniform vec3 sunColor;
 
 in vec3 normal_v;
+in vec3 tangent_v;
 in vec2 texCoord_v;
 in vec3 worldPos_v;
 in float viewZ_v;
@@ -50,13 +53,25 @@ void main(void)
 {
 	vec2 texPos = texCoord_v*120;
 	vec3 normal = normalize(normal_v);
+	vec3 tangent = normalize(tangent_v - normal * dot(normal, tangent_v));
+	vec3 bitangent = cross(tangent, normal);
+	mat3 textureToWorld = mat3(tangent, bitangent, normal);
+	
 	vec3 materialValue = texture(materialTexture, texCoord_v).rgb;
 	
 	vec3 sandTexSample = sandColor * texture(sandTexture, texPos).xyz * materialValue.b;
+	vec3 sandNormalSample = textureToWorld * (texture(sandNormalMap, texPos).xyz*2 - vec3(1));
+	sandNormalSample *= materialValue.b;
+	
 	vec3 grassTexSample = texture(grassTexture, texPos).xyz * materialValue.g;
+	vec3 grassNormalSample = textureToWorld * (texture(grassNormalMap, texPos).xyz*2 - vec3(1));
+	grassNormalSample *= materialValue.g;
 	
 	float flatSandValue = max(1-(materialValue.r+materialValue.g+materialValue.b), 0);
 	vec3 flatSandSample = sandColor * flatSandValue;
+	vec3 flatSandNormalSample = normal * flatSandValue;
+	
+	normal = normalize(flatSandNormalSample + grassNormalSample + sandNormalSample);
 	
 	const vec3 ambientColor = vec3(0.03);
 	vec3 diffuseColor = sunColor * max(dot(sunDir, normal), 0);

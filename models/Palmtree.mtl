@@ -20,5 +20,6 @@ Ks 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd bark.jpg
-map_Ka bark.jpg
+map_Kd bark.png
+map_Ka bark.png
+bump bark_normal.png

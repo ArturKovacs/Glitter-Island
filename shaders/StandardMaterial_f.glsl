@@ -1,5 +1,6 @@
 #version 330
 
+//host defined macros
 +host_defined IS_TRANSPARENT
 
 uniform vec3 lightDir;
@@ -42,12 +43,9 @@ void main(void)
 	vec3 ambient = kd.rgb * 0.02;
 
 	vec3 normal = normalize(normal_v);
-	vec3 tangent  = normalize(tangent_v);
-	tangent = normalize(tangent - normal * dot(normal, tangent));
+	vec3 tangent = normalize(tangent_v - normal * dot(normal, tangent_v));
 	vec3 bitangent = cross(tangent, normal);
-	
 	mat3 textureToWorld = mat3(tangent, bitangent, normal);
-	
 	normal = normalize(textureToWorld * UnpackNormal(normal2_spec1_rough1.xy));
 	
 	const float maxShininess = 256;

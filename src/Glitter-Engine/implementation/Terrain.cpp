@@ -27,13 +27,15 @@ Terrain::Terrain(GraphicsEngine* pGraphicsEngine) : pGraphicsEngine(pGraphicsEng
 		sh_modelViewTransform = gl::Uniform<glm::mat4>(shaderProgram, "MODELVIEW");
 
 		gl::UniformSampler(shaderProgram, "sandTexture").Set(0);
-		gl::UniformSampler(shaderProgram, "grassTexture").Set(1);
-		gl::UniformSampler(shaderProgram, "materialTexture").Set(2);
+		gl::UniformSampler(shaderProgram, "sandNormalMap").Set(1);
+		gl::UniformSampler(shaderProgram, "grassTexture").Set(2);
+		gl::UniformSampler(shaderProgram, "grassNormalMap").Set(3);
+		gl::UniformSampler(shaderProgram, "materialTexture").Set(4);
 
 		sh_worldToShadowMap.resize(pGraphicsEngine->GetLightCascadeCount());
 		sh_viewSubfrustumFarPlanesTexDepth.resize(pGraphicsEngine->GetLightCascadeCount());
 
-		int currTextureID = 3;
+		int currTextureID = 5;
 		for (int i = 0; i < pGraphicsEngine->GetLightCascadeCount(); i++) {
 			IGNORE_TRY(gl::UniformSampler(shaderProgram, "cascadeShadowMaps[" + std::to_string(i) + "]").Set(currTextureID++));
 			IGNORE_TRY(sh_worldToShadowMap.at(i) = gl::Uniform<glm::mat4>(shaderProgram, "worldToShadowMap[" + std::to_string(i) + "]"));
@@ -51,10 +53,11 @@ Terrain::Terrain(GraphicsEngine* pGraphicsEngine) : pGraphicsEngine(pGraphicsEng
 
 	materialMapFilename = GraphicsEngine::GetImgFolderPath() + "materialMap.png";
 
-	sf::Image tmpImg;
-	LoadTexture(sandTexture, tmpImg, GraphicsEngine::GetImgFolderPath() + "sand_seamless.png", false, 4);
-	LoadTexture(grassTexture, tmpImg, GraphicsEngine::GetImgFolderPath() + "grass_seamless.png", false, 4);
-	LoadTexture(materialTexture, materialMap, materialMapFilename, true);
+	LoadTexture(sandTexture, GraphicsEngine::GetImgFolderPath() + "sand_seamless.png", false, 4);
+	LoadTexture(sandNormalMap, GraphicsEngine::GetImgFolderPath() + "sand_seamless_normal.png", true);
+	LoadTexture(grassTexture, GraphicsEngine::GetImgFolderPath() + "grass_seamless.png", false, 4);
+	LoadTexture(grassNormalMap, GraphicsEngine::GetImgFolderPath() + "grass_seamless_normal.png", true);
+	materialMap = LoadTexture(materialTexture, materialMapFilename, true);
 }
 
 void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float heightMultiplyer, bool invertNormals)
@@ -72,21 +75,20 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float 
 
 	image.flipVertically();
 
-	const int imgWidth = image.getSize().x;
-	const int imgHeight = image.getSize().y;
+	const size_t imgWidth = image.getSize().x;
+	const size_t imgHeight = image.getSize().y;
 
 	if (imgWidth < 2 || imgHeight < 2) {
 		throw std::runtime_error("Terrain heightmap must be at least 2 pixel big in each direction!");
 	}
 
-	const int pixelCount = imgWidth * imgHeight;
-	const int totalVertexCount = pixelCount;
+	const size_t pixelCount = imgWidth * imgHeight;
+	const size_t totalVertexCount = pixelCount;
 
-	std::vector<glm::vec3> positions(totalVertexCount);
-	std::vector<glm::vec2> texCoords(totalVertexCount);
-	std::vector<glm::vec3> normals(totalVertexCount);
-	CalculatePositionsAndTexCoords(&positions, &texCoords, image, scale, heightMultiplyer);
-	CalculateNormals(&normals, image, positions);
+	std::vector<glm::vec3> positions = CalculatePositions(image, scale, heightMultiplyer);
+	std::vector<glm::vec2> texCoords = CalculateTexCoords(image);
+	std::vector<glm::vec3> normals = CalculateNormals(image, positions);
+	std::vector<glm::vec3> tangent = CalculateTangents(image, positions, texCoords);
 
 	const int pixelCountWithAssociatedQuad = (pixelCount-imgWidth-imgHeight)+1;
 	const int trianglesInAQuad = 2;
@@ -101,6 +103,7 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float 
 
 	submsh.SetVertexAttributeBuffer(AttributeCategory::POSITION, positions);
 	submsh.SetVertexAttributeBuffer(AttributeCategory::NORMAL, normals);
+	submsh.SetVertexAttributeBuffer(AttributeCategory::TANGENT, tangent);
 	submsh.SetVertexAttributeBuffer(AttributeCategory::TEX_COORD, texCoords);
 
 	submsh.SetIndices(indices);
@@ -108,6 +111,7 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float 
 	try {
 		submsh.AttachVertexAttribute(AttributeCategory::POSITION, shaderProgram, "vertexPos");
 		submsh.AttachVertexAttribute(AttributeCategory::NORMAL, shaderProgram, "vertexNormal");
+		submsh.AttachVertexAttribute(AttributeCategory::TANGENT, shaderProgram, "vertexTangent");
 		submsh.AttachVertexAttribute(AttributeCategory::TEX_COORD, shaderProgram, "vertexTexCoord");
 	}
 	catch (gl::Error& err) {
@@ -159,16 +163,13 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float 
 void Terrain::Draw()
 {
 	shaderProgram.Use();
-	gl::Texture::Active(0);
-	sandTexture.Bind(gl::Texture::Target::_2D);
+	gl::Texture::Active(0); sandTexture.Bind(gl::Texture::Target::_2D);
+	gl::Texture::Active(1); sandNormalMap.Bind(gl::Texture::Target::_2D);
+	gl::Texture::Active(2); grassTexture.Bind(gl::Texture::Target::_2D);
+	gl::Texture::Active(3); grassNormalMap.Bind(gl::Texture::Target::_2D);
+	gl::Texture::Active(4); materialTexture.Bind(gl::Texture::Target::_2D);
+	int currTextureID = 5;
 
-	gl::Texture::Active(1);
-	grassTexture.Bind(gl::Texture::Target::_2D);
-
-	gl::Texture::Active(2);
-	materialTexture.Bind(gl::Texture::Target::_2D);
-
-	int currTextureID = 3;
 	for (int i = 0; i < pGraphicsEngine->GetLightCascadeCount(); i++) {
 		gl::Texture::Active(currTextureID++);
 		pGraphicsEngine->GetCascadeShadowMap(i).Bind(gl::Texture::Target::_2D);
@@ -250,15 +251,19 @@ void Terrain::SaveMaterialMap() const {
 //
 ////////////////////////////////////////////
 
-void Terrain::LoadTexture(gl::Texture& target, sf::Image& srcImg, const std::string& filename, bool data, float anisotropy)
+sf::Image Terrain::LoadTexture(gl::Texture& target, const std::string& filename, bool data, float anisotropy)
 {
-	if (!srcImg.loadFromFile(filename)) {
+	sf::Image result;
+
+	if (!result.loadFromFile(filename)) {
 		throw std::runtime_error((std::string("Can not load texture ") + filename).c_str());
 	}
 
 	//srcImg.flipVertically();
 
-	LoadTexture(target, srcImg, data, anisotropy);
+	LoadTexture(target, result, data, anisotropy);
+
+	return result;
 }
 
 void Terrain::LoadTexture(gl::Texture& target, const sf::Image& srcImg, bool data, float anisotropy)
@@ -332,31 +337,34 @@ int Terrain::GetVertexIndex(const int width, const int x, const int y)
 	return y*width + x;
 }
 
-void Terrain::CalculatePositionsAndTexCoords(std::vector<glm::vec3>* positions, std::vector<glm::vec2>* texCoords, const sf::Image& image, const float scale, const float heightMultiplyer)
+std::vector<glm::vec3> Terrain::CalculatePositions(const sf::Image& image, const float scale, const float heightMultiplyer)
 {
 	static const int maxHeight = 255;
 	static const bool fromSRGB = false;
 
-	const int imgWidth = image.getSize().x;
-	const int imgHeight = image.getSize().y;
+	const size_t imgWidth = image.getSize().x;
+	const size_t imgHeight = image.getSize().y;
+	const size_t pixelCount = imgWidth * imgHeight;
+	const size_t vertexCount = pixelCount;
 
-	for (int currY = 0; currY < imgHeight; currY++) {
-		for (int currX = 0; currX < imgWidth; currX++) {
+	std::vector<glm::vec3> tmpPos(vertexCount);
+
+	for (size_t currY = 0; currY < imgHeight; currY++) {
+		for (size_t currX = 0; currX < imgWidth; currX++) {
 			float currHeight = image.getPixel(currX, currY).r;
 			if (fromSRGB) { currHeight = std::pow(currHeight/maxHeight, 2.2f)*maxHeight; }
 
-			positions->at(GetVertexIndex(imgWidth, currX, currY)) = glm::vec3(float(currX)/(imgWidth-1), float(currY)/(imgHeight-1), (float(currHeight)/maxHeight)*heightMultiplyer)*scale;
-			texCoords->at(GetVertexIndex(imgWidth, currX, currY)) = glm::vec2(float(currX)/(imgWidth-1), float(currY)/(imgHeight-1));
+			tmpPos.at(GetVertexIndex(imgWidth, currX, currY)) = glm::vec3(float(currX)/(imgWidth-1), float(currY)/(imgHeight-1), (float(currHeight)/maxHeight)*heightMultiplyer)*scale;
 		}
 	}
 
-	std::vector<glm::vec3> finalPositions(positions->size());
+	std::vector<glm::vec3> result(vertexCount);
 
 	//average heights
-	for (int currY = 0; currY < imgHeight; currY++) {
-		for (int currX = 0; currX < imgWidth; currX++) {
-			glm::vec2 currPlanePos(positions->at(GetVertexIndex(imgWidth, currX, currY)));
-			float currHeight = positions->at(GetVertexIndex(imgWidth, currX, currY)).z;
+	for (size_t currY = 0; currY < imgHeight; currY++) {
+		for (size_t currX = 0; currX < imgWidth; currX++) {
+			glm::vec2 currPlanePos(tmpPos.at(GetVertexIndex(imgWidth, currX, currY)));
+			float currHeight = tmpPos.at(GetVertexIndex(imgWidth, currX, currY)).z;
 
 			float weightedHeightSum = 0;
 			float weightSum = 0;
@@ -365,10 +373,10 @@ void Terrain::CalculatePositionsAndTexCoords(std::vector<glm::vec3>* positions, 
 
 			for (int dy = int(-radius); dy <= radius+0.01; dy++) {
 				for (int dx = int(-radius); dx <= radius+0.01; dx++) {
-					const int neighbourIdY = currY+dy;
-					const int neighbourIdX = currX+dx;
+					const size_t neighbourIdY = currY+dy;
+					const size_t neighbourIdX = currX+dx;
 					if (neighbourIdX >= 0 && neighbourIdX < imgWidth && neighbourIdY >= 0 && neighbourIdY < imgHeight) {
-						glm::vec3 neighbourPos = positions->at(GetVertexIndex(imgWidth, neighbourIdX, neighbourIdY));
+						glm::vec3 neighbourPos = tmpPos.at(GetVertexIndex(imgWidth, neighbourIdX, neighbourIdY));
 						const float neighbourWeight = 1;
 						weightSum += neighbourWeight;
 						weightedHeightSum += neighbourPos.z*neighbourWeight;
@@ -376,27 +384,52 @@ void Terrain::CalculatePositionsAndTexCoords(std::vector<glm::vec3>* positions, 
 				}
 			}
 
-			finalPositions.at(GetVertexIndex(imgWidth, currX, currY)) = glm::vec3(currPlanePos, weightedHeightSum / weightSum);
+			result.at(GetVertexIndex(imgWidth, currX, currY)) = glm::vec3(currPlanePos, weightedHeightSum / weightSum);
 		}
 	}
 
-	*positions = std::move(finalPositions);
+	return result;
 }
 
-void Terrain::CalculateNormals(std::vector<glm::vec3>* normals, const sf::Image& image, const std::vector<glm::vec3>& positions)
+std::vector<glm::vec2> Terrain::CalculateTexCoords(const sf::Image& image)
 {
-	const int imgWidth = image.getSize().x;
-	const int imgHeight = image.getSize().y;
+	const size_t imgWidth = image.getSize().x;
+	const size_t imgHeight = image.getSize().y;
+	const size_t pixelCount = imgWidth * imgHeight;
+	const size_t vertexCount = pixelCount;
 
-	for (int currY = 0; currY < imgHeight; currY++) {
-		for (int currX = 0; currX < imgWidth; currX++) {
+	std::vector<glm::vec2> result(vertexCount);
+
+	for (size_t currY = 0; currY < imgHeight; currY++) {
+		for (size_t currX = 0; currX < imgWidth; currX++) {
+			result.at(GetVertexIndex(imgWidth, currX, currY)) = glm::vec2(float(currX) / (imgWidth - 1), float(currY) / (imgHeight - 1));
+		}
+	}
+
+	return result;
+}
+
+std::vector<glm::vec3> Terrain::CalculateNormals(const sf::Image& image, const std::vector<glm::vec3>& positions)
+{
+	const size_t imgWidth = image.getSize().x;
+	const size_t imgHeight = image.getSize().y;
+	const size_t pixelCount = imgWidth * imgHeight;
+	const size_t vertexCount = pixelCount;
+
+	std::vector<glm::vec3> result(imgWidth*imgHeight);
+
+	for (size_t currY = 0; currY < imgHeight; currY++) {
+		for (size_t currX = 0; currX < imgWidth; currX++) {
+			using namespace std;
+			const size_t prevX = max(int(currX) - 1, 0);
+			const size_t prevY = max(int(currY) - 1, 0);
 			std::array<glm::vec3, 6> adjacentTriangleNormals = {
 				GetLowerTriangleNormalFromQuad(currX, currY, positions, imgWidth) * 90.f,
-				(currX - 1 >= 0 ? GetUpperTriangleNormalFromQuad(currX - 1, currY, positions, imgWidth) : glm::vec3(0, 0, 0))*45.f,
-				(currX - 1 >= 0 ? GetLowerTriangleNormalFromQuad(currX - 1, currY, positions, imgWidth) : glm::vec3(0, 0, 0))*45.f,
-				(currX - 1 >= 0 && currY - 1 >= 0 ? GetUpperTriangleNormalFromQuad(currX - 1, currY - 1, positions, imgWidth) : glm::vec3(0, 0, 0))*90.f,
-				(currY - 1 >= 0 ? GetLowerTriangleNormalFromQuad(currX, currY - 1, positions, imgWidth) : glm::vec3(0, 0, 0))*45.f,
-				(currY - 1 >= 0 ? GetUpperTriangleNormalFromQuad(currX, currY - 1, positions, imgWidth) : glm::vec3(0, 0, 0))*45.f,
+				GetUpperTriangleNormalFromQuad(prevX, currY, positions, imgWidth) * 45.f,
+				GetLowerTriangleNormalFromQuad(prevX, currY, positions, imgWidth) * 45.f,
+				GetUpperTriangleNormalFromQuad(prevX, prevY, positions, imgWidth) * 90.f,
+				GetLowerTriangleNormalFromQuad(currX, prevY, positions, imgWidth) * 45.f,
+				GetUpperTriangleNormalFromQuad(currX, prevY, positions, imgWidth) * 45.f,
 			};
 
 			glm::vec3 normal = glm::vec3(0, 0, 0);
@@ -406,9 +439,41 @@ void Terrain::CalculateNormals(std::vector<glm::vec3>* normals, const sf::Image&
 
 			normal = glm::normalize(normal);
 
-			normals->at(GetVertexIndex(imgWidth, currX, currY)) = normal;
+			result.at(GetVertexIndex(imgWidth, currX, currY)) = normal;
 		}
 	}
+
+	return result;
+}
+
+std::vector<glm::vec3> Terrain::CalculateTangents(const sf::Image& image, const std::vector<glm::vec3>& positions, const std::vector<glm::vec2>& texCoords)
+{
+	const size_t imgWidth = image.getSize().x;
+	const size_t imgHeight = image.getSize().y;
+	const size_t pixelCount = imgWidth * imgHeight;
+	const size_t vertexCount = pixelCount;
+
+	std::vector<glm::vec3> result(vertexCount);
+	//result.reserve(vertexCount);
+
+	for (size_t currY = 0; currY < imgHeight; currY++) {
+		for (size_t currX = 0; currX < imgWidth; currX++) {
+
+			glm::vec3 curr = positions.at(GetVertexIndex(imgWidth, currX, currY));
+			glm::vec3 adjacent;
+			if (currX + 1 < imgWidth) {
+				adjacent = positions.at(GetVertexIndex(imgWidth, currX+1, currY));
+			}
+			else {
+				adjacent = positions.at(GetVertexIndex(imgWidth, currX, currY));
+				adjacent.x += 1;
+			}
+			
+			result.at(GetVertexIndex(imgWidth, currX, currY)) = glm::normalize(adjacent - curr);
+		}
+	}
+
+	return result;
 }
 
 void Terrain::SetUpIndices(std::vector<Mesh::Submesh::IndexType>* indices, const int imgWidth, const int imgHeight)

@@ -37,7 +37,10 @@ private:
 
 	gl::Texture materialTexture;
 	gl::Texture sandTexture;
+	gl::Texture sandNormalMap;
 	gl::Texture grassTexture;
+	gl::Texture grassNormalMap;
+
 
 	glm::mat4 modelTransform;
 	std::vector<gl::Uniform<glm::mat4>> sh_worldToShadowMap;
@@ -56,7 +59,7 @@ private:
 	gl::Uniform<glm::vec4> seabottom_color;
 
 private:
-	static void LoadTexture(gl::Texture& target, sf::Image& srcImg, const std::string& filename, bool data, float anisotropy = 0);
+	static sf::Image LoadTexture(gl::Texture& target, const std::string& filename, bool data, float anisotropy = 0);
 	static void LoadTexture(gl::Texture& target, const sf::Image& srcImg, bool data, float anisotropy = 0);
 
 	static glm::vec3 GetLowerTriangleNormalFromQuad(const int bottomLeftVertexPosX, const int bottomLeftVertexPosY, const std::vector<glm::vec3>& positions, const int numHorizontalVertices);
@@ -64,9 +67,12 @@ private:
 
 	static int GetVertexIndex(const int width, const int x, const int y);
 
-	static void CalculatePositionsAndTexCoords(std::vector<glm::vec3>* positions, std::vector<glm::vec2>* texCoords, const sf::Image& image, const float scale, const float heightMultiplyer);
-	static void CalculateNormals(std::vector<glm::vec3>* normals, const sf::Image& image, const std::vector<glm::vec3>& positions);
+	static std::vector<glm::vec3> CalculatePositions(const sf::Image& image, const float scale, const float heightMultiplyer);
+	static std::vector<glm::vec2> CalculateTexCoords(const sf::Image& image);
+	static std::vector<glm::vec3> CalculateNormals(const sf::Image& image, const std::vector<glm::vec3>& positions);
+	static std::vector<glm::vec3> CalculateTangents(const sf::Image& image, const std::vector<glm::vec3>& positions, const std::vector<glm::vec2>& texCoords);
 
 	static void SetUpIndices(std::vector<Mesh::Submesh::IndexType>* indices, const int imgWidth, const int imgHeight);
+	
 };
 

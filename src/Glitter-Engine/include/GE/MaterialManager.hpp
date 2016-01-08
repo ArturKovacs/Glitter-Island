@@ -15,8 +15,8 @@ public:
 
 private:
 	enum class TextureType { COLOR, DATA };
-	static void LoadTexture(gl::Texture& target, const std::string& filename, TextureType type);
-	static void LoadTexture(gl::Texture& target, const sf::Image& img, TextureType type);
+	static void LoadTexture(gl::Texture& target, const std::string& filename, TextureType type, bool transparent = false);
+	static void LoadTexture(gl::Texture& target, const sf::Image& img, TextureType type, bool transparent = false);
 	static sf::Image LoadImage(const std::string& filename);
 
 private:
