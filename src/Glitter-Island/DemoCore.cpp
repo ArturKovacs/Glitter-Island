@@ -4,6 +4,7 @@
 #include <SFML/OpenGL.hpp>
 #include <sstream>
 #include <iostream>
+#include <iomanip>
 #include <glm/gtc/matrix_transform.hpp>
 
 //#include <GE/StandardMaterial.hpp>
@@ -97,14 +98,14 @@ int DemoCore::Start()
 	double FPSUpdateDelaySec = 0.1;
 
 	int framesSinceLastFPSUpdate = 0;
-	int recentMinFPS = 5000;
+	int recentMinFPS = std::numeric_limits<int>::max();
 	float avgFPS = 0;
 	int framecount = 0;
 
 	double lastMinResetSec = 0;
 	double longestMinKeepSec = 7;
 
-	float lastUpdateSec = 0;
+	float lastUpdateSec = clock.getElapsedTime().asSeconds()-1;
 
 	while (running) {
 		elapsedSec = clock.getElapsedTime().asSeconds();
@@ -138,21 +139,21 @@ int DemoCore::Start()
 		framecount += 1;
 
 		if (elapsedSec - lastMinResetSec > longestMinKeepSec) {
-			recentMinFPS = 5000;
+			recentMinFPS = std::numeric_limits<int>::max();
 			lastMinResetSec = elapsedSec;
 		}
 		else {
 			recentMinFPS = std::min(int(currFPS), recentMinFPS);
 		}
 
+		framesSinceLastFPSUpdate++;
 		if (elapsedSec - lastFPSUpdateSec > FPSUpdateDelaySec) {
 			int updatedFPS = (int)std::round(framesSinceLastFPSUpdate / (elapsedSec - lastFPSUpdateSec));
-			pWindow->setTitle(sf::String("Glitter-Island <| FPS: ") + std::to_string(updatedFPS) + " current; " + std::to_string((int)avgFPS) + " avg; " + std::to_string(recentMinFPS) + " recent min |>");
+			std::stringstream ss;
+			ss << "Glitter-Island <| FPS: " << std::setw(3) << updatedFPS << " current; " << std::setw(3) << (int)avgFPS << " avg; " << std::setw(3) << recentMinFPS << " recent min |> Build Date: " __DATE__;
+			pWindow->setTitle(ss.str());
 			lastFPSUpdateSec = elapsedSec;
 			framesSinceLastFPSUpdate = 0;
-		}
-		else {
-			framesSinceLastFPSUpdate++;
 		}
 
 		pWindow->display();

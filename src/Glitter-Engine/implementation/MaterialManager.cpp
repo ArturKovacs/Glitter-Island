@@ -18,10 +18,9 @@ util::managed_ptr<Material> MaterialManager::LoadFromFile(GraphicsEngine* pGraph
 	std::cout << "Loading material..." << std::endl;
 
 	Material *pResult  = LoadFromMTLFile(pGraphicsEngine, filename, materialName);
+	materials[materialKey] = pResult;
 
 	std::cout << "Material loaded!" << std::endl;
-
-	materials[materialKey] = pResult;
 
 	return pResult;
 }
@@ -162,7 +161,7 @@ Material* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngine, cons
 		}
 
 		LoadTexture(pResult->normal_spec_rough_Texture, normal_spec_rough_img, TextureType::DATA);
-		LoadTexture(pResult->albedoTexture, albedoImg, TextureType::COLOR, isTransparent);
+		LoadTexture(pResult->albedoTexture, albedoImg, TextureType::COLOR, !isTransparent);
 	}
 	catch (...) {
 		delete pResult;
@@ -172,7 +171,7 @@ Material* MaterialManager::LoadFromMTLFile(GraphicsEngine* pGraphicsEngine, cons
 	return pResult;
 }
 
-void MaterialManager::LoadTexture(gl::Texture& target, const std::string& filename, TextureType type, bool transparent)
+void MaterialManager::LoadTexture(gl::Texture& target, const std::string& filename, TextureType type, bool useMipMap)
 {
 	sf::Image img;
 
@@ -182,13 +181,13 @@ void MaterialManager::LoadTexture(gl::Texture& target, const std::string& filena
 
 	img.flipVertically();
 
-	LoadTexture(target, img, type, transparent);
+	LoadTexture(target, img, type, useMipMap);
 }
 
-void MaterialManager::LoadTexture(gl::Texture& target, const sf::Image& img, TextureType type, bool transparent)
+void MaterialManager::LoadTexture(gl::Texture& target, const sf::Image& img, TextureType type, bool useMipMap)
 {
 	target.Bind(gl::Texture::Target::_2D);
-	if (!transparent) {
+	if (useMipMap) {
 		gl::Texture::MinFilter(gl::Texture::Target::_2D, gl::TextureMinFilter::LinearMipmapLinear);
 	}
 	else {
@@ -209,7 +208,7 @@ void MaterialManager::LoadTexture(gl::Texture& target, const sf::Image& img, Tex
 		gl::DataType::UnsignedByte,
 		img.getPixelsPtr());
 
-	if (!transparent) {
+	if (useMipMap) {
 		gl::Texture::GenerateMipmap(gl::Texture::Target::_2D);
 	}
 }

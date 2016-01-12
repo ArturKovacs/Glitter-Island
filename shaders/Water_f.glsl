@@ -58,7 +58,8 @@ vec3 getWaveNormal(vec2 xy, float t)
 	
 	const float k = 3;
 	for (int i = 0; i < waveCount; i++) {
-		vec2 D_i = normalize(xy-D[i]*1000);
+		//vec2 D_i = normalize(xy-D[i]*1000);
+		vec2 D_i = normalize(D[i]);
 		sum_d += A[i]*pow(sin(dot(D_i, xy)*w[i]+t*phi[i])*0.5+0.5, k-1)*
 		             k*cos(dot(D_i, xy)*w[i]+t*phi[i])*
 		             w[i]*D_i;

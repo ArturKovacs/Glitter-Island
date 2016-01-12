@@ -269,6 +269,7 @@ sf::Image Terrain::LoadTexture(gl::Texture& target, const std::string& filename,
 void Terrain::LoadTexture(gl::Texture& target, const sf::Image& srcImg, bool data, float anisotropy)
 {
 	target.Bind(gl::Texture::Target::_2D);
+	
 	gl::Texture::MinFilter(gl::Texture::Target::_2D, gl::TextureMinFilter::LinearMipmapLinear);
 	gl::Texture::MagFilter(gl::Texture::Target::_2D, gl::TextureMagFilter::Linear);
 
