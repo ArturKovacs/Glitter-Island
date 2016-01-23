@@ -13,13 +13,19 @@ class Terrain
 public:
 	Terrain(GraphicsEngine* pGraphicsEngine);
 
-	void LoadFromHeightMap(const std::string& fileName, float scale, float heightMultiplyer, bool invertNormals = false);
+	void LoadFromHeightMap(const std::string& fileName, float size, float heightScale, bool invertNormals = false);
 	void Draw();
 
-	void SetTransform(const glm::mat4& transform);
-	glm::mat4 GetTransform() const;
+	float GetTerrainSize() const;
+
+	//void SetTransform(const glm::mat4& transform);
+	//glm::mat4 GetTransform() const;
+
+	glm::vec2 GetPosXZ() const;
+	float GetHeightScale() const;
 
 	sf::Image& GetMaterialMap();
+	gl::Texture& GetHeightMapGPU();
 	glm::ivec2 GetMaterialMapPos(const glm::vec4 worldPos) const;
 	float GetMaterialMapPixelSizeInWorldScale() const;
 	void DownloadMaterialMapToGPU();
@@ -31,7 +37,7 @@ private:
 	Mesh terrainModel;
 	Mesh seabottom;
 
-	float terrainScale;
+	float terrainSize;
 	std::string materialMapFilename;
 	sf::Image materialMap;
 
@@ -41,8 +47,11 @@ private:
 	gl::Texture grassTexture;
 	gl::Texture grassNormalMap;
 
+	gl::Texture heightMapGPU;
 
-	glm::mat4 modelTransform;
+	float heightScale;
+	glm::vec2 posXZ;
+	//glm::mat4 modelTransform;
 	std::vector<gl::Uniform<glm::mat4>> sh_worldToShadowMap;
 	std::vector<gl::Uniform<float>> sh_viewSubfrustumFarPlanesTexDepth;
 
@@ -67,7 +76,7 @@ private:
 
 	static int GetVertexIndex(const int width, const int x, const int y);
 
-	static std::vector<glm::vec3> CalculatePositions(const sf::Image& image, const float scale, const float heightMultiplyer);
+	static std::vector<glm::vec3> CalculatePositions(const sf::Image& image, const float size, const glm::vec2 posXZ, const float heightScale);
 	static std::vector<glm::vec2> CalculateTexCoords(const sf::Image& image);
 	static std::vector<glm::vec3> CalculateNormals(const sf::Image& image, const std::vector<glm::vec3>& positions);
 	static std::vector<glm::vec3> CalculateTangents(const sf::Image& image, const std::vector<glm::vec3>& positions, const std::vector<glm::vec2>& texCoords);

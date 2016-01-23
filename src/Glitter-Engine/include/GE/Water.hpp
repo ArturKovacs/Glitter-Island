@@ -9,14 +9,18 @@ class Water
 {
 	friend class GraphicsEngine;
 public:
-	Water(GraphicsEngine* pGraphicsEngine, const float waterSize = 50);
+	Water(GraphicsEngine* pGraphicsEngine, const float waterSize, const float waterHeight);
 	
+	float GetHeight();
+
 private:
 	GraphicsEngine* pGraphEngine;
 	Framebuffer targetFB;
 	
 	bool visible;
-	
+
+	float waterHeight;
+
 	gl::VertexArray VAO;
 
 	gl::Buffer vertexPos;
@@ -35,6 +39,12 @@ private:
 	gl::Uniform<glm::vec3> sh_sunDir;
 	gl::Uniform<glm::vec3> sh_sunColor;
 	gl::Uniform<GLfloat> sh_time;
+
+	gl::UniformSampler sh_terrainHeightMap;
+	gl::Uniform<glm::vec2> sh_terrainSizeXY;
+	gl::Uniform<float> sh_terrainHeightScale;
+	gl::Uniform<glm::vec2> sh_terrainPosXZ; //position of the (0, 0) texture coordinate of terrain heightmap in world space
+	gl::Uniform<float> sh_waterHeight;
 
 	gl::Program geometryOnlyShader;
 	gl::Uniform<glm::mat4> sh_geomOnly_MVP;

@@ -15,8 +15,23 @@ uniform float time;
 uniform vec3 sunDir;
 uniform vec3 sunColor;
 
+uniform sampler2D terrainHeightMap;
+uniform vec2 terrainSizeXY;
+uniform float terrainHeightScale;
+uniform vec2 terrainPosXZ; //position of the (0, 0) texture coordinate of terrain heightmap in world space
+uniform float waterHeight;
+
 in vec3 posFromVert;
 out vec4 fragColor;
+
+float GetWaterDepth(vec2 posXZ)
+{
+	vec2 texPos = (posXZ-terrainPosXZ)/terrainSizeXY;
+	texPos.y = -texPos.y;
+	float terrainHeight = texture(terrainHeightMap, texPos).r * terrainHeightScale;
+	
+	return max(waterHeight - terrainHeight, 0);
+}
 
 const int waveCount = 16;
 
@@ -30,10 +45,10 @@ vec2 D[waveCount] = vec2[waveCount](
 
 //wave frequencies
 float w[waveCount] = float[waveCount](
-	float(2.3), float(2.8), float(6.9), float(7.0),
-	float(3.2), float(4.7), float(3.9), float(5.9),
-	float(4.1), float(6.6), float(4.8), float(4.8),
-	float(4.0), float(2.5), float(4.7), float(5.7)
+	float(2.3), float(2.8), float(2.5), float(3.2),
+	float(5.2), float(4.7), float(4.3), float(5.8),
+	float(4.1), float(5.6), float(4.8), float(4.8),
+	float(4.6), float(5.5), float(4.7), float(5.7)
 );
 
 //wave (frequencies*speeds) packed in phi
@@ -46,13 +61,13 @@ float phi[waveCount] = float[waveCount](
 
 //amplitudes
 float A[waveCount] = float[waveCount](
-	float(.009), float(.007), float(.004), float(.003),
-	float(.006), float(.006), float(.007), float(.004),
-	float(.004), float(.004), float(.006), float(.006),
-	float(.004), float(.007), float(.005), float(.004)
+	float(.008), float(.007), float(.007), float(.006),
+	float(.005), float(.005), float(.005), float(.004),
+	float(.004), float(.004), float(.005), float(.005),
+	float(.004), float(.005), float(.005), float(.004)
 );
 
-vec3 getWaveNormal(vec2 xy, float t)
+vec3 GetWaveNormal(vec2 xy, float t)
 {
 	vec2 sum_d = vec2(0);
 	
@@ -79,7 +94,7 @@ void main(void)
 {
 	const float modulationStrength = 0.8;
 	
-	vec3 normal = getWaveNormal(posFromVert.xz, time).xzy;
+	vec3 normal = GetWaveNormal(posFromVert.xz, time).xzy;
 	vec3 viewDir = normalize(campos - posFromVert);
 	vec3 halfway = normalize(sunDir + viewDir);
 	
@@ -98,9 +113,11 @@ void main(void)
 	
 	//float distanceInWater = distance(underwaterSurfacePos.xyz, posFromVert);
 	
+	float waterDepth = GetWaterDepth(posFromVert.xz);
+	
 	vec3 fromCam = -viewDir;
 	vec3 refractedDir = refract(fromCam, normal, 1/n);
-	vec3 fakeHitPos = posFromVert+refractedDir*2;
+	vec3 fakeHitPos = posFromVert+refractedDir*waterDepth*0.75;
 	vec4 ClipSpacePos = MVP * vec4(fakeHitPos, 1);
 	vec2 hitPosOnScreen = (ClipSpacePos.xy/ClipSpacePos.w) * 0.5 + vec2(0.5);
 	
@@ -115,7 +132,7 @@ void main(void)
 	
 	bool useFallbackSample = hitPosDepth <= gl_FragCoord.z;
 	if (useFallbackSample) {
-		//hitPosOnScreen = fragCoordTex;
+		hitPosOnScreen = fragCoordTex;
 	}
 	
 	refractedColor = texture(screen, hitPosOnScreen).rgb;
@@ -129,9 +146,6 @@ void main(void)
 	                              1));
 	
 	refractedSurfacePos.xyz /= refractedSurfacePos.w;
-	
-	//TODO: this is not the actual water depth
-	float waterDepth = max(posFromVert.y - refractedSurfacePos.y, 0);
 	////////
 	
 	vec3 reflectedDir = reflect(fromCam, normalize(vec3(0, 2, 0)+normal));
@@ -145,22 +159,13 @@ void main(void)
 	refractedColor *= 1-fresnel;
 	reflectedColor *= fresnel;
 	
-	//TODO water still does not work properly
+	float distanceInWater = distance(refractedSurfacePos.xyz, posFromVert);
 	
-	float distanceInWater;// = distance(underwaterSurfacePos.xyz, posFromVert);
-	if (useFallbackSample) {
-		//distanceInWater = distance(underwaterSurfacePos.xyz, posFromVert);
-	}
-	else {
-		//distanceInWater = distance(refractedSurfacePos.xyz, posFromVert);
-	}
-	distanceInWater = distance(refractedSurfacePos.xyz, posFromVert);
-	if (useFallbackSample) {
-		distanceInWater = 0;
-	}
-	
-	//float distanceInWater = distance(underwaterSurfacePos.xyz, posFromVert);
-	//distanceInWater = mix(0, distanceInWater, -(exp(-waterDepth)-1));
 	distanceInWater = distanceInWater*clamp(distanceInWater, 0, 1); 
-	fragColor = vec4(pow(waterColor, vec3(clamp(distanceInWater*0.6, 0, 25)))*refractedColor + reflectedColor + sunColor*specularIntensity, 1);
+	//float foamStrength = pow(clamp(1-waterDepth, 0, 1), 1.5);
+	float foamStrength = 0;
+	fragColor = mix(
+	vec4(pow(waterColor, vec3(clamp(distanceInWater*0.6, 0, 25)))*refractedColor + reflectedColor + sunColor*specularIntensity, 1),
+	vec4(1),
+	foamStrength);
 }

@@ -118,8 +118,6 @@ private: // graphical state
 	bool wireframeModeEnabled;
 	
 private: // objects
-	const float waterLevel;
-	const float terrainSize;
 
 	DirectionalLight sun;
 	Terrain terrain;

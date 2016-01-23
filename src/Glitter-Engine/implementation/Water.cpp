@@ -2,7 +2,7 @@
 
 #include <GE/GraphicsEngine.hpp>
 
-Water::Water(GraphicsEngine* pGraphicsEngine, const float waterSize) :
+Water::Water(GraphicsEngine* pGraphicsEngine, const float waterSize, const float waterHeight) :
 pGraphEngine(pGraphicsEngine), visible(true)
 {
 	waterShader = GraphicsEngine::LoadShaderProgramFromFiles("Water_v.glsl", "Water_f.glsl");
@@ -21,9 +21,15 @@ pGraphEngine(pGraphicsEngine), visible(true)
 	sh_sunColor = gl::Uniform<glm::vec3>(waterShader, "sunColor");
 	sh_time = gl::Uniform<GLfloat>(waterShader, "time");
 
+	sh_terrainHeightMap = gl::UniformSampler(waterShader, "terrainHeightMap");
+	sh_terrainSizeXY = gl::Uniform<glm::vec2>(waterShader, "terrainSizeXY");
+	sh_terrainHeightScale = gl::Uniform<float>(waterShader, "terrainHeightScale");
+	sh_terrainPosXZ = gl::Uniform<glm::vec2>(waterShader, "terrainPosXZ");
+	sh_waterHeight = gl::Uniform<float>(waterShader, "waterHeight");
+
 	VAO.Bind();
 
-	const float waterHeight = 0.0;
+	this->waterHeight = waterHeight;
 
 	std::vector<GLfloat> vertexPosData = {
 		-waterSize, waterHeight, +waterSize,
@@ -46,6 +52,11 @@ pGraphEngine(pGraphicsEngine), visible(true)
 	
 	targetFB = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
 	pGraphEngine->AddFramebufferForManagment(targetFB);
+}
+
+float Water::GetHeight()
+{
+	return waterHeight;
 }
 
 void Water::Draw()
@@ -73,6 +84,16 @@ void Water::Draw()
 	sh_skybox.Set(2);
 	gl::Texture::Active(2);
 	pGraphEngine->GetSkybox().BindCubemap();
+
+	sh_terrainHeightMap.Set(3);
+	gl::Texture::Active(3);
+	pGraphEngine->GetTerrain().GetHeightMapGPU().Bind(gl::Texture::Target::_2D);
+
+	//TODO set these variables !
+	sh_terrainSizeXY.Set(glm::vec2(pGraphEngine->GetTerrain().GetTerrainSize()));
+	sh_terrainHeightScale.Set(pGraphEngine->GetTerrain().GetHeightScale());
+	sh_terrainPosXZ.Set(pGraphEngine->GetTerrain().GetPosXZ());
+	sh_waterHeight.Set(waterHeight);
 
 	sh_screenWidth.Set(pGraphEngine->GetScreenWidth());
 	sh_screenHeight.Set(pGraphEngine->GetScreenHeight());

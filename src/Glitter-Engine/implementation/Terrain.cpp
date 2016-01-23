@@ -12,7 +12,7 @@
 
 Terrain::Terrain(GraphicsEngine* pGraphicsEngine) : pGraphicsEngine(pGraphicsEngine)
 {
-	terrainScale = 0;
+	terrainSize = 0;
 
 	shaderProgram = GraphicsEngine::LoadShaderProgramFromFiles("Terrain_v.glsl", "Terrain_f.glsl");
 	seabottomProgram = GraphicsEngine::LoadShaderProgramFromFiles("SimpleColored_v.glsl", "SimpleColored_f.glsl");
@@ -60,12 +60,14 @@ Terrain::Terrain(GraphicsEngine* pGraphicsEngine) : pGraphicsEngine(pGraphicsEng
 	materialMap = LoadTexture(materialTexture, materialMapFilename, true);
 }
 
-void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float heightMultiplyer, bool invertNormals)
+void Terrain::LoadFromHeightMap(const std::string& fileName, float size, float heightScale, bool invertNormals)
 {
 	static const int maxHeight = 255;
 	static const bool fromSRGB = false;
 
-	terrainScale = scale;
+	this->heightScale = heightScale;
+	terrainSize = size;
+	posXZ = glm::vec2(-terrainSize/2, terrainSize/2);
 
 	sf::Image image;
 
@@ -82,10 +84,25 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float 
 		throw std::runtime_error("Terrain heightmap must be at least 2 pixel big in each direction!");
 	}
 
+	heightMapGPU.Bind(gl::Texture::Target::_2D);
+	gl::Texture::MinFilter(gl::Texture::Target::_2D, gl::TextureMinFilter::Linear);
+	gl::Texture::MagFilter(gl::Texture::Target::_2D, gl::TextureMagFilter::Linear);
+	gl::Texture::WrapS(gl::Texture::Target::_2D, gl::TextureWrap::ClampToEdge);
+	gl::Texture::WrapT(gl::Texture::Target::_2D, gl::TextureWrap::ClampToEdge);
+	gl::Texture::Image2D(gl::Texture::Target::_2D,
+		0,
+		gl::enums::PixelDataInternalFormat::RGB16F,
+		image.getSize().x,
+		image.getSize().y,
+		0,
+		gl::enums::PixelDataFormat::RGBA,
+		gl::enums::DataType::UnsignedByte,
+		image.getPixelsPtr());
+
 	const size_t pixelCount = imgWidth * imgHeight;
 	const size_t totalVertexCount = pixelCount;
 
-	std::vector<glm::vec3> positions = CalculatePositions(image, scale, heightMultiplyer);
+	std::vector<glm::vec3> positions = CalculatePositions(image, terrainSize, posXZ, heightScale);
 	std::vector<glm::vec2> texCoords = CalculateTexCoords(image);
 	std::vector<glm::vec3> normals = CalculateNormals(image, positions);
 	std::vector<glm::vec3> tangent = CalculateTangents(image, positions, texCoords);
@@ -122,12 +139,12 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float scale, float 
 
 	terrainModel.GetSubmeshes().push_back(std::move(submsh));
 
-	const float seaBottomScale = scale*10;
+	const float seaBottomScale = size*10;
 	std::vector<GLfloat> seaBottomVertPos = {
-		-seaBottomScale, -seaBottomScale, -0.1f,
-		+seaBottomScale, -seaBottomScale, -0.1f,
-		+seaBottomScale, +seaBottomScale, -0.1f,
-		-seaBottomScale, +seaBottomScale, -0.1f
+		-seaBottomScale, -0.0f, +seaBottomScale,
+		+seaBottomScale, -0.0f, +seaBottomScale,
+		+seaBottomScale, -0.0f, -seaBottomScale,
+		-seaBottomScale, -0.0f, -seaBottomScale,
 	};
 	std::vector<GLfloat> seaBottomVertNormal = {
 		0, 0, 1.f,
@@ -184,12 +201,18 @@ void Terrain::Draw()
 
 	sh_sunDir.Set(pGraphicsEngine->GetSun().GetDirectionTowardsSource());
 	sh_sunColor.Set(pGraphicsEngine->GetSun().GetColor());
-	sh_modelTransform.Set(modelTransform);
-	glm::mat4 MVP = pGraphicsEngine->GetActiveCamera()->GetViewProjectionTransform() * modelTransform;
-	sh_MVP.Set(MVP);
-	glm::mat4 modelView = pGraphicsEngine->GetActiveCamera()->GetViewTransform() * modelTransform;
-	sh_modelViewTransform.Set(modelView);
-	sh_modelTrInv.Set(glm::transpose(glm::inverse(modelTransform)));
+	//sh_modelTransform.Set(modelTransform);
+	//glm::mat4 MVP = pGraphicsEngine->GetActiveCamera()->GetViewProjectionTransform() * modelTransform;
+	//sh_MVP.Set(MVP);
+	//glm::mat4 modelView = pGraphicsEngine->GetActiveCamera()->GetViewTransform() * modelTransform;
+	//sh_modelViewTransform.Set(modelView);
+	//sh_modelTrInv.Set(glm::transpose(glm::inverse(modelTransform)));
+
+	const glm::mat4 identity = glm::mat4(1);
+	sh_modelTransform.Set(identity);
+	sh_MVP.Set(pGraphicsEngine->GetActiveCamera()->GetViewProjectionTransform());
+	sh_modelViewTransform.Set(pGraphicsEngine->GetActiveCamera()->GetViewTransform());
+	sh_modelTrInv.Set(identity);
 
 	pGraphicsEngine->GetGLContext().Enable(gl::Capability::CullFace);
 	pGraphicsEngine->GetGLContext().Enable(gl::Capability::DepthTest);
@@ -198,20 +221,36 @@ void Terrain::Draw()
 	pGraphicsEngine->GetGLContext().DrawElements(terrain_submsh.GetPrimitiveType(), terrain_submsh.GetNumOfIndices(), terrain_submsh.indexTypeEnum);
 
 	seabottomProgram.Use();
-	seabottom_MVP.Set(MVP);
+	//seabottom_MVP.Set(MVP);
+	seabottom_MVP.Set(pGraphicsEngine->GetActiveCamera()->GetViewProjectionTransform());
 	Mesh::Submesh& seabottom_submsh = seabottom.GetSubmeshes().at(0);
 	seabottom_submsh.BindVAO();
 	pGraphicsEngine->GetGLContext().DrawElements(seabottom_submsh.GetPrimitiveType(), seabottom_submsh.GetNumOfIndices(), seabottom_submsh.indexTypeEnum);
 }
 
-void Terrain::SetTransform(const glm::mat4& transform)
+float Terrain::GetTerrainSize() const
 {
-	modelTransform = transform;
+	return terrainSize;
 }
 
-glm::mat4 Terrain::GetTransform() const
+//void Terrain::SetTransform(const glm::mat4& transform)
+//{
+//	modelTransform = transform;
+//}
+
+//glm::mat4 Terrain::GetTransform() const
+//{
+//	return modelTransform;
+//}
+
+glm::vec2 Terrain::GetPosXZ() const
 {
-	return modelTransform;
+	return posXZ;
+}
+
+float Terrain::GetHeightScale() const
+{
+	return heightScale;
 }
 
 sf::Image& Terrain::GetMaterialMap()
@@ -219,10 +258,16 @@ sf::Image& Terrain::GetMaterialMap()
 	return materialMap;
 }
 
+gl::Texture& Terrain::GetHeightMapGPU()
+{
+	return heightMapGPU;
+}
+
 glm::ivec2 Terrain::GetMaterialMapPos(const glm::vec4 worldPos) const
 {
 	glm::ivec2 result;
-	glm::vec4 normalizedTextureCoords = ((glm::inverse(modelTransform) * worldPos)/terrainScale);
+	//glm::vec4 normalizedTextureCoords = ((glm::inverse(modelTransform) * worldPos)/terrainSize);
+	glm::vec2 normalizedTextureCoords = (glm::vec2(worldPos.x, worldPos.z) - posXZ) / terrainSize;
 	const sf::Vector2u imgSize = materialMap.getSize();
 	result[0] = int(std::floor(normalizedTextureCoords.x * imgSize.x));
 	result[1] = int(std::floor(normalizedTextureCoords.y * imgSize.y));
@@ -232,7 +277,7 @@ glm::ivec2 Terrain::GetMaterialMapPos(const glm::vec4 worldPos) const
 float Terrain::GetMaterialMapPixelSizeInWorldScale() const
 {
 	assert(materialMap.getSize().x == materialMap.getSize().y);
-	return terrainScale / materialMap.getSize().x;
+	return terrainSize / materialMap.getSize().x;
 }
 
 void Terrain::DownloadMaterialMapToGPU()
@@ -338,7 +383,7 @@ int Terrain::GetVertexIndex(const int width, const int x, const int y)
 	return y*width + x;
 }
 
-std::vector<glm::vec3> Terrain::CalculatePositions(const sf::Image& image, const float scale, const float heightMultiplyer)
+std::vector<glm::vec3> Terrain::CalculatePositions(const sf::Image& image, const float size, const glm::vec2 posXZ, const float heightScale)
 {
 	static const int maxHeight = 255;
 	static const bool fromSRGB = false;
@@ -355,7 +400,7 @@ std::vector<glm::vec3> Terrain::CalculatePositions(const sf::Image& image, const
 			float currHeight = image.getPixel(currX, currY).r;
 			if (fromSRGB) { currHeight = std::pow(currHeight/maxHeight, 2.2f)*maxHeight; }
 
-			tmpPos.at(GetVertexIndex(imgWidth, currX, currY)) = glm::vec3(float(currX)/(imgWidth-1), float(currY)/(imgHeight-1), (float(currHeight)/maxHeight)*heightMultiplyer)*scale;
+			tmpPos.at(GetVertexIndex(imgWidth, currX, currY)) = glm::vec3((float(currX)/(imgWidth-1))*size, (float(currY)/(imgHeight-1))*size, (float(currHeight)/maxHeight)*heightScale);
 		}
 	}
 
@@ -387,6 +432,14 @@ std::vector<glm::vec3> Terrain::CalculatePositions(const sf::Image& image, const
 
 			result.at(GetVertexIndex(imgWidth, currX, currY)) = glm::vec3(currPlanePos, weightedHeightSum / weightSum);
 		}
+	}
+
+	//TODO
+	//TODO fix normals being calculated upside down!
+	//swizzle around coordinates, so that terrain is lying on XZ plane
+	//plus add terrain position offset.
+	for (auto& currPos : result) {
+		currPos = glm::vec3(currPos.x, currPos.z, -currPos.y) + glm::vec3(posXZ.x, 0, posXZ.y);
 	}
 
 	return result;

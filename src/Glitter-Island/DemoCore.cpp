@@ -148,7 +148,7 @@ int DemoCore::Start()
 
 		framesSinceLastFPSUpdate++;
 		if (elapsedSec - lastFPSUpdateSec > FPSUpdateDelaySec) {
-			int updatedFPS = (int)std::round(framesSinceLastFPSUpdate / (elapsedSec - lastFPSUpdateSec));
+			int updatedFPS = int(std::round(framesSinceLastFPSUpdate / (elapsedSec - lastFPSUpdateSec)));
 			std::stringstream ss;
 			ss << "Glitter-Island -- FPS: " << std::setw(3) << updatedFPS << " current; " << std::setw(3) << (int)avgFPS << " avg; " << std::setw(3) << recentMinFPS << " recent min -- Build Date: " __DATE__;
 			pWindow->setTitle(ss.str());

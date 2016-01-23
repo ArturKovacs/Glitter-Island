@@ -26,7 +26,7 @@ editorContext(pContextManager, pCore)
 	cam.SetScreenHeight(pCore->GetScreenHeight());
 	cam.SetHorizontalRot(4.10499f);
 	cam.SetVerticalRot(-0.275f);
-	cam.SetPosition(glm::vec3(-27.2224, 21.0493, 17.4667));
+	cam.SetPosition(glm::vec3(-27.2224, 71.0493, 17.4667));
 
 	selectedCam = &cam;
 	debugCam = cam;
