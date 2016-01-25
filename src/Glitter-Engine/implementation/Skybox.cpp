@@ -9,7 +9,8 @@ Skybox::Skybox(GraphicsEngine* pGraphicsEngine)
 	skydrawShader = GraphicsEngine::LoadShaderProgramFromFiles("Skybox_skydraw_v.glsl", "Skybox_skydraw_f.glsl");
 	skydrawShader.Use();
 
-	sh_ViewProjectionMatrix = gl::Uniform<glm::mat4>(skydrawShader, "viewProjectionMatrix");
+	sh_viewProjectionMatrix = gl::Uniform<glm::mat4>(skydrawShader, "viewProjectionMatrix");
+	sh_multiplyer = gl::Uniform<GLfloat>(skydrawShader, "multiplyer");
 
 	VAO.Bind();
 
@@ -99,17 +100,31 @@ void Skybox::LoadTextureFromFiles(
 			throw std::runtime_error(std::string("Can not load image file: ") + fileName);
 		}
 
+		const int size = image.getSize().x * image.getSize().y;
+		std::vector<glm::vec3> HDR_image;
+		HDR_image.reserve(size);
+
+		for (int y = 0; y < image.getSize().y; y++) {
+			for (int x = 0; x < image.getSize().x; x++) {
+				auto curr = image.getPixel(x, y);
+				//corrent gamma, and convert it to HDR
+				glm::vec3 gamma_corrected = glm::pow(glm::vec3(curr.r/255.f, curr.g/255.f, curr.b/255.f), glm::vec3(2.2));
+				HDR_image.push_back(glm::pow(gamma_corrected, glm::vec3(2)) * 6.f);
+			}
+		}
+
 		gl::Texture::Image2D(
 			bindTarget,
 			0,
-			gl::enums::PixelDataInternalFormat::SRGB8,
+			gl::enums::PixelDataInternalFormat::RGB16F,
 			image.getSize().x,
 			image.getSize().y,
 			0,
-			gl::PixelDataFormat::RGBA,
+			gl::PixelDataFormat::RGB,
 			//gl::Texture::Property::PixDataType::OneOf(gl::DataType::UnsignedByte),
-			gl::DataType::UnsignedByte,
-			image.getPixelsPtr());
+			gl::DataType::Float,
+			HDR_image.data()
+		);
 	}
 }
 
@@ -124,6 +139,8 @@ void Skybox::Draw()
 
 	skydrawShader.Use();
 
+	sh_multiplyer.Set(glm::mix(0.05f, 1.f, glm::max(pGraphEngine->GetSun().GetDirectionTowardsSource().y, 0.f)));
+
 	gl::Texture::Active(0);
 	cubeMap.Bind(gl::Texture::Target::CubeMap);
 
@@ -137,7 +154,7 @@ void Skybox::Draw()
 	viewOnlyRotation[3][2] = 0;
 	glm::mat4 projectionMatrix = pGraphEngine->GetActiveCamera()->GetProjectionTransform();
 
-	sh_ViewProjectionMatrix.Set(projectionMatrix * viewOnlyRotation);
+	sh_viewProjectionMatrix.Set(projectionMatrix * viewOnlyRotation);
 
 	VAO.Bind();
 

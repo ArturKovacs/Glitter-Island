@@ -40,11 +40,24 @@ const in float bias)
 	shadowMapNDCPos = shadowMapNDCPos / shadowMapNDCPos.w;
 	vec3 shadowMapTexPos = shadowMapNDCPos.xyz*0.5 + vec3(0.5);
 	
-	return texture(cascadeShadowMaps_curr, vec3(shadowMapTexPos.xy, shadowMapTexPos.z-bias));
-	//float shadowMapDepth = texture(cascadeShadowMaps_curr, shadowMapTexPos.xy).x;
-	//return 1-int(shadowMapDepth < (shadowMapTexPos.z)-0.0005);
+	vec2 texSize = vec2(2048, 1024);
+	float radius = 1;
 	
-	//return result;
+	float accumValue = 0;
+	
+	for (float dx = -radius; dx <= radius + 0.01; dx += 1) {
+		for (float dy = -radius; dy <= radius + 0.01; dy += 1) {
+			accumValue += texture(cascadeShadowMaps_curr, vec3(shadowMapTexPos.xy + (vec2(dx, dy)/texSize), shadowMapTexPos.z-bias));
+		}
+	}
+	
+	float kernelSize = radius*2 + 1;
+	kernelSize *= kernelSize;
+	
+	return accumValue / kernelSize;
+	
+	//return texture(cascadeShadowMaps_curr, vec3(shadowMapTexPos.xy, shadowMapTexPos.z-bias));
+
 }
 
 const vec3 sandColor = vec3(0.98, 0.98, 0.96);
@@ -86,23 +99,23 @@ void main(void)
 	
 	switch (selectedCascade){
 	case 0:
-		shadowFactor = calculateShadowFactor(worldToShadowMap[0], cascadeShadowMaps[0], 0.000);
+		shadowFactor = calculateShadowFactor(worldToShadowMap[0], cascadeShadowMaps[0], 0.00);
 		//diffuseColor *= vec3(0.3, .9, 0.3);
 		break;
 	case 1:
-		shadowFactor = calculateShadowFactor(worldToShadowMap[1], cascadeShadowMaps[1], 0.000);
+		shadowFactor = calculateShadowFactor(worldToShadowMap[1], cascadeShadowMaps[1], 0.00);
 		//diffuseColor *= vec3(0.3, 0.4, .9);
 		break;
 	case 2:
-		shadowFactor = calculateShadowFactor(worldToShadowMap[2], cascadeShadowMaps[2], 0.000);
+		shadowFactor = calculateShadowFactor(worldToShadowMap[2], cascadeShadowMaps[2], 0.00);
 		//diffuseColor *= vec3(.9, .9, 0.3);
 		break;
 	case 3:
-		shadowFactor = calculateShadowFactor(worldToShadowMap[3], cascadeShadowMaps[3], 0.000);
+		shadowFactor = calculateShadowFactor(worldToShadowMap[3], cascadeShadowMaps[3], 0.00);
 		//diffuseColor *= vec3(.9, 0.3, 0.3);
 		break;
 	case 4:
-		shadowFactor = calculateShadowFactor(worldToShadowMap[4], cascadeShadowMaps[4], 0.000);
+		shadowFactor = calculateShadowFactor(worldToShadowMap[4], cascadeShadowMaps[4], 0.00);
 		//diffuseColor *= vec3(.9, 0.3, 0.3);
 		break;
 	

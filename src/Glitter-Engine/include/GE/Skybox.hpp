@@ -36,7 +36,8 @@ private:
 	gl::Program skydrawShader;
 	gl::Program fadeoutShader;
 
-	gl::Uniform<glm::mat4> sh_ViewProjectionMatrix;
+	gl::Uniform<glm::mat4> sh_viewProjectionMatrix;
+	gl::Uniform<GLfloat> sh_multiplyer;
 	
 	Framebuffer resultFB;
 };

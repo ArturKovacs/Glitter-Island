@@ -112,13 +112,13 @@ private: // graphical state
 	gl::DefaultFramebuffer defaultFBO;
 
 	gl::Program finalFramebufferCopy;
-	gl::Uniform<GLint> framebufferCopy_ScreenWidth;
-	gl::Uniform<GLint> framebufferCopy_ScreenHeight;
+	gl::Uniform<GLint> framebufferCopy_screenWidth;
+	gl::Uniform<GLint> framebufferCopy_screenHeight;
+	gl::Uniform<GLfloat> framebufferCopy_exposure;
 	
 	bool wireframeModeEnabled;
 	
 private: // objects
-
 	DirectionalLight sun;
 	Terrain terrain;
 	Skybox skybox;
@@ -161,6 +161,14 @@ private: //Ambient Occlusion
 	std::array<gl::Uniform<glm::vec3>, ssaoNumSamples> ssaoCalc_sampleVecs;
 
 	gl::Texture noise4;
+
+	gl::Program ssaoBlurLinProg;
+	gl::Uniform<GLint> ssaoBlurLin_screenWidth;
+	gl::Uniform<GLint> ssaoBlurLin_screenHeight;
+
+	gl::Program ssaoGrowProg;
+	gl::Uniform<GLint> ssaoGrow_screenWidth;
+	gl::Uniform<GLint> ssaoGrow_screenHeight;
 
 	gl::Program ssaoBlurHorProg;
 	gl::Uniform<GLint> ssaoBlurHor_screenWidth;

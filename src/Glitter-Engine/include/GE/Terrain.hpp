@@ -64,8 +64,11 @@ private:
 	gl::Uniform<glm::vec3> sh_sunColor;
 
 	gl::Program seabottomProgram;
+	gl::Uniform<glm::mat4> seabottom_MODEL_tr_inv;
 	gl::Uniform<glm::mat4> seabottom_MVP;
 	gl::Uniform<glm::vec4> seabottom_color;
+	gl::Uniform<glm::vec3> seabottom_sunColor;
+	gl::Uniform<glm::vec3> seabottom_sunDir;
 
 private:
 	static sf::Image LoadTexture(gl::Texture& target, const std::string& filename, bool data, float anisotropy = 0);

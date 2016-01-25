@@ -68,17 +68,12 @@ gl::Program GraphicsEngine::LoadShaderProgramFromFiles(const std::string& vs_nam
 
 GraphicsEngine::GraphicsEngine() :
 screenWidth(0), screenHeight(0),
-terrain(this), water(this, 500 * 4, 49),
+terrain(this), water(this, 500 * 4, 27),
 pActiveCam(nullptr), pActiveViewerCam(nullptr),
 debugDrawer(this),
 skybox(this)
 {
-	//terrain.LoadFromHeightMap(DemoCore::imgFolderPath + "heightMap.png", terrainSize, 0.06);
-	terrain.LoadFromHeightMap(GetImgFolderPath() + "heightMap.png", 500, 100);
-
-	//glm::mat4 transform = glm::rotate(glm::mat4(1), glm::half_pi<float>(), glm::vec3(0, 1, 0));
-	//transform = glm::rotate(glm::translate(transform, glm::vec3(-terrainSize*0.5, -waterLevel, terrainSize*0.5)), -glm::pi<float>() / 2.f, glm::vec3(1, 0, 0));
-	//terrain.SetTransform(transform);
+	terrain.LoadFromHeightMap(GetImgFolderPath() + "heightMap.png", 500, 75);
 
 	skybox.LoadTextureFromFiles(
 		GetImgFolderPath() + "sb4-x.bmp",
@@ -91,6 +86,7 @@ skybox(this)
 	sun.SetColor(glm::vec3(1, 1, 1));
 	
 	reducedSizeFramebufferScale = 0.75;
+	//reducedSizeFramebufferScale = 1;
 
 	intermediateFramebuffer = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
 	aoResultFB = Framebuffer(0, 0, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
@@ -105,19 +101,25 @@ skybox(this)
 
 	finalFramebufferCopy = LoadShaderProgramFromFiles("FinalFramebufferCopy_v.glsl", "FinalFramebufferCopy_f.glsl");
 	finalFramebufferCopy.Use();
-	framebufferCopy_ScreenWidth = gl::Uniform<GLint>(finalFramebufferCopy, "screenWidth");
-	framebufferCopy_ScreenHeight = gl::Uniform<GLint>(finalFramebufferCopy, "screenHeight");
-	framebufferCopy_ScreenWidth.Set(screenWidth);
-	framebufferCopy_ScreenHeight.Set(screenHeight);
+	framebufferCopy_screenWidth = gl::Uniform<GLint>(finalFramebufferCopy, "screenWidth");
+	framebufferCopy_screenHeight = gl::Uniform<GLint>(finalFramebufferCopy, "screenHeight");
+	framebufferCopy_exposure = gl::Uniform<GLfloat>(finalFramebufferCopy, "exposure");
+	framebufferCopy_screenWidth.Set(screenWidth);
+	framebufferCopy_screenHeight.Set(screenHeight);
 
 	ssaoCalcProgram = LoadShaderProgramFromFiles("Passthrough2_v.glsl", "SSAO_Calc_f.glsl");
 	ssaoCalcProgram.Use();
 	ssaoCalc_proj = gl::Uniform<glm::mat4>(ssaoCalcProgram, "proj");
 	ssaoCalc_projInv = gl::Uniform<glm::mat4>(ssaoCalcProgram, "projInv");
-	IGNORE_TRY( ssaoCalc_viewTrInv = gl::Uniform<glm::mat4>(ssaoCalcProgram, "viewTrInv") );
+	IGNORE_TRY(ssaoCalc_viewTrInv = gl::Uniform<glm::mat4>(ssaoCalcProgram, "viewTrInv"));
 	
 	IGNORE_TRY(ssaoCalc_screenWidth = gl::Uniform<GLint>(ssaoCalcProgram, "screenWidth"));
 	IGNORE_TRY(ssaoCalc_screenHeight = gl::Uniform<GLint>(ssaoCalcProgram, "screenHeight"));
+
+	ssaoGrowProg = LoadShaderProgramFromFiles("Passthrough2_v.glsl", "SSAO_Grow_f.glsl");
+	ssaoGrowProg.Use();
+	ssaoGrow_screenWidth = gl::Uniform<GLint>(ssaoGrowProg, "screenWidth");
+	ssaoGrow_screenHeight = gl::Uniform<GLint>(ssaoGrowProg, "screenHeight");
 
 	ssaoBlurHorProg = LoadShaderProgramFromFiles("Passthrough2_v.glsl", "SSAO_BlurHor_f.glsl");
 	ssaoBlurHorProg.Use();
@@ -128,6 +130,11 @@ skybox(this)
 	ssaoBlurVerProg.Use();
 	IGNORE_TRY(ssaoBlurVer_screenWidth = gl::Uniform<GLint>(ssaoBlurVerProg, "screenWidth"));
 	IGNORE_TRY(ssaoBlurVer_screenHeight = gl::Uniform<GLint>(ssaoBlurVerProg, "screenHeight"));
+
+	ssaoBlurLinProg = LoadShaderProgramFromFiles("Passthrough2_v.glsl", "SSAO_BlurLin_f.glsl");
+	ssaoBlurLinProg.Use();
+	IGNORE_TRY(ssaoBlurLin_screenWidth = gl::Uniform<GLint>(ssaoBlurLinProg, "screenWidth"));
+	IGNORE_TRY(ssaoBlurLin_screenHeight = gl::Uniform<GLint>(ssaoBlurLinProg, "screenHeight"));
 
 	ssaoDrawProgram = LoadShaderProgramFromFiles("Passthrough2_v.glsl", "SSAO_Draw_f.glsl");
 	ssaoDrawProgram.Use();
@@ -209,16 +216,21 @@ void GraphicsEngine::Draw()
 	GetCurrentFramebuffer().SetTextureShaderID(Framebuffer::ATTACHMENT_DEPTH, "depthTex", 1);
 	GetCurrentFramebuffer().SetShaderProgram(&finalFramebufferCopy, Framebuffer::ATTACHMENT_COLOR | Framebuffer::ATTACHMENT_DEPTH);
 
+	//TODO set it dynamically
+	framebufferCopy_exposure.Set(glm::mix(0.4f, 0.75f, 1-sun.GetDirectionTowardsSource().y));
+
 	defaultFBO.Bind(gl::Framebuffer::Target::Draw);
 	glContext.Clear().ColorBuffer().DepthBuffer();
 	GetCurrentFramebuffer().Draw(*this);
 
+	/*
 	glContext.Viewport(0, 0, 200, 200);
 	glContext.Enable(gl::Capability::ScissorTest);
 	glContext.Scissor(0, 0, 200, 200);
 	debugDrawer.Draw();
 	glContext.Disable(gl::Capability::ScissorTest);
 	glContext.Viewport(0, 0, screenWidth, screenHeight);
+	*/
 }
 
 double GraphicsEngine::GetElapsedSeconds() const
@@ -235,15 +247,12 @@ void GraphicsEngine::Resize(const int width, const int height)
 	//textDrawer.SetScreenResolution(glm::ivec2(screenWidth, screenHeight));
 	
 	finalFramebufferCopy.Use();
-	framebufferCopy_ScreenWidth.Set(screenWidth);
-	framebufferCopy_ScreenHeight.Set(screenHeight);
+	framebufferCopy_screenWidth.Set(screenWidth);
+	framebufferCopy_screenHeight.Set(screenHeight);
 
 	for (const auto& current : managedFramebuffers) {
 		current.pFramebuffer->SetResolution(int(width*current.scaleX), int(height*current.scaleY));
 	}
-
-	//halfSizedIntermFramebuffer1.SetResolution(width/2, height/2);
-	//halfSizedIntermFramebuffer2.SetResolution(width/2, height/2);
 }
 
 int GraphicsEngine::GetScreenWidth() const
@@ -641,8 +650,22 @@ void GraphicsEngine::DrawAmbientOcclusion()
 
 	objectsFB.Draw(*this);
 
+	//grow ao to eliminate "gaps"
+	/*
+	SetCurrentFramebuffer(reducedSizeIntermFramebuffer2);
+	glContext.Clear().ColorBuffer();
+	reducedSizeIntermFramebuffer1.SetTextureShaderID(Framebuffer::ATTACHMENT_COLOR, "aoValue", 0);
+	reducedSizeIntermFramebuffer1.SetShaderProgram(&ssaoGrowProg, Framebuffer::ATTACHMENT_COLOR);
+	ssaoGrowProg.Use();
+
+	ssaoGrow_screenWidth.Set(targetW);
+	ssaoGrow_screenHeight.Set(targetH);
+	reducedSizeIntermFramebuffer1.Draw(*this);
+	*/
+
 	
 	//lets blur ao
+
 	SetCurrentFramebuffer(reducedSizeIntermFramebuffer2);
 	glContext.Clear().ColorBuffer();
 	reducedSizeIntermFramebuffer1.SetTextureShaderID(Framebuffer::ATTACHMENT_COLOR, "aoValue", 0);
@@ -652,7 +675,7 @@ void GraphicsEngine::DrawAmbientOcclusion()
 	ssaoBlurHor_screenWidth.Set(targetW);
 	ssaoBlurHor_screenHeight.Set(targetH);
 	reducedSizeIntermFramebuffer1.Draw(*this);
-
+	
 	SetCurrentFramebuffer(reducedSizeIntermFramebuffer1);
 	glContext.Clear().ColorBuffer();
 	reducedSizeIntermFramebuffer2.SetTextureShaderID(Framebuffer::ATTACHMENT_COLOR, "aoValue", 0);
@@ -662,14 +685,31 @@ void GraphicsEngine::DrawAmbientOcclusion()
 	ssaoBlurVer_screenWidth.Set(targetW);
 	ssaoBlurVer_screenHeight.Set(targetH);
 	reducedSizeIntermFramebuffer2.Draw(*this);
-	
+
+
+	/*
+	SetCurrentFramebuffer(reducedSizeIntermFramebuffer2);
+	glContext.Clear().ColorBuffer();
+	reducedSizeIntermFramebuffer1.SetTextureShaderID(Framebuffer::ATTACHMENT_COLOR, "aoValue", 0);
+	reducedSizeIntermFramebuffer1.SetShaderProgram(&ssaoBlurLinProg, Framebuffer::ATTACHMENT_COLOR);
+	ssaoBlurLinProg.Use();
+
+	ssaoBlurLin_screenWidth.Set(targetW);
+	ssaoBlurLin_screenHeight.Set(targetH);
+	reducedSizeIntermFramebuffer1.Draw(*this);
+	*/
+
+
 
 	//ao is drawn to the target, lets draw it on screen
+	Framebuffer& source = GetCurrentFramebuffer();
 	SetCurrentFramebuffer(aoResultFB);
 	glContext.Clear().ColorBuffer().DepthBuffer();
 
-	reducedSizeIntermFramebuffer1.SetTextureShaderID(Framebuffer::ATTACHMENT_COLOR, "aoValue", 2);
-	reducedSizeIntermFramebuffer1.SetShaderProgram(&ssaoDrawProgram, Framebuffer::ATTACHMENT_COLOR);
+	source.SetTextureShaderID(Framebuffer::ATTACHMENT_COLOR, "aoValue", 2);
+	source.SetShaderProgram(&ssaoDrawProgram, Framebuffer::ATTACHMENT_COLOR);
+
+	
 	
 	gl::UniformSampler(ssaoDrawProgram, "objectColor").Set(0);
 	gl::Texture::Active(0);
@@ -680,5 +720,5 @@ void GraphicsEngine::DrawAmbientOcclusion()
 
 	ssaoDraw_screenWidth.Set(screenWidth);
 	ssaoDraw_screenHeight.Set(screenHeight);
-	reducedSizeIntermFramebuffer1.Draw(*this);
+	source.Draw(*this);
 }

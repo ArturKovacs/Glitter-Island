@@ -15,7 +15,7 @@ Terrain::Terrain(GraphicsEngine* pGraphicsEngine) : pGraphicsEngine(pGraphicsEng
 	terrainSize = 0;
 
 	shaderProgram = GraphicsEngine::LoadShaderProgramFromFiles("Terrain_v.glsl", "Terrain_f.glsl");
-	seabottomProgram = GraphicsEngine::LoadShaderProgramFromFiles("SimpleColored_v.glsl", "SimpleColored_f.glsl");
+	seabottomProgram = GraphicsEngine::LoadShaderProgramFromFiles("SimpleDiffuse_v.glsl", "SimpleDiffuse_f.glsl");
 
 	try {
 		shaderProgram.Use();
@@ -43,9 +43,14 @@ Terrain::Terrain(GraphicsEngine* pGraphicsEngine) : pGraphicsEngine(pGraphicsEng
 		}
 
 		seabottomProgram.Use();
+		seabottom_MODEL_tr_inv = gl::Uniform<glm::mat4>(seabottomProgram, "MODEL_tr_inv");
 		seabottom_MVP = gl::Uniform<glm::mat4>(seabottomProgram, "MVP");
 		seabottom_color = gl::Uniform<glm::vec4>(seabottomProgram, "color");
-		seabottom_color.Set(glm::vec4(0.78f, 0.78f, 0.66f, 1.0f));
+		seabottom_sunColor = gl::Uniform<glm::vec3>(seabottomProgram, "sunColor");
+		seabottom_sunDir = gl::Uniform<glm::vec3>(seabottomProgram, "sunDir");
+
+		seabottom_MODEL_tr_inv.Set(glm::mat4(1));
+		seabottom_color.Set(glm::vec4(0.98f, 0.98f, 0.96f, 1.0f));
 	}
 	catch (gl::Error& err) {
 		std::cout << err.what() << std::endl;
@@ -91,7 +96,7 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float size, float h
 	gl::Texture::WrapT(gl::Texture::Target::_2D, gl::TextureWrap::ClampToEdge);
 	gl::Texture::Image2D(gl::Texture::Target::_2D,
 		0,
-		gl::enums::PixelDataInternalFormat::RGB16F,
+		gl::enums::PixelDataInternalFormat::R16,
 		image.getSize().x,
 		image.getSize().y,
 		0,
@@ -147,10 +152,10 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float size, float h
 		-seaBottomScale, -0.0f, -seaBottomScale,
 	};
 	std::vector<GLfloat> seaBottomVertNormal = {
-		0, 0, 1.f,
-		0, 0, 1.f,
-		0, 0, 1.f,
-		0, 0, 1.f
+		0, 1.f, 0,
+		0, 1.f, 0,
+		0, 1.f, 0,
+		0, 1.f, 0
 	};
 	std::vector<Mesh::Submesh::IndexType> seaBottomIndices = {
 		0, 1, 2, 3
@@ -166,7 +171,7 @@ void Terrain::LoadFromHeightMap(const std::string& fileName, float size, float h
 
 	try {
 		seabottom_submsh.AttachVertexAttribute(AttributeCategory::POSITION, seabottomProgram, "vertexPos");
-		//seabottom_submsh.AttachVertexAttribute(AttributeCategory::NORMAL, shaderProgram, "vertexNormal");
+		seabottom_submsh.AttachVertexAttribute(AttributeCategory::NORMAL, shaderProgram, "vertexNormal");
 	}
 	catch (gl::Error& err) {
 		std::cout << err.what() << std::endl;
@@ -223,6 +228,8 @@ void Terrain::Draw()
 	seabottomProgram.Use();
 	//seabottom_MVP.Set(MVP);
 	seabottom_MVP.Set(pGraphicsEngine->GetActiveCamera()->GetViewProjectionTransform());
+	seabottom_sunColor.Set(pGraphicsEngine->GetSun().GetColor());
+	seabottom_sunDir.Set(pGraphicsEngine->GetSun().GetDirectionTowardsSource());
 	Mesh::Submesh& seabottom_submsh = seabottom.GetSubmeshes().at(0);
 	seabottom_submsh.BindVAO();
 	pGraphicsEngine->GetGLContext().DrawElements(seabottom_submsh.GetPrimitiveType(), seabottom_submsh.GetNumOfIndices(), seabottom_submsh.indexTypeEnum);
@@ -268,6 +275,7 @@ glm::ivec2 Terrain::GetMaterialMapPos(const glm::vec4 worldPos) const
 	glm::ivec2 result;
 	//glm::vec4 normalizedTextureCoords = ((glm::inverse(modelTransform) * worldPos)/terrainSize);
 	glm::vec2 normalizedTextureCoords = (glm::vec2(worldPos.x, worldPos.z) - posXZ) / terrainSize;
+	normalizedTextureCoords.y = -normalizedTextureCoords.y;
 	const sf::Vector2u imgSize = materialMap.getSize();
 	result[0] = int(std::floor(normalizedTextureCoords.x * imgSize.x));
 	result[1] = int(std::floor(normalizedTextureCoords.y * imgSize.y));

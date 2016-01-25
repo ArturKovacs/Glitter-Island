@@ -21,6 +21,7 @@ vertexPosName("vertexPos"), pShaderProgram(nullptr), w(width), h(height)
 
 			if ((currFlag & ATTACHMENT_DEPTH) != 0) {
 				gl::Texture::CompareMode(gl::Texture::Target::_2D, gl::enums::TextureCompareMode::CompareRefToTexture);
+				gl::Texture::CompareFunc(gl::Texture::Target::_2D, gl::enums::CompareFunction::LEqual);
 			}
 
 			textures[currFlag] = std::move(texture);

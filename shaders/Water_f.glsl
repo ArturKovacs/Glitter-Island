@@ -162,10 +162,10 @@ void main(void)
 	float distanceInWater = distance(refractedSurfacePos.xyz, posFromVert);
 	
 	distanceInWater = distanceInWater*clamp(distanceInWater, 0, 1); 
-	//float foamStrength = pow(clamp(1-waterDepth, 0, 1), 1.5);
-	float foamStrength = 0;
+	float foamStrength = pow(clamp(1-waterDepth, 0, 1), 1.5);
+	//float foamStrength = 0;
 	fragColor = mix(
 	vec4(pow(waterColor, vec3(clamp(distanceInWater*0.6, 0, 25)))*refractedColor + reflectedColor + sunColor*specularIntensity, 1),
-	vec4(1),
+	vec4(vec3(1)*sunColor*max(dot(vec3(0, 1, 0), sunDir), 0.05), 1),
 	foamStrength);
 }

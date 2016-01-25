@@ -25,6 +25,8 @@ float calculateAOFactor(vec3 posView, vec3 normalView, vec3 randomVec)
 	vec3 bitangent = cross(tangent, normalView);
 	mat3 NTB = mat3(normalView, tangent, bitangent);
 	
+	vec2 objectViewDepthSize = textureSize(objectViewDepth, 0);
+	
 	for (int i = 0; i < numSamples; i += 1) {
 		vec3 samplePosView = NTB*sampleVecs[i] + posView;
 		
@@ -32,9 +34,10 @@ float calculateAOFactor(vec3 posView, vec3 normalView, vec3 randomVec)
 		samplePosScreen.xy /= samplePosScreen.w;
 		samplePosScreen.xy = samplePosScreen.xy * vec2(0.5) + vec2(0.5);
 		
+		//float visibleDepth = texelFetch(objectViewDepth, ivec2(samplePosScreen.xy*objectViewDepthSize), 0).r;
 		float visibleDepth = texture(objectViewDepth, samplePosScreen.xy).r;
 		
-		if (visibleDepth > samplePosView.z+0.01) {
+		if (visibleDepth-samplePosView.z > 0.01) {
 			occlusionValue += smoothstep(0.0, 1.0, (samplePosView.z-visibleDepth)+1.5);
 		}
 	}
@@ -45,13 +48,18 @@ float calculateAOFactor(vec3 posView, vec3 normalView, vec3 randomVec)
 void main()
 {
 	vec2 screenDimensions = vec2(screenWidth, screenHeight);
+	
 	float depth = texture(objectDepth, gl_FragCoord.xy/screenDimensions).x;
 	
+	//vec2 objectDepthScale = textureSize(objectDepth, 0);
+	//float depth = texelFetch(objectDepth, ivec2((gl_FragCoord.xy/screenDimensions)*objectDepthScale), 0).r;
+	
 	vec3 normal = texture(objectNormal, gl_FragCoord.xy/screenDimensions).xyz;
+	
 	vec3 normalView = normalize((viewTrInv * vec4(normal, 1)).xyz);
 	
 	vec4 posView = projInv * vec4(vec3(gl_FragCoord.xy/screenDimensions, depth)*2 - vec3(1), 1);
-	posView /= posView.w;
+	posView.xyz /= posView.w;
 	
 	//float aoFactor = clamp(calculateAOFactor(posView.xyz, normalView.xyz, vec3(texture(noiseTex, posView.xy*64+posView.zx*83).xy, 0))*2, 0, 1);
 	float aoFactor = clamp(calculateAOFactor(posView.xyz, normalView.xyz, vec3(texture(noiseTex, gl_FragCoord.xy*0.25).xy, 0))*2, 0, 1);
