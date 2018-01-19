@@ -79,7 +79,8 @@ void main(void)
 	//Select cascade
 	int selectedCascade;
 	for (int i = LIGHT_CASCADE_COUNT-1; i >= 0; i--) {
-		selectedCascade = int(mix(selectedCascade, i, int(gl_FragCoord.z < viewSubfrustumFarPlanesTexDepth[i])));
+		//selectedCascade = int(mix(selectedCascade, i, int(gl_FragCoord.z < viewSubfrustumFarPlanesTexDepth[i])));
+		selectedCascade = (gl_FragCoord.z < viewSubfrustumFarPlanesTexDepth[i]) ? i : selectedCascade;
 	}
 	
 	float shadowFactor;

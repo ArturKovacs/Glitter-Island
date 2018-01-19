@@ -600,7 +600,9 @@ void GraphicsEngine::DrawScene()
 	};
 	glContext.DrawBuffers(colorBuffer.size(), colorBuffer.data());
 
-	DrawAmbientOcclusion();
+#pragma message("TODO !FIX THIS FUNCTION! TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO");
+	//TODO fix this function
+	//DrawAmbientOcclusion();
 
 	skybox.Draw();
 

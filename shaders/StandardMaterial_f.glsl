@@ -21,10 +21,10 @@ float PhongBlinn(const in vec3 lightSourceDir, const in vec3 viewerDir, const in
 }
 
 //assuming that z is always positive
-vec3 UnpackNormal(in vec2 packed)
+vec3 UnpackNormal(in vec2 packedVec)
 {
-	packed = packed*2-1;
-	return normalize(vec3(packed, sqrt(-(packed.x*packed.x+packed.y*packed.y-1))));
+	packedVec = packedVec*2-1;
+	return normalize(vec3(packedVec, sqrt(-(packedVec.x*packedVec.x+packedVec.y*packedVec.y-1))));
 }
 
 void main(void) 
