@@ -643,7 +643,6 @@ void GraphicsEngine::DrawAmbientOcclusion()
 
 	objectsFB.Draw(*this);
 
-	
 	//lets blur ao
 	SetCurrentFramebuffer(reducedSizeIntermFramebuffer2);
 	glContext.Clear().ColorBuffer();

@@ -41,7 +41,7 @@ mouseSensitivity(0.005f)
 	graphicsEngine.GetModelsFolderPath() = modelsFolderPath;
 
 	//////////////////////////////////////////////////
-	//TEST
+	// TEST
 	//////////////////////////////////////////////////
 
 	glm::mat4 viewTransform = glm::rotate(glm::mat4(1.f), glm::radians(32.1f), glm::vec3(0, 1, 0));

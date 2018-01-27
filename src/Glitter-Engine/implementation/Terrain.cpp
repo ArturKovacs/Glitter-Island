@@ -271,6 +271,13 @@ glm::ivec2 Terrain::GetMaterialMapPos(const glm::vec4 worldPos) const
 	const sf::Vector2u imgSize = materialMap.getSize();
 	result[0] = int(std::floor(normalizedTextureCoords.x * imgSize.x));
 	result[1] = int(std::floor(normalizedTextureCoords.y * imgSize.y));
+
+	// 21-01-2017
+	// Terrain texture painting used to work, when I was developing on AMD GPUs.
+	// Now I revived the project but now I have an Nvidia. (At least I think that is the only significant difference)
+	// It really seems that the y texture coordinate is flipped when painting the terrain.
+	result[1] = std::abs(result[1]);
+
 	return result;
 }
 
